@@ -1,0 +1,199 @@
+:root {
+    /* Fiery Ocean Coolors.co */
+    --deep-red: #780000;
+    --light-red: #c1121f;
+    --cream-white: #fdf0d5;
+    --deep-blue: #003049;
+    --light-blue: #669bbc;
+
+    /* Glass Background */
+    --glass-cream: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(102, 102, 102, 0.4);
+
+    /* Text Colors */
+    --text-primary: #fdf0d5;
+    --text-secondary: rgba(253, 240, 213, .3);
+    --text-muted: rgba(253, 240, 213, .3);
+}
+
+body {
+    background:linear-gradient(to bottom, var(--light-blue), var(--deep-blue));
+    background-image:url(/img/background.jpg);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+
+    overflow: hidden;
+
+    font-family: 'Outfit', sans-serif;
+    color: var(--text-primary)
+}
+
+.login-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+    /* border: 2px solid red; */
+    background-image: url(../assets/background.jpg);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.login-card {
+    background-color: var(--glass-cream);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 40px;
+    border-radius: 20px;
+
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 440px;
+}
+
+.login-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.login-logo {
+    background: linear-gradient(to bottom right, var(--light-blue), var(--cream-white));
+    border-radius: 20px;
+    height: 100px;
+    width: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-title h1 {
+    color: white;
+    margin-bottom: 0px;
+    font: inherit;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.login-title p{
+    margin-top: 15px;
+    margin-bottom: 0px;
+
+    color: var(--text-muted);
+    font-size: .9rem;
+}
+
+.login-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background-color: var(--text-muted);
+}
+
+.login-divider span {
+    color: var(--text-muted);
+    font-size: .8rem;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    width: 100%;
+    margin-top: 10px;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    
+    font-size: 14px;
+    text-align: left;
+
+    color: white;
+
+    margin-bottom: 12px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px;
+
+    background: var(--glass-cream);
+
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    box-sizing: border-box;
+    
+    color: var(--text-primary);
+
+    font-family:inherit;
+    font-size: 16px;
+
+    margin-bottom: 12px;
+
+    transition: 0.15s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--light-blue);
+    box-shadow: 0 0 5px var(--light-blue);
+}
+
+.login-button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+
+    font-family: inherit;
+    font-weight: 500;
+
+    background: linear-gradient(to bottom right, var(--cream-white), var(--light-blue));
+    border: none;
+    border-radius: 10px;
+    color:black;
+    font-size: 16px;
+    cursor: pointer;
+
+    transition: 0.2s ease;
+}
+
+.login-button:hover {
+    box-shadow: 0 0 10px var(--light-blue);
+    transform: translateY(-2px);
+}
+
+#email-login {
+    margin-top: 0px;
+}
+
+#google-login {
+    margin: 0;
+}
+
+
