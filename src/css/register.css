@@ -30,19 +30,15 @@ body {
     color: var(--text-primary)
 }
 
-.login-page {
+.register-page {
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     width: 100vw;
-    /* border: 2px solid red; */
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
 }
 
-.login-card {
+.register-card {
     background-color: var(--glass-cream);
     border: 1px solid var(--glass-border);
     backdrop-filter: blur(20px);
@@ -56,18 +52,18 @@ body {
     align-items: center;
 }
 
-.login-container {
+.register-container {
     width: 100%;
     max-width: 440px;
 }
 
-.login-header {
+.register-header {
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.login-logo {
+.register-logo {
     background: linear-gradient(to bottom right, var(--light-blue), var(--cream-white));
     border-radius: 20px;
     height: 100px;
@@ -77,7 +73,7 @@ body {
     align-items: center;
 }
 
-.login-title h1 {
+.register-title h1 {
     color: white;
     margin-bottom: 0px;
     font: inherit;
@@ -85,7 +81,7 @@ body {
     font-weight: 600;
 }
 
-.login-title p{
+.register-title p{
     margin-top: 15px;
     margin-bottom: 0px;
 
@@ -93,27 +89,27 @@ body {
     font-size: .9rem;
 }
 
-.login-divider {
+.register-divider {
     display: flex;
     align-items: center;
     gap: 10px;
     margin: 15px 0;
 }
 
-.login-divider::before,
-.login-divider::after {
+.register-divider::before,
+.register-divider::after {
     content: '';
     flex: 1;
     height: 1px;
     background-color: var(--text-muted);
 }
 
-.login-divider span {
+.register-divider span {
     color: var(--text-muted);
     font-size: .8rem;
 }
 
-.login-form {
+.register-form {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -153,7 +149,7 @@ body {
     font-family:inherit;
     font-size: 16px;
 
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 
     transition: 0.15s ease;
 }
@@ -164,10 +160,10 @@ body {
     box-shadow: 0 0 5px var(--light-blue);
 }
 
-.login-button {
+.register-button {
     width: 100%;
     padding: 12px;
-    margin-top: 15px;
+    margin-top: 0;
 
     font-family: inherit;
     font-weight: 500;
@@ -182,39 +178,35 @@ body {
     transition: 0.2s ease;
 }
 
-.login-button:hover {
+.register-button:hover {
     box-shadow: 0 0 10px var(--light-blue);
     transform: translateY(-2px);
 }
 
-#email-login {
-    margin-top: 0px;
-}
-
-#google-login {
-    margin: 0;
-}
-
-.register {
-    margin: 0;
-    margin-top: 10px;
-    width: 100%;
-    font-size: 14px;
+.account-exist {
     /* border: 2px solid white; */
     display: flex;
+    align-items: center;
+    height: 1rem;
+    margin-top: 10px;
+    padding: 0;
     justify-content: space-between;
+    width: 100%;
+    font-size: 15px;
 }
 
-.register span {
+.account-exist p {
+    margin: 0;
+    padding: 0;
     color: var(--text-muted);
 }
 
-.register a {
+.account-exist a {
     color: var(--text-primary);
     text-decoration: none;
     transition: 0.3s;
 }
 
-.register a:hover {
+.account-exist a:hover {
     color: var(--light-blue)
 }
