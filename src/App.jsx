@@ -3,6 +3,7 @@ import Login from './pages/login'
 import Dashboard from './pages/dashboard'
 import XUDashboard from './pages/dashboard-xu'
 import ProtectedRoute from './components/ProtectedRoute'
+import Register from './pages/register'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
 function App() {
@@ -12,15 +13,17 @@ function App() {
         <Routes>
 
           <Route path="/" element={<Login/>} />
+
+          <Route path="/register" element={<Register/>} />
           
           <Route path="/dashboard" element={
-            <ProtectedRoute allowedDomain="gmail.com">
+            <ProtectedRoute requiredRole="u">
               <Dashboard/>
             </ProtectedRoute> 
           } />
           
           <Route path="/xu-dash" element={
-            <ProtectedRoute allowedDomain="my.xu.edu.ph">
+            <ProtectedRoute requiredRole="admin">
               <XUDashboard/>
             </ProtectedRoute>
           } />  
