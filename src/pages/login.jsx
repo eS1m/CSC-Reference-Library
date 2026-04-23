@@ -110,7 +110,6 @@ export default function Login() {
                         <button type="submit" className="login-button" id="email-login">
                             Login
                         </button>
-
                         <div className="register">
                             <span>No Account? </span>
                             <a href="/register">Register here</a>

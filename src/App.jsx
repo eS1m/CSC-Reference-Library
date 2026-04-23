@@ -23,7 +23,7 @@ function App() {
           } />
           
           <Route path="/xu-dash" element={
-            <ProtectedRoute requiredRole="xu">
+            <ProtectedRoute requiredRole="admin">
               <XUDashboard/>
             </ProtectedRoute>
           } />  
