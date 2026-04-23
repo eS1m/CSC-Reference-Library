@@ -38,6 +38,7 @@ export default function Login() {
         } else {
             nav('/dashboard');
         }
+    };
    
     const signIn = async () => {
         try {
@@ -109,6 +110,10 @@ export default function Login() {
                         <button type="submit" className="login-button" id="email-login">
                             Login
                         </button>
+                        <div className="register">
+                            <span>No Account? </span>
+                            <a href="/register">Register here</a>
+                        </div>
                     </form>
 
                     <div className="login-divider" id="login-other">
@@ -123,4 +128,4 @@ export default function Login() {
         </div>
     );
     }
-}
+

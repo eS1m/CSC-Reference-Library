@@ -196,4 +196,27 @@ body {
     margin: 0;
 }
 
+.register {
+    margin: 0;
+    margin-top: 10px;
+    width: 100%;
+    font-size: 14px;
+    /* border: 2px solid white; */
+    display: flex;
+    justify-content: space-between;
+    justify-content: space-between;
+}
 
+.register span {
+    color: var(--text-muted);
+}
+
+.register a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.register a:hover {
+    color: var(--light-blue)
+}
