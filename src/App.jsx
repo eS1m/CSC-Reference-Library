@@ -14,13 +14,13 @@ function App() {
           <Route path="/" element={<Login/>} />
           
           <Route path="/dashboard" element={
-            <ProtectedRoute allowedDomain="gmail.com">
+            <ProtectedRoute requiredRole="u">
               <Dashboard/>
             </ProtectedRoute> 
           } />
           
           <Route path="/xu-dash" element={
-            <ProtectedRoute allowedDomain="my.xu.edu.ph">
+            <ProtectedRoute requiredRole="xu">
               <XUDashboard/>
             </ProtectedRoute>
           } />  
