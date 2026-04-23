@@ -196,6 +196,13 @@ body {
     margin: 0;
 }
 
+.register {
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
 .register span {
     color: var(--text-muted);
 }

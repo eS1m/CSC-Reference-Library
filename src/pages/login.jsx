@@ -38,6 +38,7 @@ export default function Login() {
         } else {
             nav('/dashboard');
         }
+    };
    
     const signIn = async () => {
         try {
@@ -128,4 +129,4 @@ export default function Login() {
         </div>
     );
     }
-}
+
