@@ -196,4 +196,16 @@ body {
     margin: 0;
 }
 
+.register span {
+    color: var(--text-muted);
+}
 
+.register a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.register a:hover {
+    color: var(--light-blue)
+}
