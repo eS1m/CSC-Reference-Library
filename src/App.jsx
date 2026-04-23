@@ -12,6 +12,8 @@ function App() {
         <Routes>
 
           <Route path="/" element={<Login/>} />
+
+          <Route path="/register" element={<Register/>} />
           
           <Route path="/dashboard" element={
             <ProtectedRoute requiredRole="u">
