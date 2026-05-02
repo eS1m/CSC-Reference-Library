@@ -5,6 +5,7 @@ import { signOut } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     const nav = useNavigate();
     const [file, setFile] = useState(null);
     const [uploadStatus, setUploadStatus] = useState('');
@@ -33,7 +34,7 @@ export default function Dashboard() {
         formData.append('file', file);
 
         try {
-            const response = await fetch('https://ccs-reference-library-staging-vtmh4.ondigitalocean.app/upload', {
+            const response = await fetch(`${API_BASE_URL}/upload`, {
                 method: 'POST',
                 body: formData,
             });
