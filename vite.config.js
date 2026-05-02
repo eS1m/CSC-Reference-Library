@@ -8,4 +8,9 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] })
   ],
+  preview: {
+    allowedHosts: [
+      'ccs-reference-library-staging-vtmh4.ondigitalocean.app'
+    ]
+  }
 })
