@@ -17,7 +17,6 @@
 }
 
 body {
-    background:linear-gradient(to bottom, var(--light-blue), var(--deep-blue));
     background-image:url(../assets/background.jpg);
     background-size: cover;
     background-position: center;
