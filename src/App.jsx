@@ -4,6 +4,7 @@ import Dashboard from './pages/dashboard'
 import XUDashboard from './pages/dashboard-xu'
 import ProtectedRoute from './components/ProtectedRoute'
 import Register from './pages/register'
+import UserDash from './pages/lgu/dashboard-u'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
 function App() {
@@ -11,6 +12,8 @@ function App() {
     <>
       <Router>
         <Routes>
+
+          <Route path="/dev" element={<UserDash />} />
 
           <Route path="/" element={<Login/>} />
 
