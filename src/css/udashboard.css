@@ -37,6 +37,13 @@ header {
     box-shadow: 0 3px 15px rgba(0, 0, 0, 0.5);
 }
 
+.divider {
+    width: 1px;
+    height: 24px;
+    background-color: var(--glass-border-ham);
+    margin: 0 15px;
+}
+
 .leftside {
     display: flex;
     align-items: center;
@@ -65,14 +72,49 @@ header {
     font-weight: 800;
 }
 
+.rightside {
+    display: flex;
+    align-items: center;
+    gap: 0px;
+}
+
+.who-am-i-box {
+    /* border: 1px solid var(--glass-border-ham);
+    border-radius: 32px;
+    background: var(--glass-cream-ham); */
+    margin: 0px;
+    padding: 2px 16px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.who-am-i-box #who-am-i {
+    font-size: 16px;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.1;
+}
+
+.who-am-i-box #who-am-i-name {
+    font-size: 14px;
+    color: white;
+    margin-top: 2px;
+    margin-right: 0;
+    line-height: 1.1;
+}
+
 #btn-sign-out {
     border: 1px solid var(--glass-border-ham);
     border-radius: 32px;
     background: var(--glass-cream-ham);
     padding: 2px 16px;
+    margin-left: 12px;
     cursor: pointer;
 
     font-family: 'Outfit', sans-serif;
+    font-size: 16px;
 
     transition: 0.3s;
 }

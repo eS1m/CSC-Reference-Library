@@ -14,9 +14,11 @@ export default function udashboard() {
             <p className='dashboard-title'>Agency Screen</p>
         </div>
         <div className="rightside">
-            <div className="who-am-i">
+            <div className="who-am-i-box">
                 <p id="who-am-i">LGU AGENCY EMAIL</p>
+                <p id="who-am-i-name">LGU AGENCY NAME</p>
             </div>
+            <div className="divider"></div>
             <button id="btn-sign-out">Sign Out</button>
         </div>
     </header>
