@@ -9,7 +9,7 @@ import folderIcon from '../../assets/folder.svg';
 
 import uploadIcon from '../../assets/upload.svg';
 
-export default function Udashboard() {
+export default function Uupload() {
 
   /* Side Bar Functionality */
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
