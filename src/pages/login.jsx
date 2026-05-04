@@ -2,7 +2,7 @@ import { useState } from 'react';
 import '../css/login.css';
 import logo from '../assets/logo.svg';
 import googleIcon from '../assets/google-icon.svg';
-import { signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithPopup, signInWithEmailAndPassword, GoogleAuthProvider } from 'firebase/auth';
 import { auth, googleProvider, db } from '../firebase/config.js';
 import { useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc } from 'firebase/firestore'
@@ -23,7 +23,6 @@ export default function Login() {
         let role = "u"
 
         if (!userSnap.exists()) {
-            // If user document doesn't exist, create it with default role "u"
             await setDoc(userRef, {
                 email: user.email,
                 role: role,
@@ -42,11 +41,20 @@ export default function Login() {
    
     const signIn = async () => {
         try {
+            googleProvider.addScope('https://www.googleapis.com/auth/drive.file');
             const result = await signInWithPopup(auth, googleProvider);
+
+            const credential = GoogleAuthProvider.credentialFromResult(result);
+            const token = credential?.accessToken;
+
+            if (token) {
+                sessionStorage.setItem('googleAccessToken', token);
+            }   
+
             await handleUserRoleAndRedirect(result.user);
         } catch (error) {
             console.log(error);
-            alert("Google Sign-In failed.");
+            set.error("Google sign-in failed. Please try again.");
         }
     };
 

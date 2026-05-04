@@ -9,7 +9,6 @@ const app = express();
 app.use(cors());
 const upload = multer();
 
-// Replace these with your actual values
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN;
@@ -26,14 +25,25 @@ oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
 app.post('/upload', upload.single('file'), async (req, res) => {
+  const userAccessToken = req.body.googleToken; 
+  const SHARED_FOLDER_ID = process.env.GOOGLE_FOLDER_ID;
+
+  if (!userAccessToken) {
+    return res.status(400).send('No Google Access Token provided.');
+  }
   try {
+    const userAuth = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+    userAuth.setCredentials({ access_token: userAccessToken });
+
+    const userDrive = google.drive({ version: 'v3', auth: userAuth });
+
     const bufferStream = new stream.PassThrough();
     bufferStream.end(req.file.buffer);
 
-    const response = await drive.files.create({
+    const response = await userDrive.files.create({
       requestBody: {
         name: req.file.originalname,
-        parents: [process.env.GOOGLE_FOLDER_ID], // The folder in your drive
+        parents: [SHARED_FOLDER_ID],
       },
       media: {
         mimeType: req.file.mimetype,
@@ -42,7 +52,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
       fields: 'id',
     });
 
-    res.status(200).json({ success: true, id: response.data.id });
+    res.status(200).json({ fileId: response.data.id });
   } catch (error) {
     console.error('Upload Error:', error);
     res.status(500).send(error.message);

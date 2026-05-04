@@ -244,10 +244,81 @@ header {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
 }
 
 .upload-prompt {
     font-size: 18px;
     color: var(--text-description);
     margin-top: 20px;
+}
+
+.upload-file-btn {
+    min-width: 120px;
+    margin-top: 20px;
+    padding: 12px 24px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px;
+    color: white;
+    background: var(--deep-blue);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s ease;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.upload-file-btn:hover {
+    background: var(--light-blue);
+    box-shadow: 0 0 5px var(--light-blue);
+    transform: translateY(-2px);
+}
+
+.upload-file-btn:disabled {
+    background-color: #cccccc;
+    color: #888888;
+    cursor: not-allowed;
+    filter: grayscale(1);
+}
+
+/* Status Messages */
+.status-message {
+    margin: 10px 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-align: center;
+    width: 80%; /* Keeps it contained */
+}
+
+.status-message.success {
+    color: var(--light-blue);
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+}
+
+.status-message.error {
+    color: var(--light-red);
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+/* Loading Animation */
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    display: inline-block;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
