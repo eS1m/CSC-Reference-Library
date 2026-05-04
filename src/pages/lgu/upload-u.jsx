@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import '../../css/udashboard.css';
+import '../../css/uupload.css';
 import hamIcon from '../../assets/hamburger.svg';
 import logo from '../../assets/logo.svg';
 import addCircleIcon from '../../assets/add-circle.svg';
 import dashboardIcon from '../../assets/dashboard.svg';
 import addFolderIcon from '../../assets/add-folder.svg';
 import folderIcon from '../../assets/folder.svg';
+
+import uploadIcon from '../../assets/upload.svg';
 
 export default function Udashboard() {
 
@@ -65,7 +67,7 @@ export default function Udashboard() {
           <div className="sidebar-section">
             <p className="sidebar-label">HOME</p>
             <nav>
-              <div className="nav-item active">
+              <div className="nav-item">
                 <img src={dashboardIcon} alt="Dashboard" width="25" height="25" className="deep-blue-filter"/>
                 Dashboard
               </div>
@@ -75,7 +77,7 @@ export default function Udashboard() {
           <div className="sidebar-section">
             <p className="sidebar-label">FILE MANAGEMENT</p>
             <nav>
-              <div className="nav-item nav-item-upload">
+              <div className="nav-item nav-item-upload active">
                 <img src={addFolderIcon} alt="Add Folder" width="20" height="20" className="deep-blue-filter"/>
                 Upload New File
               </div>
@@ -87,44 +89,10 @@ export default function Udashboard() {
           </div>
         </aside>
 
-        <main className="main-content">
-          <div className="main-content-header">
-            <h1 id="main-content-title">Welcome back, LGU AGENCY NAME</h1>
-            <button className="new-submission-btn">
-              <img src={addCircleIcon} alt="Add" width="25" height="25" className='white-filter'/>
-              Add Assessment
-            </button>
-          </div>
-          
-          <div className="main-content-container">
-            <div className="stat-tracker stat-container">
-              <div className="tracker">
-                <div className="tracker-steps">
-                  <span className={`circle ${currentStep >= 1 ? 'active' : ''}`}>1</span>
-                  <span className={`circle ${currentStep >= 2 ? 'active' : ''}`}>2</span>
-                  <span className={`circle ${currentStep >= 3 ? 'active' : ''}`}>3</span>
-                  <span className={`circle ${currentStep >= 4 ? 'active' : ''}`}>4</span>
-                  <div className="progress-bar">
-                    <span 
-                      className="indicator" 
-                      style={{ width: `${progressWidth}%` }}
-                    ></span>
-                  </div>
-                </div>
-                <p>Assessment Progress: <span className="progress-status"> {stepLabels[currentStep]}</span></p>
-                {/* Dev Button Functionality for Testing */}
-                
-                {/* <div className="tracker-debug-buttons">
-                  <button id="prev" onClick={handlePrev} disabled={currentStep === 1}>
-                    Previous
-                  </button>
-                  <button id="next" onClick={handleNext} disabled={currentStep === totalSteps}>
-                    Next
-                  </button>
-                </div> */} 
-
-              </div>
-            </div>
+        <main className="upload-main-content">
+          <div className="upload-file-container">
+            <img src={uploadIcon} alt="Upload File" className="upload-icon grey-filter" width="300" height="300"/>
+            <p className="upload-prompt">Drag and drop your self-assessment file here, or click to browse.</p>
           </div>
         </main>
       </div>

@@ -5,6 +5,7 @@ import XUDashboard from './pages/dashboard-xu'
 import ProtectedRoute from './components/ProtectedRoute'
 import Register from './pages/register'
 import UserDash from './pages/lgu/dashboard-u'
+import UserUpload from './pages/lgu/upload-u'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
         <Routes>
 
           <Route path="/dev" element={<UserDash />} />
+          <Route path="/dev1" element={<UserUpload />} />
 
           <Route path="/" element={<Login/>} />
 
