@@ -1,11 +1,9 @@
 import './App.css'
 import Login from './pages/login'
-import Dashboard from './pages/dashboard'
-import XUDashboard from './pages/dashboard-xu'
+import Udashboard from './pages/lgu/dashboard-u';
+import Uupload from './pages/lgu/upload-u';
 import ProtectedRoute from './components/ProtectedRoute'
 import Register from './pages/register'
-import UserDash from './pages/lgu/dashboard-u'
-import UserUpload from './pages/lgu/upload-u'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
 function App() {
@@ -14,24 +12,22 @@ function App() {
       <Router>
         <Routes>
 
-          <Route path="/dev" element={<UserDash />} />
-          <Route path="/dev1" element={<UserUpload />} />
-
           <Route path="/" element={<Login/>} />
 
           <Route path="/register" element={<Register/>} />
           
-          <Route path="/dashboard" element={
+          <Route path="/dashboard-u" element={
             <ProtectedRoute requiredRole="u">
-              <Dashboard/>
+              <Udashboard/>
+            </ProtectedRoute> 
+          } />
+
+          <Route path="/upload-u" element={
+            <ProtectedRoute requiredRole="u">
+              <Uupload/>
             </ProtectedRoute> 
           } />
           
-          <Route path="/xu-dash" element={
-            <ProtectedRoute requiredRole="admin">
-              <XUDashboard/>
-            </ProtectedRoute>
-          } />  
         </Routes>
       </Router>
     </>

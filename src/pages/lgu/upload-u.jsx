@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../../css/uupload.css';
 import hamIcon from '../../assets/hamburger.svg';
 import logo from '../../assets/logo.svg';
@@ -6,10 +7,20 @@ import addCircleIcon from '../../assets/add-circle.svg';
 import dashboardIcon from '../../assets/dashboard.svg';
 import addFolderIcon from '../../assets/add-folder.svg';
 import folderIcon from '../../assets/folder.svg';
-
 import uploadIcon from '../../assets/upload.svg';
 
+import { auth } from '../../firebase/config';
+import { signOut } from 'firebase/auth';
+
 export default function Uupload() {
+
+  /* Navigation */
+    const nav = useNavigate();
+  
+    async function logout() {
+        await signOut(auth);
+        nav('/');
+    }
 
   /* Side Bar Functionality */
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -58,7 +69,9 @@ export default function Uupload() {
                     <p id="who-am-i-name">LGU AGENCY NAME</p>
                 </div>
                 <div className="divider"></div>
-                <button id="btn-sign-out">Sign Out</button>
+                <button id="btn-sign-out" onClick={logout}>
+                    Sign Out
+                </button>
             </div>
         </header>
       
@@ -67,7 +80,7 @@ export default function Uupload() {
           <div className="sidebar-section">
             <p className="sidebar-label">HOME</p>
             <nav>
-              <div className="nav-item">
+              <div className="nav-item" onClick={() => nav('/dashboard-u')}>
                 <img src={dashboardIcon} alt="Dashboard" width="25" height="25" className="deep-blue-filter"/>
                 Dashboard
               </div>

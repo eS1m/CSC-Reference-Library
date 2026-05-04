@@ -36,7 +36,7 @@ export default function Login() {
         if (role === "xu") {
             nav('/xu-dash');
         } else {
-            nav('/dashboard');
+            nav('/dashboard-u');
         }
     };
    

@@ -256,7 +256,9 @@ header {
 
 #main-content-title {
     color: var(--deep-blue);
+    font-family: 'Outfit', sans-serif;
     font-weight: 800;
+    font-size: 2rem;
 }
 
 .main-content-container {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../../css/udashboard.css';
 import hamIcon from '../../assets/hamburger.svg';
 import logo from '../../assets/logo.svg';
@@ -7,7 +8,23 @@ import dashboardIcon from '../../assets/dashboard.svg';
 import addFolderIcon from '../../assets/add-folder.svg';
 import folderIcon from '../../assets/folder.svg';
 
+import { auth } from '../../firebase/config';
+import { signOut } from 'firebase/auth';
+
+
 export default function Udashboard() {
+
+  /* Navigation */
+  const nav = useNavigate();
+
+  async function logout() {
+      await signOut(auth);
+      nav('/');
+  }
+
+  const handleAddAssessment = () => {
+    nav('/upload-u');
+  };
 
   /* Side Bar Functionality */
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -52,11 +69,11 @@ export default function Udashboard() {
             </div>
             <div className="rightside">
                 <div className="who-am-i-box">
-                    <p id="who-am-i">LGU AGENCY EMAIL</p>
-                    <p id="who-am-i-name">LGU AGENCY NAME</p>
+                    <p id="who-am-i">{auth.currentUser?.email}</p>
+                    <p id="who-am-i-name">{auth.currentUser?.displayName || 'Agency User'}</p>
                 </div>
                 <div className="divider"></div>
-                <button id="btn-sign-out">Sign Out</button>
+                <button id="btn-sign-out" onClick={logout}>Sign Out</button>
             </div>
         </header>
       
@@ -75,7 +92,7 @@ export default function Udashboard() {
           <div className="sidebar-section">
             <p className="sidebar-label">FILE MANAGEMENT</p>
             <nav>
-              <div className="nav-item nav-item-upload">
+              <div className="nav-item nav-item-upload" onClick={() => nav('/upload-u')}>
                 <img src={addFolderIcon} alt="Add Folder" width="20" height="20" className="deep-blue-filter"/>
                 Upload New File
               </div>
@@ -89,8 +106,8 @@ export default function Udashboard() {
 
         <main className="main-content">
           <div className="main-content-header">
-            <h1 id="main-content-title">Welcome back, LGU AGENCY NAME</h1>
-            <button className="new-submission-btn">
+            <h1 id="main-content-title">Welcome back, {auth.currentUser?.displayName || 'Agency User'}</h1>
+            <button className="new-submission-btn" onClick={handleAddAssessment}>
               <img src={addCircleIcon} alt="Add" width="25" height="25" className='white-filter'/>
               Add Assessment
             </button>

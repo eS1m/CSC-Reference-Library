@@ -55,7 +55,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   // If they have the wrong role, redirect or show error
   if (requiredRole && role !== requiredRole) {
     // Optional: Redirect them to their proper dashboard instead of just showing a message
-    return <Navigate to={role === "admin" ? "/xu-dash" : "/dashboard"} replace />;
+    return <Navigate to={role === "admin" ? "/xu-dash" : "/dashboard-u"} replace />;
   }
 
   return children;

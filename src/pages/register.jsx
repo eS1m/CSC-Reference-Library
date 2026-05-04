@@ -17,19 +17,16 @@ export default function Register() {
         setError('');
 
         try {
-            // 1. Create user in Firebase Auth
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            // 2. Create the user document in Firestore with default role 'u'
             await setDoc(doc(db, "users", user.uid), {
                 email: user.email,
-                role: 'u', // Assigning default user role
+                role: 'u',
                 createdAt: new Date()
             });
 
-            // 3. Send them to the user dashboard
-            navigate('/dashboard');
+            navigate('/dashboard-u');
         } catch (err) {
             console.error(err);
             setError(err.message);
@@ -37,12 +34,11 @@ export default function Register() {
     };
 
     return (
-        <div className="register-page"> {/* Changed 'class' to 'className' */}
+        <div className="register-page">
             <div className="register-card">
                 <div className="register-container">
                     <div className="register-header">
                         <div className="register-logo">
-                            {/* Use the imported 'logo' variable and close the tag with /> */}
                             <img src={logo} alt="logo" width="75" height="80" />
                         </div>
                         <div className="register-title">
@@ -87,7 +83,6 @@ export default function Register() {
                         </button>
                         <div className="account-exist">
                             <p>Already have one?</p> 
-                            {/* Using Link is better for SPA performance than <a href> */}
                             <Link to="/">Sign in</Link>
                         </div>
                     </form>
