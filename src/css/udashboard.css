@@ -17,6 +17,11 @@ body {
     background: white;
 }
 
+.dashboard-container {
+    width: 100vw;
+    height: 100vh;
+}
+
 .white-filter {
     filter: brightness(0) invert(1);
 }
@@ -121,4 +126,75 @@ header {
 
 #btn-sign-out:hover {
     background: var(--glass-border-ham);
+}
+
+/* Sidebar */
+
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+}
+
+.dashboard-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 260px;
+    background-color: white;
+    border-right: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    transition: width 0.3s ease, padding 0.3s ease, border 0.3s ease;
+}
+
+.sidebar.closed {
+    width: 0;
+    padding: 20px 0;
+    border-right: 0px solid transparent;
+}
+
+.sidebar-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #9e9e9e;
+    padding: 10px 25px;
+    letter-spacing: 1px;
+}
+
+.nav-item {
+    padding: 12px 25px;
+    font-size: 14px;
+    color: #555;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.nav-item:hover {
+    background-color: #f5f5f5;
+    color: var(--deep-blue);
+    border-left: 4px solid var(--light-blue);
+}
+
+.nav-item.active {
+    background-color: #f0f4ff;
+    color: var(--deep-blue);
+    border-left: 4px solid var(--deep-blue);
+}
+
+.main-content {
+    display: flex;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+#main-content-title {
+    color: black;
+    font-weight: 800;
 }
