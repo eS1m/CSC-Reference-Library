@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../css/udashboard.css';
 import hamIcon from '../../assets/hamburger.svg';
@@ -13,6 +13,34 @@ import { signOut } from 'firebase/auth';
 
 
 export default function Udashboard() {
+
+  /* Date and Time */
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString([], { 
+      hour12: false,
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit' });
+  }
+
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
 
   /* Navigation */
   const nav = useNavigate();
@@ -141,6 +169,10 @@ export default function Udashboard() {
                 </div> */} 
 
               </div>
+            </div>
+            <div className="stat-time stat-container">
+              <div className="stat-time-clock">{formatTime(time)}</div>
+              <div className="stat-time-date">{formatDate(time)}</div>
             </div>
           </div>
         </main>
