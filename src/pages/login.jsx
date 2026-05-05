@@ -94,7 +94,7 @@ export default function Login() {
                         <div className="input-group">
                             <label className="form-label" htmlFor="email">Username</label>
                             <input 
-                                className="form-input" 
+                                className="form-input-login" 
                                 type="email" 
                                 id="email" 
                                 value={email} 
@@ -106,7 +106,7 @@ export default function Login() {
                         <div className="input-group">
                             <label className="form-label" htmlFor="password">Password</label>
                             <input 
-                                className="form-input" 
+                                className="form-input-login" 
                                 type="password" 
                                 id="password" 
                                 value={password} 

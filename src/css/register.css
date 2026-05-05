@@ -39,10 +39,9 @@ body {
 }
 
 .register-card {
-    background-color: var(--glass-cream);
+    background: var(--deep-red);
     border: 1px solid var(--glass-border);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 0 5px black;
     padding: 40px;
     border-radius: 20px;
 
@@ -140,7 +139,7 @@ body {
 
     background: var(--glass-cream);
 
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--light-red);
     border-radius: 10px;
     box-sizing: border-box;
     
@@ -158,6 +157,10 @@ body {
     outline: none;
     border-color: var(--light-blue);
     box-shadow: 0 0 5px var(--light-blue);
+}
+
+.form-input::placeholder {
+    color: var(--text-muted);
 }
 
 .register-button {

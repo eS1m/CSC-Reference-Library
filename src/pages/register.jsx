@@ -82,8 +82,7 @@ export default function Register() {
                             Create Account
                         </button>
                         <div className="account-exist">
-                            <p>Already have one?</p> 
-                            <Link to="/">Sign in</Link>
+                            <p>Already have one? <Link to="/">Sign in</Link></p>
                         </div>
                     </form>
                 </div>
