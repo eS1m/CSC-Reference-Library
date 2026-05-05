@@ -1,23 +1,4 @@
-:root {
-    /* Fiery Ocean Coolors.co */
-    --deep-red: #780000;
-    --light-red: #c1121f;
-    --cream-white: #fdf0d5;
-    --deep-blue: #003049;
-    --light-blue: #669bbc;
-
-    /* Glass Background */
-    --glass-cream: rgba(255, 255, 255, 0.1);
-    --glass-border: rgba(102, 102, 102, 0.4);
-
-    /* Text Colors */
-    --text-primary: #fdf0d5;
-    --text-secondary: rgba(253, 240, 213, .3);
-    --text-muted: rgba(255, 255, 255, 0.603);
-}
-
 body {
-    background:linear-gradient(to bottom, var(--light-blue), var(--deep-blue));
     background-image:url(../assets/background.jpg);
     background-size: cover;
     background-position: center;
@@ -26,11 +7,10 @@ body {
 
     overflow: hidden;
 
-    font-family: 'Outfit', sans-serif;
     color: var(--text-primary)
 }
 
-.register-page {
+.auth-page {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -38,31 +18,37 @@ body {
     width: 100vw;
 }
 
-.register-card {
-    background: var(--deep-red);
+.auth-card {
     border: 1px solid var(--glass-border);
     box-shadow: 0 0 5px black;
     padding: 40px;
     border-radius: 20px;
-
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.register-container {
+.auth-card-login{
+    background: linear-gradient(to bottom left, var(--light-blue), var(--deep-blue));
+}
+
+.auth-card-register{
+    background: linear-gradient(to top left, var(--light-red), var(--deep-red));
+}
+
+.auth-container {
     width: 100%;
     max-width: 440px;
 }
 
-.register-header {
+.auth-header {
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.register-logo {
+.auth-logo {
     background: linear-gradient(to bottom right, var(--light-blue), var(--cream-white));
     border-radius: 20px;
     height: 100px;
@@ -72,119 +58,158 @@ body {
     align-items: center;
 }
 
-.register-title h1 {
+.auth-title h1 {
     color: white;
+    margin-top: 12px;
     margin-bottom: 0px;
     font: inherit;
     font-size: 2rem;
     font-weight: 600;
 }
 
-.register-title p{
+.auth-title p{
     margin-top: 15px;
     margin-bottom: 0px;
-
     color: var(--text-muted);
     font-size: .9rem;
 }
 
-.register-divider {
+.auth-divider {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin: 15px 0;
+    margin: 15px;
 }
 
-.register-divider::before,
-.register-divider::after {
+.auth-divider::before,
+.auth-divider::after {
     content: '';
     flex: 1;
     height: 1px;
     background-color: var(--text-muted);
 }
 
-.register-divider span {
+.auth-divider span {
     color: var(--text-muted);
     font-size: .8rem;
 }
 
-.register-form {
+.auth-form {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-
     width: 100%;
     margin-top: 10px;
 }
 
-.input-group {
+.auth-group {
     margin-bottom: 20px;
 }
 
-.form-label {
+.auth-label {
     display: block;
-    
     font-size: 14px;
     text-align: left;
-
     color: white;
-
     margin-bottom: 12px;
 }
 
-.form-input {
+.auth-input {
     width: 100%;
     padding: 12px;
-
     background: var(--glass-cream);
-
-    border: 1px solid var(--light-red);
     border-radius: 10px;
     box-sizing: border-box;
-    
     color: var(--text-primary);
-
     font-family:inherit;
     font-size: 16px;
-
-    margin-bottom: 10px;
-
+    margin-bottom: 12px;
     transition: 0.15s ease;
 }
 
-.form-input:focus {
-    outline: none;
-    border-color: var(--light-blue);
-    box-shadow: 0 0 5px var(--light-blue);
+.auth-input-login{
+    border: 1px solid var(--light-blue);
 }
 
-.form-input::placeholder {
+.auth-input-register{
+    border: 1px solid var(--light-blue);
+}
+
+.auth-input:focus {
+    outline: none;
+}
+
+.auth-input-login:focus {
+    border-color: var(--light-blue);
+    box-shadow: 0 0 5px var(--light-blue);
+} 
+
+.auth-input-register:focus {
+    border-color: var(--light-red);
+    box-shadow: 0 0 5px var(--light-red);
+}
+
+.auth-input::placeholder {
     color: var(--text-muted);
 }
 
-.register-button {
+.auth-button {
     width: 100%;
     padding: 12px;
-    margin-top: 0;
+    margin-top: 15px;
 
     font-family: inherit;
     font-weight: 500;
-
     background: linear-gradient(to bottom right, var(--cream-white), var(--light-blue));
     border: none;
     border-radius: 10px;
     color:black;
     font-size: 16px;
     cursor: pointer;
-
     transition: 0.2s ease;
 }
 
-.register-button:hover {
+.auth-button:hover {
     box-shadow: 0 0 10px var(--light-blue);
     transform: translateY(-2px);
 }
+
+/* Login Functionality */
+
+#email-login {
+    margin-top: 0px;
+}
+
+#google-login {
+    margin: 0;
+}
+
+.register {
+    margin: 0;
+    margin-top: 10px;
+    width: 100%;
+    font-size: 14px;
+    /* border: 2px solid white; */
+    display: flex;
+    justify-content: space-between;
+}
+
+.register span {
+    color: var(--text-muted);
+}
+
+.register a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.register a:hover {
+    color: var(--cream-white)
+}
+
+/* Register Functionality */
 
 .account-exist {
     /* border: 2px solid white; */
@@ -211,5 +236,5 @@ body {
 }
 
 .account-exist a:hover {
-    color: var(--light-blue)
+    color: var(--cream-white)
 }

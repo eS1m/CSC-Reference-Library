@@ -59,7 +59,6 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-// server.js
 app.get('/list-files', async (req, res) => {
     const userAccessToken = req.headers.authorization?.split(' ')[1];
     const SHARED_FOLDER_ID = process.env.GOOGLE_FOLDER_ID;

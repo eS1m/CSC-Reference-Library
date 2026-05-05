@@ -1,12 +1,15 @@
+import '../../css/user-layout.css';
+import '../../css/udashboard.css';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../../css/udashboard.css';
 import hamIcon from '../../assets/hamburger.svg';
 import logo from '../../assets/logo.svg';
 import addCircleIcon from '../../assets/add-circle.svg';
 import dashboardIcon from '../../assets/dashboard.svg';
 import addFolderIcon from '../../assets/add-folder.svg';
 import folderIcon from '../../assets/folder.svg';
+import profileIcon from '../../assets/profile.svg';
+
 
 import { auth } from '../../firebase/config';
 import { signOut } from 'firebase/auth';
@@ -111,7 +114,7 @@ export default function Udashboard() {
             <p className="sidebar-label">HOME</p>
             <nav>
               <div className="nav-item active">
-                <img src={dashboardIcon} alt="Dashboard" width="25" height="25" className="deep-blue-filter"/>
+                <img src={dashboardIcon} alt="Dashboard" width="30" height="30" className="deep-blue-filter"/>
                 Dashboard
               </div>
             </nav>
@@ -127,6 +130,16 @@ export default function Udashboard() {
               <div className="nav-item nav-view-files" onClick={() => nav('/view-u')}>
                 <img src={folderIcon} alt="View Files" width="20" height="20" className="deep-blue-filter"/>
                 View Your Files
+              </div>
+            </nav>
+          </div>
+
+          <div className="sidebar-section">
+            <p className="sidebar-label">PROFILE</p>
+            <nav>
+              <div className="nav-item nav-my-profile">
+                <img src={profileIcon} alt="My Profile" width="15" height="15" className="deep-blue-filter"/>
+                My Profile
               </div>
             </nav>
           </div>

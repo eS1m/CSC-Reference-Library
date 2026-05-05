@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import '../css/login.css';
+import '../css/auth.css';
 import logo from '../assets/logo.svg';
 import googleIcon from '../assets/google-icon.svg';
 import { signInWithPopup, signInWithEmailAndPassword, GoogleAuthProvider } from 'firebase/auth';
@@ -7,7 +7,6 @@ import { auth, googleProvider, db } from '../firebase/config.js';
 import { useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 
-// This comment will be pushed into the feature/login branch
 
 export default function Login() {
     const nav = useNavigate();
@@ -71,30 +70,30 @@ export default function Login() {
     };
     
     return (
-        <div className="login-page">
-            <div className="login-card">
-                <div className="login-container">
-                    <div className="login-header">
-                        <div className="login-logo">
+        <div className="auth-page">
+            <div className="auth-card auth-card-login">
+                <div className="auth-container">
+                    <div className="auth-header">
+                        <div className="auth-logo">
                             <img src={logo} alt="logo" width="75" height="80" />
                         </div>
-                        <div className="login-title">
+                        <div className="auth-title">
                             <h1>Login</h1>
                             <p>Sign in to connect</p>
                         </div>
                     </div>
 
-                    <div className="login-divider">
+                    <div className="auth-divider">
                         <span>email and password</span>
                     </div>
 
                     {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
 
-                    <form className="login-form" onSubmit={handleLoginEP}>
-                        <div className="input-group">
-                            <label className="form-label" htmlFor="email">Username</label>
+                    <form className="auth-form" onSubmit={handleLoginEP}>
+                        <div className="auth-group">
+                            <label className="auth-label" htmlFor="email">Username</label>
                             <input 
-                                className="form-input-login" 
+                                className="auth-input auth-input-login" 
                                 type="email" 
                                 id="email" 
                                 value={email} 
@@ -103,10 +102,10 @@ export default function Login() {
                                 placeholder="Enter your email" 
                                 required/>
                         </div>
-                        <div className="input-group">
-                            <label className="form-label" htmlFor="password">Password</label>
+                        <div className="auth-group">
+                            <label className="auth-label" htmlFor="password">Password</label>
                             <input 
-                                className="form-input-login" 
+                                className="auth-input auth-input-login" 
                                 type="password" 
                                 id="password" 
                                 value={password} 
@@ -115,20 +114,19 @@ export default function Login() {
                                 required 
                                 placeholder="Enter your password" />
                         </div>
-                        <button type="submit" className="login-button" id="email-login">
+                        <button type="submit" className="auth-button" id="email-login">
                             Login
                         </button>
                         <div className="register">
-                            <span>No Account? </span>
-                            <a href="/register">Register here</a>
+                            <span>No Account? <a href="/register">Register here</a></span>
                         </div>
                     </form>
 
-                    <div className="login-divider" id="login-other">
+                    <div className="auth-divider" id="auth-other">
                         <span>OR login with</span>
                     </div>
 
-                    <button className="login-button" id="google-login" onClick={signIn}>
+                    <button className="auth-button" id="google-login" onClick={signIn}>
                         <img src={googleIcon} alt="Google Icon" width="20" height="20" />
                     </button>
                 </div>

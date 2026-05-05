@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'; // Using Link for navigati
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase/config.js'; 
-import '../css/register.css';
+import '../css/auth.css';
 import logo from '../assets/logo.svg';
 
 export default function Register() {
@@ -34,30 +34,30 @@ export default function Register() {
     };
 
     return (
-        <div className="register-page">
-            <div className="register-card">
-                <div className="register-container">
-                    <div className="register-header">
-                        <div className="register-logo">
+        <div className="auth-page">
+            <div className="auth-card auth-card-register">
+                <div className="auth-container">
+                    <div className="auth-header">
+                        <div className="auth-logo">
                             <img src={logo} alt="logo" width="75" height="80" />
                         </div>
-                        <div className="register-title">
+                        <div className="auth-title">
                             <h1>Sign up</h1>
                             <p>Register a new account</p>
                         </div>
                     </div>
 
-                    <div className="register-divider">
+                    <div className="auth-divider">
                         <span>email and password</span>
                     </div>
 
                     {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
 
-                    <form className="register-form" onSubmit={handleRegister}>
-                        <div className="input-group">
-                            <label className="form-label" htmlFor="email">Email</label>
+                    <form className="auth-form" onSubmit={handleRegister}>
+                        <div className="auth-group">
+                            <label className="auth-label" htmlFor="email">Email</label>
                             <input 
-                                className="form-input" 
+                                className="auth-input auth-input-register" 
                                 type="email" 
                                 id="email" 
                                 value={email}
@@ -66,10 +66,10 @@ export default function Register() {
                                 required 
                             />
                         </div>
-                        <div className="input-group">
-                            <label className="form-label" htmlFor="password">Password</label>
+                        <div className="auth-group">
+                            <label className="auth-label" htmlFor="password">Password</label>
                             <input 
-                                className="form-input" 
+                                className="auth-input auth-input-register" 
                                 type="password" 
                                 id="password" 
                                 value={password}
@@ -78,7 +78,7 @@ export default function Register() {
                                 required 
                             />
                         </div>
-                        <button type="submit" className="register-button">
+                        <button type="submit" className="auth-button">
                             Create Account
                         </button>
                         <div className="account-exist">

@@ -1,4 +1,4 @@
-import './App.css'
+import './css/global.css'
 import Login from './pages/login'
 import Udashboard from './pages/lgu/dashboard-u';
 import Uupload from './pages/lgu/upload-u';

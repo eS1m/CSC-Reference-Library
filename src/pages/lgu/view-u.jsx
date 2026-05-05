@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import '../../css/user-layout.css';
 import '../../css/uview.css';
 import hamIcon from '../../assets/hamburger.svg';
 import logo from '../../assets/logo.svg';
@@ -7,6 +8,8 @@ import dashboardIcon from '../../assets/dashboard.svg';
 import addFolderIcon from '../../assets/add-folder.svg';
 import folderIcon from '../../assets/folder.svg';
 import fileIcon from '../../assets/file.svg';
+import profileIcon from '../../assets/profile.svg';
+
 
 import { auth } from '../../firebase/config';
 import { signOut } from 'firebase/auth';
@@ -36,6 +39,10 @@ export default function Uview() {
     useEffect(() => {
       const fetchFiles = async () => {
         const token = sessionStorage.getItem('googleAccessToken');
+
+        // DEBUG: Check if token exists in your browser console
+        console.log("Current Token:", token);
+
         if (!token) {
           setIsLoading(false);
           return;
@@ -103,19 +110,37 @@ export default function Uview() {
               </div>
             </nav>
           </div>
+
+          <div className="sidebar-section">
+            <p className="sidebar-label">PROFILE</p>
+            <nav>
+              <div className="nav-item nav-my-profile">
+                <img src={profileIcon} alt="My Profile" width="15" height="15" className="deep-blue-filter"/>
+                My Profile
+              </div>
+            </nav>
+          </div>
         </aside>
 
         <main className="view-main-content">
           <div className="view-header">
             <h1>View Your Files</h1>
           </div>
-          {/* Empty state: Toggle 'disable' based on files array */}
+
+          {/* Centered Professional Loading Bar */}
           {isLoading && (
             <div className="loading-container">
               <p>Fetching your documents...</p>
               <div className="loading-bar-background">
                 <div className="loading-bar-fill"></div>
               </div>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!isLoading && files.length === 0 && (
+            <div className="no-files-found">
+              <p>No files found in the shared directory.</p>
             </div>
           )}
 

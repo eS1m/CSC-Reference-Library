@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import '../../css/user-layout.css';
 import '../../css/uupload.css';
 import hamIcon from '../../assets/hamburger.svg';
 import logo from '../../assets/logo.svg';
@@ -8,6 +9,8 @@ import dashboardIcon from '../../assets/dashboard.svg';
 import addFolderIcon from '../../assets/add-folder.svg';
 import folderIcon from '../../assets/folder.svg';
 import uploadIcon from '../../assets/upload.svg';
+import profileIcon from '../../assets/profile.svg';
+
 
 import { auth } from '../../firebase/config';
 import { signOut } from 'firebase/auth';
@@ -127,7 +130,7 @@ export default function Uupload() {
                     Sign Out
                 </button>
             </div>
-        </header>
+      </header>
       
       <div className="dashboard-layout">
         <aside className={`sidebar ${isSidebarOpen ? '' : 'closed'}`}>
@@ -151,6 +154,16 @@ export default function Uupload() {
               <div className="nav-item nav-view-files" onClick={() => nav('/view-u')}>
                 <img src={folderIcon} alt="View Files" width="20" height="20" className="deep-blue-filter"/>
                 View Your Files
+              </div>
+            </nav>
+          </div>
+
+          <div className="sidebar-section">
+            <p className="sidebar-label">PROFILE</p>
+            <nav>
+              <div className="nav-item nav-my-profile">
+                <img src={profileIcon} alt="My Profile" width="15" height="15" className="deep-blue-filter"/>
+                My Profile
               </div>
             </nav>
           </div>
