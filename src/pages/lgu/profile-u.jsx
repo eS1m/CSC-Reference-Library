@@ -31,6 +31,31 @@ export default function Uprofile() {
         setIsSidebarOpen(!isSidebarOpen);
     };
 
+  /* Officer Adding Removing Functionality */
+  const [hrmOfficers, setHrmOfficers] = useState([
+    { id: Date.now(), name: '', number: '', email: '', position: '', status: '' }
+  ]);
+
+  const addOfficer = () => {
+    setHrmOfficers([
+      ...hrmOfficers,
+      { id: Date.now(), name: '', number: '', email: '', position: '', status: '' }
+    ]);
+  };
+
+  const removeOfficer = (id) => {
+    if (hrmOfficers.length > 1) {
+      setHrmOfficers(hrmOfficers.filter(officer => officer.id !== id));
+    }
+  };
+
+  const handleInputChange = (id, field, value) => {
+    const updatedOfficers = hrmOfficers.map(off => 
+      off.id === id ? { ...off, [field]: value } : off
+    );
+    setHrmOfficers(updatedOfficers);
+  };
+
   return (
     <div className="user-dashboard-container">
       <header>
@@ -176,67 +201,95 @@ export default function Uprofile() {
                 </div>
               </div>
             </form>
+
             <p className="profile-agency-title">HRM Officers</p>
             <form className="profile-hrm-officers">
-              <div className="profile-input-container hrm-officer">
-                <div className="profile-officer-info">
-                  <div className="profile-group">
-                    <label htmlFor="hrm-officer-name" className="profile-label">Name of Officer</label>
-                    <input 
-                        type="text" 
-                        className="profile-input hrm-officer"
-                        id="hrm-officer-name"
-                        name="hrm-officer-name"
-                        placeholder="Enter officer's name"
-                        required />
+              <div className="hrm-officers-scroll-container">
+                {hrmOfficers.map((officer, index) => (
+                  <div className="profile-input-container hrm-officer" key={officer.id}>
+                    <div className="profile-officer-info">
+                      <div className="profile-group">
+                        <label htmlFor="hrm-officer-name" className="profile-label">Name of Officer</label>
+                        <input 
+                            type="text" 
+                            className="profile-input hrm-officer"
+                            id="hrm-officer-name"
+                            name="hrm-officer-name"
+                            placeholder="Enter officer's name"
+                            value={officer.name}
+                            onChange={(e) => handleInputChange(officer.id, 'name', e.target.value)}
+                            required />
+                      </div>
+                      <div className="profile-group">
+                        <label htmlFor="hrm-officer-number" className="profile-label">Contact Number</label>
+                        <input 
+                            type="text" 
+                            className="profile-input hrm-officer"
+                            id="hrm-officer-number"
+                            name="hrm-officer-number"
+                            placeholder="Enter their number"
+                            value={officer.number}
+                            onChange={(e) => handleInputChange(officer.id, 'number', e.target.value)}
+                            required />
+                      </div>
+                      <div className="profile-group">
+                        <label htmlFor="hrm-officer-email" className="profile-label">Email Address</label>
+                        <input 
+                            type="email" 
+                            className="profile-input hrm-officer"
+                            id="hrm-officer-email"
+                            name="hrm-officer-email"
+                            placeholder="Enter their email"
+                            value={officer.email}
+                            onChange={(e) => handleInputChange(officer.id, 'email', e.target.value)}
+                            required />
+                      </div>
+                      <div className="profile-group">
+                        <label htmlFor="hrm-officer-position" className="profile-label">Position Title</label>
+                        <input 
+                            type="text" 
+                            className="profile-input hrm-officer"
+                            id="hrm-officer-position"
+                            name="hrm-officer-position"
+                            placeholder="Enter their title"
+                            value={officer.position}
+                            onChange={(e) => handleInputChange(officer.id, 'position', e.target.value)}
+                            required />
+                      </div>
+                      <div className="profile-group">
+                        <label htmlFor="hrm-officer-status" className="profile-label">Employment Status</label>
+                        <input 
+                            type="text" 
+                            className="profile-input hrm-officer"
+                            id="hrm-officer-status"
+                            name="hrm-officer-status"
+                            placeholder="Enter their status"
+                            value={officer.status}
+                            onChange={(e) => handleInputChange(officer.id, 'status', e.target.value)}
+                            required />
+                      </div>
+                      <div className="profile-officer-addremove">
+                        <img 
+                          src={addSquare} 
+                          alt="Add" 
+                          className="profile-officer-add grey-filter" 
+                          onClick={addOfficer} 
+                        />
+                        <img 
+                          src={removeSquare} 
+                          alt="Remove" 
+                          className={`profile-officer-remove grey-filter ${hrmOfficers.length === 1 ? 'disable' : ''}`} 
+                          onClick={() => removeOfficer(officer.id)} 
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="profile-group">
-                    <label htmlFor="hrm-officer-number" className="profile-label">Contact Number</label>
-                    <input 
-                        type="text" 
-                        className="profile-input hrm-officer"
-                        id="hrm-officer-number"
-                        name="hrm-officer-number"
-                        placeholder="Enter their contact number"
-                        required />
-                  </div>
-                  <div className="profile-group">
-                    <label htmlFor="hrm-officer-email" className="profile-label">Email Address</label>
-                    <input 
-                        type="email" 
-                        className="profile-input hrm-officer"
-                        id="hrm-officer-email"
-                        name="hrm-officer-email"
-                        placeholder="Enter their email"
-                        required />
-                  </div>
-                  <div className="profile-group">
-                    <label htmlFor="hrm-officer-position" className="profile-label">Position Title</label>
-                    <input 
-                        type="text" 
-                        className="profile-input hrm-officer"
-                        id="hrm-officer-position"
-                        name="hrm-officer-position"
-                        placeholder="Enter their position title"
-                        required />
-                  </div>
-                  <div className="profile-group">
-                    <label htmlFor="hrm-officer-status" className="profile-label">Employment Status</label>
-                    <input 
-                        type="text" 
-                        className="profile-input hrm-officer"
-                        id="hrm-officer-status"
-                        name="hrm-officer-status"
-                        placeholder="Enter their current status"
-                        required />
-                  </div>
-                  <div className="profile-officer-addremove">
-                    <img src={addSquare} width="35" height="35" alt="Add Officer" className="profile-officer-add grey-filter" />
-                    <img src={removeSquare} width="35" height="35"alt="Remove Officer" className="profile-officer-remove disable grey-filter" />
-                  </div>
-                </div>
-              </div>
-            </form>
+                ))}
+              </div>   
+            </form> 
+            <div className="profile-actions">
+              <button className="profile-save-btn"> Save Agency Profile </button>
+            </div>
           </div>
         </main>
       </div>
