@@ -1,0 +1,146 @@
+.profile-main-content {
+    /* border: 2px solid red; */
+    width: 100%;
+    display: flex;
+    padding: 30px;
+    margin: 0 96px;
+    overflow-y: auto;
+    flex-direction: column;
+    align-items: start;
+}
+
+.profile-main-content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+
+    /* border: 2px solid green; */
+}
+
+#profile-main-content-title {
+    color: var(--deep-blue);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 2rem;
+}
+
+.profile-container {
+    /* border: 2px solid cyan; */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    min-height: 500px;
+    gap: 20px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.096);
+
+    margin-top: 40px;
+    background: white;
+    border-radius: 14px;
+
+    padding: 24px;
+}
+
+.profile-container .profile-agency-title {
+    font-weight: 600;
+    font-size: 1.2rem;
+    width: 100%;
+    margin-top: 24px;
+    margin-bottom: 5px;
+}
+
+.profile-input-container {
+    display: flex;
+    flex-wrap: wrap;
+    /* border: 2px solid purple; */
+    height: fit-content;
+    width: 100%;
+    gap: 32px;
+}
+
+.profile-agency-details {
+    /* border: 2px solid orange; */
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: auto;
+}
+
+.profile-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
+    /* border: 2px solid greenyellow; */
+    width: auto;
+    margin-top: 0;
+}
+
+.profile-label {
+    color: var(--stat-description);
+    font-size: 14px;
+    font-weight: 370;
+}
+
+.profile-input {
+    margin-top: 10px;
+    width: 400px;
+    max-width: 100%;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.027);
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.062);
+    /* border: none; */
+    box-sizing: border-box;
+    color: grey;
+    font-family:inherit;
+    font-size: 16px;
+    margin-bottom: 12px;
+    transition: 0.15s ease;
+}
+
+.profile-input.hrm-officer {
+    width: 250px;
+}
+
+.profile-input:focus {
+    outline: none;
+    box-shadow: 0 0 6px var(--light-blue);
+}
+
+.profile-agency-head {
+    /* border: 2px solid orange; */
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: auto;
+}
+
+.profile-input-container.hrm-officer {
+    display: flex;
+    flex-wrap: wrap;
+    /* border: 2px solid green; */
+}
+
+.profile-officer-info {
+    display: flex;
+    flex-wrap: wrap;
+    /* border: 2px solid purple; */
+    height: fit-content;
+    width: 100%;
+    gap: 32px;
+    justify-content: center;
+    align-items: center;
+}
+
+.profile-officer-addremove {
+    margin-left: 56px;
+}
+
+.profile-officer-add, .profile-officer-remove {
+    cursor: pointer;
+}

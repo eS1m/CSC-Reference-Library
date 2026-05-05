@@ -27,12 +27,16 @@
 .loading-text {
     margin-top: 20px;
     font-size: 1.2rem;
-    color: var(--text-description);
+    color: var(--stat-description);
 }
 
 .no-files-found p, .no-files-found {
-    color: var(--text-description);
+    color: var(--stat-description);
     display:block;
+}
+
+.no-files-found p {
+    margin-top: 26px;
 }
 
 .current-files-found {
@@ -59,7 +63,7 @@
     padding: 15px;
 
     background: white;
-    border: 6px solid var(--deep-blue);
+    border: 2px solid var(--deep-blue);
     border-radius: 16px;
     margin-bottom: 10px;
     box-shadow: 0 0 4px var(--deep-blue);

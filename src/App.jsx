@@ -4,6 +4,7 @@ import Udashboard from './pages/lgu/dashboard-u';
 import Uupload from './pages/lgu/upload-u';
 import ProtectedRoute from './components/ProtectedRoute'
 import Register from './pages/register'
+import Uprofile from './pages/lgu/profile-u';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
 import Uview from './pages/lgu/view-u'
@@ -32,6 +33,12 @@ function App() {
           <Route path="/view-u" element={
             <ProtectedRoute requiredRole="u">
               <Uview/>
+            </ProtectedRoute> 
+          } />
+
+          <Route path="/profile-u" element={
+            <ProtectedRoute requiredRole="u">
+              <Uprofile/>
             </ProtectedRoute> 
           } />
           

@@ -121,9 +121,9 @@ export default function Uupload() {
                 <p className='dashboard-title'>Agency Screen</p>
             </div>
             <div className="rightside">
-                <div className="who-am-i-box">
+                <div className="who-am-i-box" onClick={() => nav('/profile-u')}>
                     <p id="who-am-i">{auth.currentUser?.email}</p>
-                                        <p id="who-am-i-name">{auth.currentUser?.displayName || 'Agency User'}</p>
+                    <p id="who-am-i-name">{auth.currentUser?.displayName || 'Agency User'}</p>
                 </div>
                 <div className="divider"></div>
                 <button id="btn-sign-out" onClick={logout}>
@@ -158,12 +158,12 @@ export default function Uupload() {
             </nav>
           </div>
 
-          <div className="sidebar-section">
+          <div className="sidebar-section" onClick={() => nav('/profile-u')}>
             <p className="sidebar-label">PROFILE</p>
             <nav>
               <div className="nav-item nav-my-profile">
                 <img src={profileIcon} alt="My Profile" width="15" height="15" className="deep-blue-filter"/>
-                My Profile
+                Agency Profile
               </div>
             </nav>
           </div>

@@ -19,7 +19,7 @@ body {
 }
 
 .auth-card {
-    border: 1px solid var(--glass-border);
+    border: 1px solid white;
     box-shadow: 0 0 5px black;
     padding: 40px;
     border-radius: 20px;
@@ -56,6 +56,10 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.auth-logo-register {
+    background: linear-gradient(to bottom right, var(--cream-white), var(--light-red));
 }
 
 .auth-title h1 {
@@ -121,7 +125,7 @@ body {
     background: var(--glass-cream);
     border-radius: 10px;
     box-sizing: border-box;
-    color: var(--text-primary);
+    color: var(--cream-white);
     font-family:inherit;
     font-size: 16px;
     margin-bottom: 12px;
@@ -133,7 +137,7 @@ body {
 }
 
 .auth-input-register{
-    border: 1px solid var(--light-blue);
+    border: 1px solid var(--light-red);
 }
 
 .auth-input:focus {
@@ -170,8 +174,19 @@ body {
     transition: 0.2s ease;
 }
 
+.auth-button-register {
+    background: linear-gradient(to bottom left, var(--cream-white), var(--light-red));
+    color: var(--cream-white);
+    margin-top: 0px;
+}
+
 .auth-button:hover {
     box-shadow: 0 0 10px var(--light-blue);
+    transform: translateY(-2px);
+}
+
+.auth-button-register:hover {
+    box-shadow: 0 0 10px var(--cream-white);
     transform: translateY(-2px);
 }
 

@@ -32,7 +32,7 @@
 
 .upload-prompt {
     font-size: 18px;
-    color: var(--text-description);
+    color: var(--stat-description);
     margin-top: 20px;
 }
 

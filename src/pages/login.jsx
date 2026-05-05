@@ -87,7 +87,7 @@ export default function Login() {
                         <span>email and password</span>
                     </div>
 
-                    {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
+                    {error && <p id="error-message"style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
 
                     <form className="auth-form" onSubmit={handleLoginEP}>
                         <div className="auth-group">

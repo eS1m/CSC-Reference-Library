@@ -38,7 +38,7 @@ export default function Register() {
             <div className="auth-card auth-card-register">
                 <div className="auth-container">
                     <div className="auth-header">
-                        <div className="auth-logo">
+                        <div className="auth-logo auth-logo-register">
                             <img src={logo} alt="logo" width="75" height="80" />
                         </div>
                         <div className="auth-title">
@@ -78,7 +78,7 @@ export default function Register() {
                                 required 
                             />
                         </div>
-                        <button type="submit" className="auth-button">
+                        <button type="submit" className="auth-button auth-button-register">
                             Create Account
                         </button>
                         <div className="account-exist">

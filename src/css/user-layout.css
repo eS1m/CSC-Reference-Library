@@ -66,20 +66,54 @@ header {
 }
 
 .who-am-i-box {
-    border-bottom-right-radius: 32px;
-    border-top-right-radius: 32px;
-    border: 1px solid var(--glass-border-ham);
-    
     margin: 0px;
     padding: 6px 16px;
-    display: flex;
-    align-items: flex-end;
     justify-content: center;
     flex-direction: column;
     cursor: pointer;
     transition: 0.3s;
 }
 
+/* Hover over account */
+.who-am-i-box {
+    position: relative;
+    overflow: hidden;
+    border-radius:50px;
+    padding: 10px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-end;
+    z-index: 1; 
+    background: transparent;
+    transition: color 0.3s ease;
+}
+
+.who-am-i-box::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: var(--glass-cream-ham);
+    border-radius: 50px; 
+    transform: translate(-50%, -50%);
+    transition: width 0.4s ease, height 0.4s ease;
+    z-index: -1;
+}
+
+.who-am-i-box:hover::before {
+    width: 300px;
+    height: 300px;
+    border-radius: 50px;
+}
+
+.who-am-i-box:hover {
+    color: var(--deep-blue); 
+    border-radius: 50px;
+}
+
+/* END: Hover over account */
 
 .who-am-i-box #who-am-i {
     color: var(--cream-white);

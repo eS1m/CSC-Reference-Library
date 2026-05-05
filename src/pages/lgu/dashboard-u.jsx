@@ -99,7 +99,7 @@ export default function Udashboard() {
                 <p className='dashboard-title'>Agency Screen</p>
             </div>
             <div className="rightside">
-                <div className="who-am-i-box">
+                <div className="who-am-i-box" onClick={() => nav('/profile-u')}>
                     <p id="who-am-i">{auth.currentUser?.email}</p>
                     <p id="who-am-i-name">{auth.currentUser?.displayName || 'Agency User'}</p>
                 </div>
@@ -137,9 +137,9 @@ export default function Udashboard() {
           <div className="sidebar-section">
             <p className="sidebar-label">PROFILE</p>
             <nav>
-              <div className="nav-item nav-my-profile">
+              <div className="nav-item nav-my-profile" onClick={() => nav('/profile-u')}>
                 <img src={profileIcon} alt="My Profile" width="15" height="15" className="deep-blue-filter"/>
-                My Profile
+                Agency Profile
               </div>
             </nav>
           </div>
