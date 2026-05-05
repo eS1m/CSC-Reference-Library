@@ -59,6 +59,33 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
+// server.js
+app.get('/list-files', async (req, res) => {
+    const userAccessToken = req.headers.authorization?.split(' ')[1];
+    const SHARED_FOLDER_ID = process.env.GOOGLE_FOLDER_ID;
+
+    if (!userAccessToken) {
+        return res.status(401).send("Unauthorized: No token provided");
+    }
+
+    try {
+        const userAuth = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+        userAuth.setCredentials({ access_token: userAccessToken });
+
+        const userDrive = google.drive({ version: 'v3', auth: userAuth });
+
+        const response = await userDrive.files.list({
+            q: `'${SHARED_FOLDER_ID}' in parents and trashed = false`,
+            fields: 'files(id, name, mimeType, webViewLink)',
+        });
+
+        res.status(200).json(response.data.files);
+    } catch (error) {
+        console.error('List Files Error:', error);
+        res.status(500).send("Failed to fetch files from Drive.");
+    }
+});
+
 const PORT = process.env.PORT || 5000; 
 
 app.listen(PORT, () => {

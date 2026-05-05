@@ -13,7 +13,7 @@
     /* Text Colors */
     --text-primary: #fdf0d5;
     --text-secondary: rgba(253, 240, 213, .3);
-    --text-muted: rgba(253, 240, 213, .3);
+    --text-muted: rgba(255, 255, 255, 0.603);
 }
 
 body {

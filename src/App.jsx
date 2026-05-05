@@ -6,6 +6,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Register from './pages/register'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
+import Uview from './pages/lgu/view-u'
+
 function App() {
   return (
     <>
@@ -13,7 +15,6 @@ function App() {
         <Routes>
 
           <Route path="/" element={<Login/>} />
-
           <Route path="/register" element={<Register/>} />
           
           <Route path="/dashboard-u" element={
@@ -25,6 +26,12 @@ function App() {
           <Route path="/upload-u" element={
             <ProtectedRoute requiredRole="u">
               <Uupload/>
+            </ProtectedRoute> 
+          } />
+
+          <Route path="/view-u" element={
+            <ProtectedRoute requiredRole="u">
+              <Uview/>
             </ProtectedRoute> 
           } />
           

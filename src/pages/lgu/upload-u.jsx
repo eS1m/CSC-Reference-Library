@@ -148,7 +148,7 @@ export default function Uupload() {
                 <img src={addFolderIcon} alt="Add Folder" width="20" height="20" className="deep-blue-filter"/>
                 Upload New File
               </div>
-              <div className="nav-item nav-view-files">
+              <div className="nav-item nav-view-files" onClick={() => nav('/view-u')}>
                 <img src={folderIcon} alt="View Files" width="20" height="20" className="deep-blue-filter"/>
                 View Your Files
               </div>
