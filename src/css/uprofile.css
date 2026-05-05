@@ -138,6 +138,11 @@
 }
 
 .profile-officer-addremove {
+    width: 150px;
+    /* border: 2px solid pink; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
     margin-left: 56px;
 }
 
