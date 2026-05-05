@@ -10,13 +10,65 @@ import folderIcon from '../../assets/folder.svg';
 import fileIcon from '../../assets/file.svg';
 import profileIcon from '../../assets/profile.svg';
 
+import editIcon from '../../assets/edit.svg'
 import addSquare from '../../assets/add-square.svg';
 import removeSquare from '../../assets/min-square.svg';
-
-import { auth } from '../../firebase/config';
-import { signOut } from 'firebase/auth';
+import { auth, db } from '../../firebase/config';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';import { signOut } from 'firebase/auth';
 
 export default function Uprofile() {
+  /* Static Fields */
+  const [agencyData, setAgencyData] = useState({
+    agencyName: '',
+    region: '',
+    sector: '',
+    status: '',
+    resolutionStatus: '',
+    headName: '',
+    headDesignation: ''
+  });
+
+  const [hrmOfficers, setHrmOfficers] = useState([
+    { id: Date.now(), name: '', number: '', email: '', position: '', status: '' }
+  ]);
+
+  /* Fetching of Firestore Data */
+  useEffect(() => {
+  const fetchProfile = async () => {
+    const user = auth.currentUser;
+    if (user) {
+      const docRef = doc(db, "agencyProfiles", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setAgencyData({
+          agencyName: data.agencyDetails.agencyName || '',
+          region: data.agencyDetails.region || '',
+          sector: data.agencyDetails.sector || '',
+          status: data.agencyDetails.status || '',
+          resolutionStatus: data.agencyDetails.resolutionStatus || '',
+          headName: data.headDetails.name || '',
+          headDesignation: data.headDetails.designation || ''
+        });
+        setHrmOfficers(data.hrmOfficers || []);
+        setIsEditing(false);
+      } else {
+        setIsEditing(true);
+      }
+    }
+  };
+  fetchProfile();
+}, []);
+
+  /* Editing State */
+  const [isEditing, setIsEditing] = useState(false);
+
+  /* Message State */
+  const [message, setMessage] = useState({ text: '', type: '' });
+
+  /* Loading State */
+  const [isSaving, setIsSaving] = useState(false);
 
   /* Navigation */
     const nav = useNavigate();
@@ -32,10 +84,6 @@ export default function Uprofile() {
     };
 
   /* Officer Adding Removing Functionality */
-  const [hrmOfficers, setHrmOfficers] = useState([
-    { id: Date.now(), name: '', number: '', email: '', position: '', status: '' }
-  ]);
-
   const addOfficer = () => {
     setHrmOfficers([
       ...hrmOfficers,
@@ -55,6 +103,77 @@ export default function Uprofile() {
     );
     setHrmOfficers(updatedOfficers);
   };
+
+  /* Saving Agency Profile Functionality */
+  const handleSaveAll = async (e) => {
+    e.preventDefault();
+    setMessage({ text: '', type: '' });
+
+    const requiredIds = [
+        'agency-name', 'agency-region', 'agency-sector', 
+        'agency-status', 'agency-reso-status', 
+        'head-name', 'head-designation'
+    ];
+
+    for (const id of requiredIds) {
+        const element = document.getElementById(id);
+        if (!element || !element.value.trim()) {
+            alert(`Please fill out the ${element?.previousSibling?.innerText || id} field.`);
+            element?.focus();
+            return;
+        }
+    }
+
+    const isOfficersIncomplete = hrmOfficers.some(off => 
+        !off.name.trim() || !off.position.trim() || !off.email.trim()
+    );
+
+    if (isOfficersIncomplete) {
+        alert("Please complete all HRM Officer details or remove empty rows.");
+        return;
+    }
+
+    setIsSaving(true);
+
+    const user = auth.currentUser;
+    if (!user) {
+        alert("You must be logged in to save your profile.");
+        return;
+    }
+
+    try {
+        const agencyData = {
+            agencyName: document.getElementById('agency-name').value,
+            region: document.getElementById('agency-region').value,
+            sector: document.getElementById('agency-sector').value,
+            status: document.getElementById('agency-status').value,
+            resolutionStatus: document.getElementById('agency-reso-status').value,
+        };
+
+        const headData = {
+            name: document.getElementById('head-name')?.value || '',
+            designation: document.getElementById('head-designation')?.value || '',
+        };
+
+        const masterProfile = {
+            uid: user.uid,
+            email: user.email,
+            agencyDetails: agencyData,
+            headDetails: headData,
+            hrmOfficers: hrmOfficers,
+            lastUpdated: serverTimestamp()
+        };
+
+        await setDoc(doc(db, "agencyProfiles", user.uid), masterProfile, { merge: true });
+
+        setMessage({ text: "Profile updated successfully!", type: 'success' });
+        setIsEditing(false);
+    } catch (error) {
+        setMessage({ text: "Failed to save profile. Please try again.", type: 'error' });
+    } finally {
+        setIsSaving(false);
+    }
+};
 
   return (
     <div className="user-dashboard-container">
@@ -117,10 +236,22 @@ export default function Uprofile() {
         <main className="profile-main-content">
           <div className="profile-main-content-header">
             <h1 id="profile-main-content-title">Agency Profile</h1>
+            <button 
+                className={`edit-agency-profile ${isEditing ? 'active' : ''}`}
+                onClick={() => setIsEditing(true)}
+              > 
+                <img src={editIcon} alt="Edit" width="25" height="25" className="white-filter"/>
+                Edit Agency Profile 
+            </button>
           </div>
           <div className="profile-container">
-            <p className="profile-agency-title">Agency Details</p>
+            {message.text && (
+                <div className={`profile-message-banner ${message.type}`}>
+                    {message.text}
+                </div>
+            )}
 
+            <p className="profile-agency-title">Agency Details</p>
             <form className="profile-agency-details">
               <div className="profile-input-container">
                 <div className="profile-group">
@@ -130,6 +261,9 @@ export default function Uprofile() {
                     className="profile-input"
                     id="agency-name"
                     name="agency-name"
+                    value={agencyData.agencyName}
+                    onChange={(e) => setAgencyData({...agencyData, agencyName: e.target.value})}
+                      disabled={!isEditing}
                     placeholder="Enter your Agency Name"
                     required />
                 </div>
@@ -140,6 +274,9 @@ export default function Uprofile() {
                     className="profile-input"
                     id="agency-region"
                     name="agency-region"
+                    value={agencyData.region}
+                    onChange={(e) => setAgencyData({...agencyData, agencyRegion: e.target.value})}
+                      disabled={!isEditing}
                     placeholder="Enter your region"
                     required />
                 </div>
@@ -150,6 +287,9 @@ export default function Uprofile() {
                     className="profile-input"
                     id="agency-sector"
                     name="agency-sector"
+                    value={agencyData.sector}
+                    onChange={(e) => setAgencyData({...agencyData, agencySector: e.target.value})}
+                      disabled={!isEditing}
                     placeholder="Enter your sector"
                     required />
                 </div>
@@ -160,6 +300,9 @@ export default function Uprofile() {
                     className="profile-input"
                     id="agency-status"
                     name="agency-status"
+                    value={agencyData.status}
+                    onChange={(e) => setAgencyData({...agencyData, agencySector: e.target.value})}
+                      disabled={!isEditing}
                     placeholder="Enter your status"
                     required />
                 </div>
@@ -170,6 +313,9 @@ export default function Uprofile() {
                     className="profile-input"
                     id="agency-reso-status"
                     name="agency-reso-status"
+                    value={agencyData.resolutionStatus}
+                    onChange={(e) => setAgencyData({...agencyData, resolutionStatus: e.target.value})}
+                      disabled={!isEditing}
                     placeholder="Enter your status"
                     required />
                 </div>
@@ -180,22 +326,28 @@ export default function Uprofile() {
             <form className="profile-agency-head">
               <div className="profile-input-container">
                 <div className="profile-group">
-                  <label htmlFor="agency-head-name" className="profile-label">Agency Head</label>
+                  <label htmlFor="head-name" className="profile-label">Agency Head</label>
                   <input 
                       type="text" 
                       className="profile-input"
-                      id="agency-head-name"
-                      name="agency-head-name"
+                      id="head-name"
+                      name="head-name"
+                      value={agencyData.headName}
+                      onChange={(e) => setAgencyData({...agencyData, headName: e.target.value})}
+                      disabled={!isEditing}
                       placeholder="Enter the name of the Agency Head"
                       required />
                 </div>
                 <div className="profile-group">
-                  <label htmlFor="agency-head-position" className="profile-label">Position Title</label>
+                  <label htmlFor="head-designation" className="profile-label">Position Title</label>
                   <input 
                       type="text" 
                       className="profile-input"
-                      id="agency-head-position"
-                      name="agency-head-position"
+                      id="head-designation"
+                      name="head-designation"
+                      value={agencyData.headDesignation}
+                      onChange={(e) => setAgencyData({...agencyData, headDesignation: e.target.value})}
+                      disabled={!isEditing}
                       placeholder="Enter their Position Title"
                       required />
                 </div>
@@ -218,6 +370,7 @@ export default function Uprofile() {
                             placeholder="Enter officer's name"
                             value={officer.name}
                             onChange={(e) => handleInputChange(officer.id, 'name', e.target.value)}
+                            disabled={!isEditing}
                             required />
                       </div>
                       <div className="profile-group">
@@ -230,6 +383,7 @@ export default function Uprofile() {
                             placeholder="Enter their number"
                             value={officer.number}
                             onChange={(e) => handleInputChange(officer.id, 'number', e.target.value)}
+                            disabled={!isEditing}
                             required />
                       </div>
                       <div className="profile-group">
@@ -242,6 +396,7 @@ export default function Uprofile() {
                             placeholder="Enter their email"
                             value={officer.email}
                             onChange={(e) => handleInputChange(officer.id, 'email', e.target.value)}
+                            disabled={!isEditing}
                             required />
                       </div>
                       <div className="profile-group">
@@ -254,6 +409,7 @@ export default function Uprofile() {
                             placeholder="Enter their title"
                             value={officer.position}
                             onChange={(e) => handleInputChange(officer.id, 'position', e.target.value)}
+                            disabled={!isEditing}
                             required />
                       </div>
                       <div className="profile-group">
@@ -266,9 +422,10 @@ export default function Uprofile() {
                             placeholder="Enter their status"
                             value={officer.status}
                             onChange={(e) => handleInputChange(officer.id, 'status', e.target.value)}
+                            disabled={!isEditing}
                             required />
                       </div>
-                      <div className="profile-officer-addremove">
+                      <div className={`profile-officer-addremove ${!isEditing ? 'hidden' : ''}`}>
                         <img 
                           src={addSquare} 
                           alt="Add" 
@@ -288,7 +445,22 @@ export default function Uprofile() {
               </div>   
             </form> 
             <div className="profile-actions">
-              <button className="profile-save-btn"> Save Agency Profile </button>
+              {isEditing && (
+                <button 
+                  className="profile-save-btn" 
+                  onClick={handleSaveAll} 
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="spinner"></div>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    "Save Agency Profile"
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </main>
