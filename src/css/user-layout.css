@@ -6,6 +6,29 @@
     background: #f6f7fb;
 }
 
+.layout-content-area {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    /* overflow-x: hidden; */
+    /* border: 2px solid orange; */
+}
+
+.main-content, 
+.profile-main-content, 
+.upload-main-content, 
+.view-main-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    padding: 30px 40px;
+    margin: 0;
+    box-sizing: border-box;
+}
+
 /* HEADER STYLES */
 header {
     width: 100%;
@@ -163,7 +186,7 @@ header {
 
 .dashboard-layout {
     display: flex;
-    flex: 1;
+    height: calc(100vh - 60px);
     width: 100%;
     overflow: hidden;
 }
@@ -217,6 +240,8 @@ header {
     color: #555;
     cursor: pointer;
     gap: 5px;
+
+    text-decoration: none;
 }
 
 .nav-item-upload, .nav-view-files{
@@ -231,8 +256,12 @@ header {
 
 .nav-item.active {
     background-color: #f0f4ff;
-    color: var(--deep-blue);
+    color: var(--light-blue);
     border-left: 4px solid var(--deep-blue);
+}
+
+.nav-item.active img{
+    filter: brightness(0) saturate(100%) invert(60%) sepia(10%) saturate(1652%) hue-rotate(160deg) brightness(96%) contrast(84%);
 }
 
 .nav-item img[alt="Dashboard"] {

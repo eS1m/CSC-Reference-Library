@@ -90,61 +90,6 @@ export default function Udashboard() {
   };
 
   return (
-    <div className="user-dashboard-container">
-      <header>
-            <div className="leftside">
-                <div className="hamburger" onClick={toggleSidebar}>
-                    <img src={hamIcon} alt="Menu" width="20" height="20" className="white-filter" id="hamburger-icon"/>
-                </div>
-                <p className='dashboard-title'>Agency Screen</p>
-            </div>
-            <div className="rightside">
-                <div className="who-am-i-box" onClick={() => nav('/profile-u')}>
-                    <p id="who-am-i">{auth.currentUser?.email}</p>
-                    <p id="who-am-i-name">{auth.currentUser?.displayName || 'Agency User'}</p>
-                </div>
-                <div className="divider"></div>
-                <button id="btn-sign-out" onClick={logout}>Sign Out</button>
-            </div>
-        </header>
-      
-      <div className="dashboard-layout">
-        <aside className={`sidebar ${isSidebarOpen ? '' : 'closed'}`}>
-          <div className="sidebar-section">
-            <p className="sidebar-label">HOME</p>
-            <nav>
-              <div className="nav-item active">
-                <img src={dashboardIcon} alt="Dashboard" width="30" height="30" className="deep-blue-filter"/>
-                Dashboard
-              </div>
-            </nav>
-          </div>
-
-          <div className="sidebar-section">
-            <p className="sidebar-label">FILE MANAGEMENT</p>
-            <nav>
-              <div className="nav-item nav-item-upload" onClick={() => nav('/upload-u')}>
-                <img src={addFolderIcon} alt="Add Folder" width="20" height="20" className="deep-blue-filter"/>
-                Upload New File
-              </div>
-              <div className="nav-item nav-view-files" onClick={() => nav('/view-u')}>
-                <img src={folderIcon} alt="View Files" width="20" height="20" className="deep-blue-filter"/>
-                View Your Files
-              </div>
-            </nav>
-          </div>
-
-          <div className="sidebar-section">
-            <p className="sidebar-label">PROFILE</p>
-            <nav>
-              <div className="nav-item nav-my-profile" onClick={() => nav('/profile-u')}>
-                <img src={profileIcon} alt="My Profile" width="15" height="15" className="deep-blue-filter"/>
-                Agency Profile
-              </div>
-            </nav>
-          </div>
-        </aside>
-
         <main className="main-content">
           <div className="main-content-header">
             <h1 id="main-content-title">Welcome back, {auth.currentUser?.displayName || 'Agency User'}</h1>
@@ -189,7 +134,5 @@ export default function Udashboard() {
             </div>
           </div>
         </main>
-      </div>
-    </div>
   );
 }

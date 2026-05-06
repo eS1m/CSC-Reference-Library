@@ -1,14 +1,3 @@
-.profile-main-content {
-    /* border: 2px solid red; */
-    width: 100%;
-    display: flex;
-    padding: 30px;
-    margin: 0 96px;
-    overflow-y: auto;
-    flex-direction: column;
-    align-items: start;
-}
-
 .profile-main-content-header {
     display: flex;
     justify-content: space-between;

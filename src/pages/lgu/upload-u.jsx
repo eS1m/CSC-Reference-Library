@@ -4,14 +4,13 @@ import '../../css/user-layout.css';
 import '../../css/uupload.css';
 import hamIcon from '../../assets/hamburger.svg';
 import logo from '../../assets/logo.svg';
-import addCircleIcon from '../../assets/add-circle.svg';
 import dashboardIcon from '../../assets/dashboard.svg';
 import addFolderIcon from '../../assets/add-folder.svg';
 import folderIcon from '../../assets/folder.svg';
-import uploadIcon from '../../assets/upload.svg';
 import profileIcon from '../../assets/profile.svg';
 
-
+import addCircleIcon from '../../assets/add-circle.svg';
+import uploadIcon from '../../assets/upload.svg';
 import { auth } from '../../firebase/config';
 import { signOut } from 'firebase/auth';
 
@@ -86,90 +85,8 @@ export default function Uupload() {
         setIsSidebarOpen(!isSidebarOpen);
     };
 
-    /* Progress Bar Functionality */
-    const [currentStep, setCurrentStep] = useState(1);
-    const progressWidth = ((currentStep - 1) / (4 - 1)) * 100;
-    const totalSteps = 4;
-
-    /* Dev Button Functionality for Testing */
-    const handleNext = () => {
-        if (currentStep < totalSteps) {
-            setCurrentStep(prev => prev + 1);
-        }
-    };
-
-    const handlePrev = () => {
-        if (currentStep > 1) {
-            setCurrentStep(prev => prev - 1);
-        }
-    };
-
-    const stepLabels = {
-    1: "No Self-Assessment File Uploaded",
-    2: "Assessment Checking",
-    3: "No Action Plan Uploaded",
-    4: "Final Review"
-  };
-
   return (
-    <div className="user-dashboard-container">
-      <header>
-            <div className="leftside">
-                <div className="hamburger" onClick={toggleSidebar}>
-                    <img src={hamIcon} alt="Menu" width="20" height="20" className="white-filter" id="hamburger-icon"/>
-                </div>
-                <p className='dashboard-title'>Agency Screen</p>
-            </div>
-            <div className="rightside">
-                <div className="who-am-i-box" onClick={() => nav('/profile-u')}>
-                    <p id="who-am-i">{auth.currentUser?.email}</p>
-                    <p id="who-am-i-name">{auth.currentUser?.displayName || 'Agency User'}</p>
-                </div>
-                <div className="divider"></div>
-                <button id="btn-sign-out" onClick={logout}>
-                    Sign Out
-                </button>
-            </div>
-      </header>
-      
-      <div className="dashboard-layout">
-        <aside className={`sidebar ${isSidebarOpen ? '' : 'closed'}`}>
-          <div className="sidebar-section">
-            <p className="sidebar-label">HOME</p>
-            <nav>
-              <div className="nav-item" onClick={() => nav('/dashboard-u')}>
-                <img src={dashboardIcon} alt="Dashboard" width="25" height="25" className="deep-blue-filter"/>
-                Dashboard
-              </div>
-            </nav>
-          </div>
-
-          <div className="sidebar-section">
-            <p className="sidebar-label">FILE MANAGEMENT</p>
-            <nav>
-              <div className="nav-item nav-item-upload active">
-                <img src={addFolderIcon} alt="Add Folder" width="20" height="20" className="deep-blue-filter"/>
-                Upload New File
-              </div>
-              <div className="nav-item nav-view-files" onClick={() => nav('/view-u')}>
-                <img src={folderIcon} alt="View Files" width="20" height="20" className="deep-blue-filter"/>
-                View Your Files
-              </div>
-            </nav>
-          </div>
-
-          <div className="sidebar-section" onClick={() => nav('/profile-u')}>
-            <p className="sidebar-label">PROFILE</p>
-            <nav>
-              <div className="nav-item nav-my-profile">
-                <img src={profileIcon} alt="My Profile" width="15" height="15" className="deep-blue-filter"/>
-                Agency Profile
-              </div>
-            </nav>
-          </div>
-        </aside>
-
-        <main className="upload-main-content">
+    <main className="upload-main-content">
           <div className="upload-file-container" onClick={handleContainerClick}>
             <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".xlsx, .xls" onChange={(e) => {handleFileChange(e); setUploadStatus("");}} 
         />
@@ -193,8 +110,6 @@ export default function Uupload() {
               {isUploading ? <div className="spinner"></div> : "Upload File"}
             </button>
           </div>
-        </main>
-      </div>
-    </div>
+    </main>
   );
 }

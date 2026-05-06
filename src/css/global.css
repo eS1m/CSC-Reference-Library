@@ -32,3 +32,7 @@ body {
     filter: brightness(0) saturate(100%) invert(13%) sepia(58%) saturate(2014%) hue-rotate(174deg) brightness(97%) contrast(103%); 
 }
 .grey-filter { filter: grayscale(1); opacity: 0.5; }
+
+.light-blue-filter {
+    filter: brightness(0) saturate(100%) invert(60%) sepia(10%) saturate(1652%) hue-rotate(160deg) brightness(96%) contrast(84%);
+}
