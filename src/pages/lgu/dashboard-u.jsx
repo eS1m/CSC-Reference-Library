@@ -70,8 +70,10 @@ export default function Udashboard() {
 
     /* Progress Bar Functionality */
     const [currentStep, setCurrentStep] = useState(1);
-    const progressWidth = ((currentStep - 1) / (4 - 1)) * 100;
-    const totalSteps = 4;
+    const [isLoading, setIsLoading] = useState(true);
+    const totalSteps = 6;
+    const progressWidth = ((currentStep - 1) / (totalSteps - 1)) * 100;
+    
 
     /* Dev Button Functionality for Testing */
     const handleNext = () => {
@@ -87,38 +89,81 @@ export default function Udashboard() {
     };
 
     const stepLabels = {
-    1: "No Self-Assessment File Uploaded",
-    2: "Assessment Checking",
-    3: "No Action Plan Uploaded",
-    4: "Final Review"
+    1: "Agency Profile is empty/not updated",
+    2: "Employee Profile is empty/not updated",
+    3: "No Self-Assessment file uploaded",
+    4: "Awaiting Review",
+    5: "No Assist Plan file uploaded",
+    6: "Awaiting Review"
   };
+  
+  /* Fetching of Agency Profile and Agency Employees */
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const profileRef = doc(db, "agencyProfiles", user.uid);
+          const profileSnap = await getDoc(profileRef);
+          
+          const employeeRef = doc(db, "agencyEmployees", user.uid);
+          const employeeSnap = await getDoc(employeeRef);
+
+          const hasProfile = profileSnap.exists();
+          const hasEmployees = employeeSnap.exists();
+
+          if (hasProfile) {
+            setAgencyName(profileSnap.data().agencyDetails?.agencyName || 'Agency User');
+          }
+
+          if (!hasProfile) {
+            setCurrentStep(1);
+          } else if (!hasEmployees) {
+            setCurrentStep(2);
+          } else {
+            setCurrentStep(3);
+          }
+
+        } catch (error) {
+          console.error("Error checking status:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  if (isLoading) return <div className="loading-screen">Loading Dashboard...</div>;
 
   return (
         <main className="main-content">
           <div className="main-content-header">
             <h1 id="main-content-title">Welcome back, <b>{agencyName}</b>!</h1>
-            <button className="new-submission-btn" onClick={handleAddAssessment}>
-              <img src={addCircleIcon} alt="Add" width="25" height="25" className='white-filter'/>
-              Add Assessment
-            </button>
+              <button 
+                className="new-submission-btn" 
+                onClick={() => nav('/upload-u')}
+                disabled={currentStep < 3}
+                style={{ opacity: currentStep < 3 ? 0.5 : 1, cursor: currentStep < 3 ? 'not-allowed' : 'pointer' }}
+              >
+                Add Assessment
+              </button>
           </div>
           
           <div className="main-content-container">
             <div className="stat-tracker stat-container">
               <div className="tracker">
                 <div className="tracker-steps">
-                  <span className={`circle ${currentStep >= 1 ? 'active' : ''}`}>1</span>
-                  <span className={`circle ${currentStep >= 2 ? 'active' : ''}`}>2</span>
-                  <span className={`circle ${currentStep >= 3 ? 'active' : ''}`}>3</span>
-                  <span className={`circle ${currentStep >= 4 ? 'active' : ''}`}>4</span>
+                  {[1, 2, 3, 4, 5, 6].map((step) => (
+                    <span key={step} className={`circle ${currentStep >= step ? 'active' : ''}`}>
+                      {step}
+                    </span>
+                  ))}
                   <div className="progress-bar">
-                    <span 
-                      className="indicator" 
-                      style={{ width: `${progressWidth}%` }}
-                    ></span>
+                    <span className="indicator" style={{ width: `${progressWidth}%` }}></span>
                   </div>
                 </div>
-                <p>Assessment Progress: <span className="progress-status"> {stepLabels[currentStep]}</span></p>
+                <p>Assessment Progress: <span className="progress-status">{stepLabels[currentStep]}</span></p>
                 {/* Dev Button Functionality for Testing */}
                 
                 {/* <div className="tracker-debug-buttons">
@@ -128,7 +173,7 @@ export default function Udashboard() {
                   <button id="next" onClick={handleNext} disabled={currentStep === totalSteps}>
                     Next
                   </button>
-                </div> */} 
+                </div> */}
 
               </div>
             </div>

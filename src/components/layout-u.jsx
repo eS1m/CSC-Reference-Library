@@ -7,12 +7,40 @@ import addFolderIcon from '../assets/add-folder.svg';
 import folderIcon from '../assets/folder.svg';
 import profileIcon from '../assets/profile.svg';
 import employeeIcon from '../assets/employees.svg'
+import lockIcon from '../assets/lock.svg'
 
 import { auth, db } from '../firebase/config';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 
 export default function Ulayout() {
+    /* Upload Restriction Functionality */
+    const location = useLocation();
+    const [isProfileComplete, setIsProfileComplete] = useState(false);
+    const [isEmployeeComplete, setIsEmployeeComplete] = useState(false);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const profileSnap = await getDoc(doc(db, "agencyProfiles", user.uid));
+                setIsProfileComplete(profileSnap.exists());
+
+                const employeeSnap = await getDoc(doc(db, "agencyEmployees", user.uid));
+                setIsEmployeeComplete(employeeSnap.exists());
+            }
+        });
+        return () => unsubscribe();
+    }, [location.pathname]);
+
+    const canUpload = isProfileComplete && isEmployeeComplete;
+
+    const handleLockedNav = (e) => {
+        if (!canUpload) {
+            e.preventDefault();
+            alert("Please complete both your Agency Profile and Employee Profile before uploading documents.");
+        }
+    };
+    
     /* Agency Name Fetching Functionality */
     const [agencyName, setAgencyName] = useState('Agency User');
     useEffect(() => {
@@ -49,7 +77,7 @@ export default function Ulayout() {
 
     /* Dynamic Header Title Functionality */
 
-    const location = useLocation();
+    
     const getPageTitle = (path) => {
         switch (path) {
             case '/dashboard-u': return 'Agency Dashboard';
@@ -101,9 +129,10 @@ export default function Ulayout() {
                     <div className="sidebar-section">
                         <p className="sidebar-label">FILE MANAGEMENT</p>
                         <nav>
-                            <NavLink className="nav-item nav-item-upload" to="/upload-u">
+                            <NavLink className={`nav-item ${!canUpload ? 'nav-locked' : ''}`} to="/upload-u" onClick={handleLockedNav}>
                                 <img src={addFolderIcon} alt="Add Folder" width="20" height="20" className="deep-blue-filter"/>
                                 Upload New File
+                                {!canUpload && <span className="lock-tag"><img src={lockIcon} alt="Locked" width="15" height="15" className='grey-filter'/></span>}
                             </NavLink>
                             <NavLink className="nav-item nav-view-files" to="/view-u">
                                 <img src={folderIcon} alt="View Files" width="20" height="20" className="deep-blue-filter"/>

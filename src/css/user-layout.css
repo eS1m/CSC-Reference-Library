@@ -239,4 +239,20 @@ header {
     height: 25px;
 }
 
+.nav-item.nav-locked {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #f0f0f0;
+}
+
+.nav-item.nav-locked:hover {
+    background-color: #f0f0f0; /* Prevent hover color change */
+    color: #555;
+}
+
+.lock-tag {
+    margin-left: auto;
+    font-size: 12px;
+}
+
 

@@ -210,3 +210,11 @@
     margin-top: 16px;
     font-size: 0.9rem;
 }
+
+.new-submission-btn:disabled {
+    background: #cccccc;
+    color: #666666;
+    transform: none;
+    box-shadow: none;
+    cursor: not-allowed;
+}

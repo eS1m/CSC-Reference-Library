@@ -188,7 +188,7 @@ export default function Uprofile() {
                     name="agency-name"
                     value={agencyData.agencyName}
                     onChange={(e) => setAgencyData({...agencyData, agencyName: e.target.value})}
-                      disabled={!isEditing}
+                    disabled={!isEditing}
                     placeholder="Enter your Agency Name"
                     required />
                 </div>
@@ -200,8 +200,8 @@ export default function Uprofile() {
                     id="agency-region"
                     name="agency-region"
                     value={agencyData.region}
-                    onChange={(e) => setAgencyData({...agencyData, agencyRegion: e.target.value})}
-                      disabled={!isEditing}
+                    onChange={(e) => setAgencyData({...agencyData, region: e.target.value})}
+                    disabled={!isEditing}
                     placeholder="Enter your region"
                     required />
                 </div>
@@ -213,7 +213,7 @@ export default function Uprofile() {
                     id="agency-sector"
                     name="agency-sector"
                     value={agencyData.sector}
-                    onChange={(e) => setAgencyData({...agencyData, agencySector: e.target.value})}
+                    onChange={(e) => setAgencyData({...agencyData, sector: e.target.value})}
                       disabled={!isEditing}
                     placeholder="Enter your sector"
                     required />
@@ -226,7 +226,7 @@ export default function Uprofile() {
                     id="agency-status"
                     name="agency-status"
                     value={agencyData.status}
-                    onChange={(e) => setAgencyData({...agencyData, agencySector: e.target.value})}
+                    onChange={(e) => setAgencyData({...agencyData, status: e.target.value})}
                       disabled={!isEditing}
                     placeholder="Enter your status"
                     required />

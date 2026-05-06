@@ -10,6 +10,7 @@ import Uemployee from './pages/lgu/employee-u';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
 import Uview from './pages/lgu/view-u'
+import ProfileGuard from './components/ProfileGuard';
 
 function App() {
   return (
@@ -29,7 +30,9 @@ function App() {
 
             <Route path="/upload-u" element={
               <ProtectedRoute requiredRole="u">
-                <Uupload/>
+                <ProfileGuard>
+                  <Uupload/>
+                </ProfileGuard>
               </ProtectedRoute> 
             } />
 
