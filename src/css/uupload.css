@@ -75,15 +75,19 @@
 }
 
 .status-message.success {
-    color: var(--light-blue);
     background-color: #d4edda;
+    color: #155724;
     border: 1px solid #c3e6cb;
 }
 
 .status-message.error {
-    color: var(--light-red);
     background-color: #f8d7da;
+    color: #721c24;
     border: 1px solid #f5c6cb;
+}
+
+.upload-file-btn:disabled {
+    cursor: wait;
 }
 
 /* Loading Animation */

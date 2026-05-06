@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import '../css/user-layout.css';
 import hamIcon from '../assets/hamburger.svg';
@@ -9,75 +9,45 @@ import profileIcon from '../assets/profile.svg';
 import employeeIcon from '../assets/employees.svg'
 import lockIcon from '../assets/lock.svg'
 
-import { auth, db } from '../firebase/config';
-import { signOut, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { useAgencyData } from '../hooks/useAgencyData';
+import { auth } from '../firebase/config';
+import { signOut } from 'firebase/auth';
 
 export default function Ulayout() {
-    /* Upload Restriction Functionality */
-    const location = useLocation();
-    const [isProfileComplete, setIsProfileComplete] = useState(false);
-    const [isEmployeeComplete, setIsEmployeeComplete] = useState(false);
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const profileSnap = await getDoc(doc(db, "agencyProfiles", user.uid));
-                setIsProfileComplete(profileSnap.exists());
-
-                const employeeSnap = await getDoc(doc(db, "agencyEmployees", user.uid));
-                setIsEmployeeComplete(employeeSnap.exists());
-            }
-        });
-        return () => unsubscribe();
-    }, [location.pathname]);
-
-    const canUpload = isProfileComplete && isEmployeeComplete;
-
-    const handleLockedNav = (e) => {
-        if (!canUpload) {
-            e.preventDefault();
-            alert("Please complete both your Agency Profile and Employee Profile before uploading documents.");
-        }
-    };
-    
-    /* Agency Name Fetching Functionality */
-    const [agencyName, setAgencyName] = useState('Agency User');
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const docRef = doc(db, "agencyProfiles", user.uid);
-                try {
-                    const docSnap = await getDoc(docRef);
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        setAgencyName(data.agencyDetails?.agencyName || 'Agency User');
-                    }
-                } catch (error) {
-                    console.error("Error fetching layout name:", error);
-                }
-            }
-        });
-        return () => unsubscribe();
-    }, []);
     /* Navigation */
-      const nav = useNavigate();
-    
-      async function logout() {
-          await signOut(auth);
-          nav('/');
-      }
+    const nav = useNavigate();
+    const location = useLocation();
+
+    async function logout() {
+        try {
+            await signOut(auth);
+            nav('/');
+        } catch (error) {
+            console.error("Logout Error:", error);
+        }
+    }
 
     /* Side Bar Functionality */
-        const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    
-        const toggleSidebar = () => {
-            setIsSidebarOpen(!isSidebarOpen);
-        };
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+    const toggleSidebar = () => {
+        setIsSidebarOpen(!isSidebarOpen);
+    };
+
+    /* Upload Restriction Functionality */
+    const { isLocked, currentStep, agencyName, loading } = useAgencyData();
+
+    const handleLockedNav = (e) => {
+        if (isLocked) {
+            e.preventDefault();
+            const message = currentStep < 3 
+                ? "Please complete both your Agency and Employee profiles first." 
+                : "Upload Locked: Your submission is awaiting review.";
+            alert(message);
+        }
+    };
 
     /* Dynamic Header Title Functionality */
-
-    
     const getPageTitle = (path) => {
         switch (path) {
             case '/dashboard-u': return 'Agency Dashboard';
@@ -88,6 +58,8 @@ export default function Ulayout() {
             default: return 'Agency Screen';
         }
     };
+
+    if (loading && !agencyName) return null;
 
     return (
         <div className="user-dashboard-container">
@@ -105,7 +77,7 @@ export default function Ulayout() {
                         style={{ cursor: 'pointer' }}
                     >
                         <p id="who-am-i">{auth.currentUser?.email}</p>
-                        <p id="who-am-i-name">{agencyName}</p>
+                        <p id="who-am-i-name">{agencyName || 'Agency User'}</p>
                     </div>
                     <div className="divider"></div>
                     <button id="btn-sign-out" onClick={logout}>
@@ -129,10 +101,18 @@ export default function Ulayout() {
                     <div className="sidebar-section">
                         <p className="sidebar-label">FILE MANAGEMENT</p>
                         <nav>
-                            <NavLink className={`nav-item ${!canUpload ? 'nav-locked' : ''}`} to="/upload-u" onClick={handleLockedNav}>
+                            <NavLink 
+                                className={`nav-item nav-item-upload ${isLocked ? 'nav-locked' : ''}`}
+                                to="/upload-u" 
+                                onClick={handleLockedNav}
+                            >
                                 <img src={addFolderIcon} alt="Add Folder" width="20" height="20" className="deep-blue-filter"/>
                                 Upload New File
-                                {!canUpload && <span className="lock-tag"><img src={lockIcon} alt="Locked" width="15" height="15" className='grey-filter'/></span>}
+                                {isLocked && (
+                                    <span className="lock-tag">
+                                        <img src={lockIcon} alt="Locked" width="15" height="15" className='grey-filter'/>
+                                    </span>
+                                )}
                             </NavLink>
                             <NavLink className="nav-item nav-view-files" to="/view-u">
                                 <img src={folderIcon} alt="View Files" width="20" height="20" className="deep-blue-filter"/>

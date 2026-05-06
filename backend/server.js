@@ -24,38 +24,89 @@ oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
 const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
-app.post('/upload', upload.single('file'), async (req, res) => {
-  const userAccessToken = req.body.googleToken; 
-  const SHARED_FOLDER_ID = process.env.GOOGLE_FOLDER_ID;
-
-  if (!userAccessToken) {
-    return res.status(400).send('No Google Access Token provided.');
+async function getOrCreateFolder(folderName, parentId = null) {
+  const searchParent = parentId || process.env.GOOGLE_FOLDER_ID;
+  const query = `name = '${folderName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false and '${searchParent}' in parents`;
+  const res = await drive.files.list({ q: query, fields: 'files(id)' });
+  
+  if (res.data.files.length > 0) {
+    return res.data.files[0].id;
   }
-  try {
-    const userAuth = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
-    userAuth.setCredentials({ access_token: userAccessToken });
 
-    const userDrive = google.drive({ version: 'v3', auth: userAuth });
+  const folderMetadata = {
+    name: folderName,
+    mimeType: 'application/vnd.google-apps.folder',
+    parents: [searchParent]
+  };
+
+  const folder = await drive.files.create({
+    resource: folderMetadata,
+    fields: 'id'
+  });
+
+  return folder.data.id;
+}
+
+app.post('/upload', upload.single('file'), async (req, res) => {
+  try {
+    const { agencyName, fileType } = req.body; 
+    const currentYear = new Date().getFullYear().toString();
+    const path = require('path');
+    const fileExtension = path.extname(req.file.originalname);
+    let finalFileName = req.file.originalname;
+    
+    if (!agencyName || !fileType) {
+      return res.status(400).send('Agency Name and File Type are required.');
+    }
+
+    if (fileType === 'Self-Assessment') {
+      const allowedMimeTypes = [
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'application/vnd.ms-excel'
+      ];
+      if (!allowedMimeTypes.includes(req.file.mimetype)) {
+          return res.status(400).send('Invalid file type. Self-Assessments must be Excel files.');
+      }
+      finalFileName = `PRIME-HRM Assessment-(${agencyName})${fileExtension}`;
+    } 
+    else if (fileType === 'Assist-Plan') {
+      finalFileName = `PRIME-HRM Assist Plan-(${agencyName})${fileExtension}`;
+    }
+
+    const agencyFolderId = await getOrCreateFolder(agencyName);
+    const yearFolderId = await getOrCreateFolder(currentYear, agencyFolderId);
 
     const bufferStream = new stream.PassThrough();
     bufferStream.end(req.file.buffer);
 
-    const response = await userDrive.files.create({
+    const response = await drive.files.create({
       requestBody: {
-        name: req.file.originalname,
-        parents: [SHARED_FOLDER_ID],
+        name: finalFileName,
+        parents: [yearFolderId],
       },
       media: {
         mimeType: req.file.mimetype,
         body: bufferStream,
       },
-      fields: 'id',
+      fields: 'id, webViewLink',
     });
 
-    res.status(200).json({ fileId: response.data.id });
+    const fileId = response.data.id;
+
+    await drive.permissions.create({
+      fileId: fileId,
+      requestBody: { role: 'reader', type: 'anyone' },
+    });
+
+    res.status(200).json({ 
+      fileId: fileId, 
+      webViewLink: response.data.webViewLink,
+      fileName: finalFileName
+    });
+
   } catch (error) {
-    console.error('Upload Error:', error);
-    res.status(500).send(error.message);
+    console.error('Secure Upload Error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

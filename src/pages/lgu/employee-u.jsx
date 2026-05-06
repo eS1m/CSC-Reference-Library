@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../css/user-layout.css';
 import '../../css/uemployee.css';
@@ -7,8 +7,8 @@ import editIcon from '../../assets/edit.svg'
 import addSquare from '../../assets/add-square.svg';
 import removeSquare from '../../assets/min-square.svg';
 import { auth, db } from '../../firebase/config';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { useAgencyData } from '../../hooks/useAgencyData';
 
 export default function Uemployee() {
 
@@ -38,39 +38,23 @@ export default function Uemployee() {
   const [tableData, setTableData] = useState({});
   const [dataAsOf, setDataAsOf] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
 
   const filledCells = Object.keys(tableData).length;
 
-  // Fetching data from Firebase/Firestore
+  // Fetching data from Firebase/Firestore via hook
+  const { employees, loading } = useAgencyData();
+  
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
-          const docRef = doc(db, "agencyEmployees", user.uid);
-          const docSnap = await getDoc(docRef);
-
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            setTableData(data.employeeData || {});
-            setDataAsOf(data.dataAsOf || '');
-            setIsEditing(false);
-          } else {
-            setIsEditing(true);
-          }
-        } catch (error) {
-          console.error("Error fetching data:", error);
-        } finally {
-          setIsLoading(false);
-        }
-      } else {
-        setIsLoading(false);
-      }
-    });
-    return () => unsubscribe();
-  }, []);
+    if (employees) {
+      setTableData(employees.employeeData || {});
+      setDataAsOf(employees.dataAsOf || '');
+      setIsEditing(false);
+    } else {
+      setIsEditing(true);
+    }
+  }, [employees]);
 
   // Saving to Firebase Functionality
   const handleSaveEmployeeInfo = async () => {
@@ -172,6 +156,10 @@ export default function Uemployee() {
   const total2ndLevelPT = getSumByCategory(categories[1]);
   const total2ndLevelEM = getSumByCategory(categories[2]);
   const total3rdLevelPA = getSumByCategory(categories[3]);
+
+  if (loading) {
+    return <div className="loading-screen">Loading Employee Data...</div>;
+  }
 
   return (
       <main className="employee-main-content">

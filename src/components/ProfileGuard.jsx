@@ -1,42 +1,20 @@
-import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { auth, db } from '../firebase/config';
-import { doc, getDoc } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAgencyData } from '../hooks/useAgencyData';
 
 const ProfileGuard = ({ children }) => {
-  const [status, setStatus] = useState({ loading: true, allowed: false });
+  const location = useLocation();
+  const { currentStep, loading } = useAgencyData();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
-          const profileSnap = await getDoc(doc(db, "agencyProfiles", user.uid));
-          const employeeSnap = await getDoc(doc(db, "agencyEmployees", user.uid));
+  if (loading) return <div className="loading-screen">Verifying Access...</div>;
 
-          setStatus({ 
-            loading: false, 
-            allowed: profileSnap.exists() && employeeSnap.exists() 
-          });
-        } catch (error) {
-          console.error("Guard Error:", error);
-          setStatus({ loading: false, allowed: false });
-        }
-      } else {
-        setStatus({ loading: false, allowed: false });
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  if (status.loading) {
-    return <div className="loading-screen">Verifying Profile Status...</div>;
+  if (location.pathname === '/upload-u' && currentStep !== 3) {
+      alert(currentStep === 4 ? "Upload Locked: Review in progress." : "Please complete profiles first.");
+      return <Navigate to="/dashboard-u" replace />;
   }
 
-  if (!status.allowed) {
-    alert("Access Denied: Please complete your Agency and Employee profiles first.");
-    return <Navigate to="/dashboard-u" replace />;
+  const allowed = ['/dashboard-u', '/profile-u', '/employee-u'];
+  if (currentStep < 3 && !allowed.includes(location.pathname)) {
+      return <Navigate to="/dashboard-u" replace />;
   }
 
   return children;

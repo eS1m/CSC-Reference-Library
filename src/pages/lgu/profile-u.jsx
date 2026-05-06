@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../css/user-layout.css';
 import '../../css/uprofile.css';
-import hamIcon from '../../assets/hamburger.svg';
 
 import editIcon from '../../assets/edit.svg'
 import addSquare from '../../assets/add-square.svg';
@@ -10,8 +9,15 @@ import removeSquare from '../../assets/min-square.svg';
 import { auth, db } from '../../firebase/config';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
+import { useAgencyData } from '../../hooks/useAgencyData';
 
 export default function Uprofile() {
+  const { profile, loading, isAgencyDone } = useAgencyData();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  /* Message State */
+  const [message, setMessage] = useState({ text: '', type: '' });
   /* Static Fields */
   const [agencyData, setAgencyData] = useState({
     agencyName: '',
@@ -29,41 +35,22 @@ export default function Uprofile() {
 
   /* Fetching of Firestore Data */
   useEffect(() => {
-  const fetchProfile = async () => {
-    const user = auth.currentUser;
-    if (user) {
-      const docRef = doc(db, "agencyProfiles", user.uid);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setAgencyData({
-          agencyName: data.agencyDetails.agencyName || '',
-          region: data.agencyDetails.region || '',
-          sector: data.agencyDetails.sector || '',
-          status: data.agencyDetails.status || '',
-          resolutionStatus: data.agencyDetails.resolutionStatus || '',
-          headName: data.headDetails.name || '',
-          headDesignation: data.headDetails.designation || ''
-        });
-        setHrmOfficers(data.hrmOfficers || []);
-        setIsEditing(false);
-      } else {
-        setIsEditing(true);
-      }
+    if (profile) {
+      setAgencyData({
+        agencyName: profile.agencyDetails?.agencyName || '',
+        region: profile.agencyDetails?.region || '',
+        sector: profile.agencyDetails?.sector || '',
+        status: profile.agencyDetails?.status || '',
+        resolutionStatus: profile.agencyDetails?.resolutionStatus || '',
+        headName: profile.headDetails?.name || '',
+        headDesignation: profile.headDetails?.designation || ''
+      });
+      setHrmOfficers(profile.hrmOfficers || [{ id: Date.now(), name: '', number: '', email: '', position: '', status: '' }]);
+      setIsEditing(false);
+    } else {
+      setIsEditing(true);
     }
-  };
-  fetchProfile();
-}, []);
-
-  /* Editing State */
-  const [isEditing, setIsEditing] = useState(false);
-
-  /* Message State */
-  const [message, setMessage] = useState({ text: '', type: '' });
-
-  /* Loading State */
-  const [isSaving, setIsSaving] = useState(false);
+  }, [profile]);
 
   /* Officer Adding Removing Functionality */
   const addOfficer = () => {
@@ -89,6 +76,18 @@ export default function Uprofile() {
   /* Saving Agency Profile Functionality */
   const handleSaveAll = async (e) => {
     e.preventDefault();
+    const isAgencyIncomplete = Object.values(agencyData).some(val => !val || val.trim() === '');
+    const isHrmIncomplete = hrmOfficers.some(off => !off.name || off.name.trim() === '');
+
+    if (isAgencyIncomplete || isHrmIncomplete) {
+        setMessage({
+            text: 'All fields are required. Please fill in missing information before saving.',
+            type: 'error'
+        });
+        window.scrollTo(0, 0);
+        return; 
+    }
+    e.preventDefault();
     setMessage({ text: '', type: '' });
 
     const requiredIds = [
@@ -105,13 +104,9 @@ export default function Uprofile() {
             return;
         }
     }
-
-    const isOfficersIncomplete = hrmOfficers.some(off => 
-        !off.name.trim() || !off.position.trim() || !off.email.trim()
-    );
-
-    if (isOfficersIncomplete) {
-        alert("Please complete all HRM Officer details or remove empty rows.");
+    
+    if (isAgencyIncomplete) {
+        setBanner({ show: true, type: 'error', message: 'Please fill in all Agency Details before saving.' });
         return;
     }
 
