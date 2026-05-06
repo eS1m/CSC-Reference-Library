@@ -164,13 +164,14 @@ export default function Uemployee() {
   return (
       <main className="employee-main-content">
           <div className="employee-main-content-header">
-            <h1 id="employee-main-content-title">Employee Profile</h1>
-              {!isEditing && (
-                <button className="edit-employee-profile" onClick={() => setIsEditing(true)}> 
+              <h1 id="employee-main-content-title">Employee Profile</h1>
+              <button 
+                  className={`edit-employee-profile ${isEditing ? 'active' : ''}`} 
+                  onClick={() => !isEditing && setIsEditing(true)}
+              > 
                   <img src={editIcon} alt="Edit" width="25" height="25" className="white-filter"/>
-                  Edit Employee Profile 
-                </button>
-              )}
+                  {isEditing ? 'Editing...' : 'Edit Employee Profile'}
+              </button>
           </div>
           <div className="employee-container">
             {message.text && (
@@ -263,11 +264,18 @@ export default function Uemployee() {
             {isEditing && (
               <div className="employee-actions">
                 <button 
-                  className="employee-save button" 
+                  className="employee-save-btn" 
                   onClick={handleSaveEmployeeInfo}
                   disabled={isSaving}
                 >
-                  {isSaving ? "Saving..." : "Save Employee Information"}
+                  {isSaving ? (
+                    <>
+                      <div className="spinner"></div>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    "Save Employee Information"
+                  )}
                 </button>
               </div>
             )}

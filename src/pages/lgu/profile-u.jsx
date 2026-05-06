@@ -155,14 +155,14 @@ export default function Uprofile() {
   return (
       <main className="profile-main-content">
           <div className="profile-main-content-header">
-            <h1 id="profile-main-content-title">Agency Profile</h1>
-            <button 
-                className={`edit-agency-profile ${isEditing ? 'active' : ''}`}
-                onClick={() => setIsEditing(true)}
+              <h1 id="profile-main-content-title">Agency Profile</h1>
+              <button 
+                  className={`edit-agency-profile ${isEditing ? 'active' : ''}`}
+                  onClick={() => !isEditing && setIsEditing(true)}
               > 
-                <img src={editIcon} alt="Edit" width="25" height="25" className="white-filter"/>
-                Edit Agency Profile 
-            </button>
+                  <img src={editIcon} alt="Edit" width="25" height="25" className="white-filter"/>
+                  {isEditing ? 'Editing...' : 'Edit Agency Profile'}
+              </button>
           </div>
           <div className="profile-container">
             {message.text && (

@@ -3,8 +3,6 @@
     justify-content: space-between;
     align-items: center;
     width: 100%;
-
-    /* border: 2px solid green; */
 }
 
 .employee-main-content-header.table {
@@ -13,12 +11,10 @@
     align-content: center;
     width: 100%;
     height: auto;
-    /* border: 2px solid green; */
     padding-top: 0px;
 }
 
 .employee-main-content-header.table .profile-employee-title{
-    /* border: 2px solid cyan; */
     width: auto;
 }
 
@@ -44,6 +40,7 @@
     color: white;
 }
 
+/* NEW: Match profile button grey-out when editing */
 .edit-employee-profile.active {
     background: var(--stat-description);
     cursor: default;
@@ -90,7 +87,6 @@
 .profile-employee-input-container {
     display: flex;
     flex-wrap: wrap;
-    /* border: 2px solid purple; */
     height: fit-content;
     width: 100%;
     max-width: auto;
@@ -100,7 +96,6 @@
 .profile-employee-input-container.sum {
     display: flex;
     flex-flow: row wrap;
-    /* border: 2px solid purple; */
     width: auto;
     max-width: none;
 }
@@ -110,7 +105,6 @@
     font-size: 1.1rem;
     margin:0;
     width: auto;
-    /* border: 2px solid orange; */
 }
 
 .profile-employee-input-container.sum span{
@@ -124,7 +118,6 @@
     flex-direction: column;
     justify-content: center;
     align-items: start;
-    /* border: 2px solid greenyellow; */
     width: auto;
     margin-top: 0;
 }
@@ -233,7 +226,8 @@
     padding-bottom: 20px; 
 }
 
-.employee-actions button {
+/* NEW: Match profile save button style */
+.employee-save-btn {
     background: linear-gradient(to bottom right, var(--light-blue), var(--deep-blue));
     color: var(--cream-white);
     padding: 12px 32px;
@@ -244,12 +238,23 @@
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
-.employee-actions button:hover {
+.employee-save-btn:hover {
     background-color: #1a3a5a;
     transform: translateY(-2px);
     box-shadow: 0 0px 6px var(--light-blue);
+}
+
+/* NEW: Match profile disabled state */
+.employee-save-btn:disabled {
+    background: var(--stat-description);
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
 /* Status Banner */
@@ -276,13 +281,6 @@
 @keyframes slideIn {
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
-}
-
-/* Save Button Loading State */
-.employee-save:disabled {
-    background: var(--stat-description);
-    cursor: not-allowed;
-    opacity: 0.7;
 }
 
 .table-input:placeholder-shown {
@@ -317,4 +315,21 @@
     color: var(--deep-blue);
     font-size: 1.2rem;
     font-weight: 600;
+}
+
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.edit-employee-profile:disabled {
+    opacity: 1;
 }
