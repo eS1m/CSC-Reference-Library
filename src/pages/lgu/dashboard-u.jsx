@@ -2,20 +2,40 @@ import '../../css/user-layout.css';
 import '../../css/udashboard.css';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import hamIcon from '../../assets/hamburger.svg';
-import logo from '../../assets/logo.svg';
+
 import addCircleIcon from '../../assets/add-circle.svg';
-import dashboardIcon from '../../assets/dashboard.svg';
-import addFolderIcon from '../../assets/add-folder.svg';
-import folderIcon from '../../assets/folder.svg';
-import profileIcon from '../../assets/profile.svg';
-
-
-import { auth } from '../../firebase/config';
-import { signOut } from 'firebase/auth';
+import { doc, onSnapshot, getDoc } from 'firebase/firestore'; 
+import { auth, db } from '../../firebase/config';
+import { onAuthStateChanged } from 'firebase/auth';
 
 
 export default function Udashboard() {
+  const nav = useNavigate();
+
+  /* Fetching of Agency Name Functionality */
+  const [agencyName, setAgencyName] = useState('Agency User');
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const docRef = doc(db, "agencyProfiles", user.uid);
+        try {
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            // Accessing the nested agencyDetails field
+            const fetchedName = data.agencyDetails?.agencyName || 'Agency User';
+            setAgencyName(fetchedName);
+          }
+        } catch (error) {
+          console.error("Error fetching agency name:", error);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+}, []);
+
 
   /* Date and Time */
   const [time, setTime] = useState(new Date());
@@ -44,25 +64,9 @@ export default function Udashboard() {
       day: 'numeric'
     });
   };
-
-  /* Navigation */
-  const nav = useNavigate();
-
-  async function logout() {
-      await signOut(auth);
-      nav('/');
-  }
-
   const handleAddAssessment = () => {
     nav('/upload-u');
   };
-
-  /* Side Bar Functionality */
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
-    const toggleSidebar = () => {
-        setIsSidebarOpen(!isSidebarOpen);
-    };
 
     /* Progress Bar Functionality */
     const [currentStep, setCurrentStep] = useState(1);
@@ -92,7 +96,7 @@ export default function Udashboard() {
   return (
         <main className="main-content">
           <div className="main-content-header">
-            <h1 id="main-content-title">Welcome back, {auth.currentUser?.displayName || 'Agency User'}</h1>
+            <h1 id="main-content-title">Welcome back, <b>{agencyName}</b>!</h1>
             <button className="new-submission-btn" onClick={handleAddAssessment}>
               <img src={addCircleIcon} alt="Add" width="25" height="25" className='white-filter'/>
               Add Assessment

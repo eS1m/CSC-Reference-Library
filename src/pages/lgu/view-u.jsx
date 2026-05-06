@@ -3,33 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import '../../css/user-layout.css';
 import '../../css/uview.css';
 import hamIcon from '../../assets/hamburger.svg';
-import logo from '../../assets/logo.svg';
-import dashboardIcon from '../../assets/dashboard.svg';
-import addFolderIcon from '../../assets/add-folder.svg';
-import folderIcon from '../../assets/folder.svg';
-import profileIcon from '../../assets/profile.svg';
 
 import fileIcon from '../../assets/file.svg';
 import { auth } from '../../firebase/config';
 import { signOut } from 'firebase/auth';
 
 export default function Uview() {
-
-  /* Navigation */
-    const nav = useNavigate();
-  
-    async function logout() {
-        await signOut(auth);
-        nav('/');
-    }
-
-  /* Side Bar Functionality */
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
-    const toggleSidebar = () => {
-        setIsSidebarOpen(!isSidebarOpen);
-    };
-
   /* File Fetching Functionality */
     const [files, setFiles] = useState([]);
     const [isLoading, setIsLoading] = useState(true);

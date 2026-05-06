@@ -1,4 +1,7 @@
 .view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     width: 100%;
 }
 
@@ -9,6 +12,7 @@
     font-family: 'Outfit', sans-serif;
     font-weight: 800;
     color: var(--deep-blue);
+    margin-top: 7px;
 
     /* border: 2px solid red; */
 }

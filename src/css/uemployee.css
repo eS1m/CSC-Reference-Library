@@ -1,0 +1,320 @@
+.employee-main-content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+
+    /* border: 2px solid green; */
+}
+
+.employee-main-content-header.table {
+    display: flex;
+    justify-content: space-between;
+    align-content: center;
+    width: 100%;
+    height: auto;
+    /* border: 2px solid green; */
+    padding-top: 0px;
+}
+
+.employee-main-content-header.table .profile-employee-title{
+    /* border: 2px solid cyan; */
+    width: auto;
+}
+
+#employee-main-content-title {
+    color: var(--deep-blue);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 2rem;
+}
+
+.edit-employee-profile{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 18px;
+    padding: 14px 20px;
+    cursor: pointer;
+    background: linear-gradient(to left, var(--deep-blue), var(--light-blue));
+    border: none;
+    border-radius: 14px;
+    transition: 0.3s;
+    color: white;
+}
+
+.edit-employee-profile.active {
+    background: var(--stat-description);
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+}
+
+.edit-employee-profile:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 0 8px var(--light-blue);
+}
+
+
+.employee-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+
+    width: 100%;
+    height: 75vh; 
+    
+    overflow-y: auto; 
+    overflow-x: hidden;
+
+    gap: 20px;
+    background: white;
+    border-radius: 14px;
+    padding: 24px;
+    margin-top: 40px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.096);
+    box-sizing: border-box;
+}
+
+.employee-container p {
+    font-weight: 600;
+    font-size: 1.2rem;
+    width: 100%;
+    margin-top: 24px;
+    margin-bottom: 5px;
+}
+
+
+.profile-employee-input-container {
+    display: flex;
+    flex-wrap: wrap;
+    /* border: 2px solid purple; */
+    height: fit-content;
+    width: 100%;
+    max-width: auto;
+    gap: 32px;
+}
+
+.profile-employee-input-container.sum {
+    display: flex;
+    flex-flow: row wrap;
+    /* border: 2px solid purple; */
+    width: auto;
+    max-width: none;
+}
+
+.profile-employee-input-container.sum p{
+    font-weight: 370;
+    font-size: 1.1rem;
+    margin:0;
+    width: auto;
+    /* border: 2px solid orange; */
+}
+
+.profile-employee-input-container.sum span{
+    font-weight: 500;
+    font-size: 1.3rem;
+    color: var(--light-blue);
+}
+
+.profile-employee-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
+    /* border: 2px solid greenyellow; */
+    width: auto;
+    margin-top: 0;
+}
+
+.employee-label {
+    color: var(--stat-description);
+    font-size: 14px;
+    font-weight: 370;
+}
+
+.employee-label::after {
+    content: " *";
+    color: var(--light-red);
+}
+
+.employee-status-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: white;
+    font-size: 12px;
+}
+
+.employee-status-table th {
+    background-color: #f8f9fa;
+    color: var(--deep-blue);
+    padding: 8px 4px;
+    border: 1px solid #dee2e6;
+    text-align: center;
+}
+
+.employee-status-table td {
+    padding: 5px;
+    border: 1px solid #dee2e6;
+    text-align: center;
+}
+
+.employee-status-table td.category-label {
+    text-align: left;
+    padding-left: 15px;
+    font-weight: 600;
+    color: var(--stat-description);
+    white-space: nowrap;
+}
+
+.table-input {
+    width: 100%;
+    max-width: 45px;
+    padding: 8px 2px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    text-align: center;
+    font-family: 'Outfit', sans-serif;
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.table-input:focus {
+    outline: none;
+    background-color: white;
+    border-color: var(--light-blue);
+}
+
+.profile-employee-details {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+.employee-date-input {
+    margin-top: 10px;
+    width: 280px;
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: #555;
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.employee-date-input:focus {
+    border-color: var(--light-blue);
+    background: white;
+    box-shadow: 0 0 8px rgba(0, 180, 216, 0.2);
+}
+
+.employee-date-input::-webkit-calendar-picker-indicator {
+    filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(160deg) brightness(98%) contrast(84%);
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.employee-date-input::-webkit-calendar-picker-indicator:hover {
+    background-color: rgba(0, 180, 216, 0.1);
+}
+
+.employee-actions {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px; 
+    padding-bottom: 20px; 
+}
+
+.employee-actions button {
+    background: linear-gradient(to bottom right, var(--light-blue), var(--deep-blue));
+    color: var(--cream-white);
+    padding: 12px 32px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.employee-actions button:hover {
+    background-color: #1a3a5a;
+    transform: translateY(-2px);
+    box-shadow: 0 0px 6px var(--light-blue);
+}
+
+/* Status Banner */
+.profile-message-banner {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.profile-message-banner.error {
+    background-color: #ffe5e5;
+    color: #cc0000;
+    border: 1px solid #ffcccc;
+}
+
+.profile-message-banner.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Save Button Loading State */
+.employee-save:disabled {
+    background: var(--stat-description);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.table-input:placeholder-shown {
+    border: 1px solid var(--light-red);
+}
+
+.table-input:invalid {
+    border: 2px solid #ff4d4d;
+    background-color: #fff5f5;
+}
+
+.profile-message-banner {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.table-input:disabled, 
+.employee-date-input:disabled {
+    background: rgba(0, 0, 0, 0.05);
+    color: #888;
+    cursor: not-allowed;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.loading-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    font-family: 'Outfit', sans-serif;
+    color: var(--deep-blue);
+    font-size: 1.2rem;
+    font-weight: 600;
+}

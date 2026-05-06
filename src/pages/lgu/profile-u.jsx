@@ -3,11 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import '../../css/user-layout.css';
 import '../../css/uprofile.css';
 import hamIcon from '../../assets/hamburger.svg';
-import logo from '../../assets/logo.svg';
-import dashboardIcon from '../../assets/dashboard.svg';
-import addFolderIcon from '../../assets/add-folder.svg';
-import folderIcon from '../../assets/folder.svg';
-import profileIcon from '../../assets/profile.svg';
 
 import editIcon from '../../assets/edit.svg'
 import addSquare from '../../assets/add-square.svg';
@@ -69,19 +64,6 @@ export default function Uprofile() {
 
   /* Loading State */
   const [isSaving, setIsSaving] = useState(false);
-
-  /* Navigation */
-    const nav = useNavigate();
-    async function logout() {
-        await signOut(auth);
-        nav('/');
-    }
-
-  /* Side Bar Functionality */
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const toggleSidebar = () => {
-        setIsSidebarOpen(!isSidebarOpen);
-    };
 
   /* Officer Adding Removing Functionality */
   const addOfficer = () => {

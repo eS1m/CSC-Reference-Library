@@ -3,11 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import '../../css/user-layout.css';
 import '../../css/uupload.css';
 import hamIcon from '../../assets/hamburger.svg';
-import logo from '../../assets/logo.svg';
-import dashboardIcon from '../../assets/dashboard.svg';
-import addFolderIcon from '../../assets/add-folder.svg';
-import folderIcon from '../../assets/folder.svg';
-import profileIcon from '../../assets/profile.svg';
 
 import addCircleIcon from '../../assets/add-circle.svg';
 import uploadIcon from '../../assets/upload.svg';
@@ -69,21 +64,6 @@ export default function Uupload() {
       setFile(selectedFile);
     }
   };
-
-  /* Navigation */
-    const nav = useNavigate();
-  
-    async function logout() {
-        await signOut(auth);
-        nav('/');
-    }
-
-  /* Side Bar Functionality */
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
-    const toggleSidebar = () => {
-        setIsSidebarOpen(!isSidebarOpen);
-    };
 
   return (
     <main className="upload-main-content">

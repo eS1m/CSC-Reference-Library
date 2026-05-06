@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Register from './pages/register'
 import Uprofile from './pages/lgu/profile-u';
 import Ulayout from './components/layout-u'
+import Uemployee from './pages/lgu/employee-u';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
 import Uview from './pages/lgu/view-u'
@@ -41,6 +42,12 @@ function App() {
             <Route path="/profile-u" element={
               <ProtectedRoute requiredRole="u">
                 <Uprofile/>
+              </ProtectedRoute> 
+            } />
+
+            <Route path="/employee-u" element={
+              <ProtectedRoute requiredRole="u">
+                <Uemployee/>
               </ProtectedRoute> 
             } />
           </Route>
