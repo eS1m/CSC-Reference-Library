@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import '../../css/lgu/user-layout.css';
 import '../../css/lgu/uupload.css';
 import uploadIcon from '../../assets/upload.svg';
-import warningIcon from '../../assets/warning.svg';      // Or reuse existing
-import closeIcon from '../../assets/close.svg';           // Or reuse min-square.svg
+import warningIcon from '../../assets/warning.svg';
+import closeIcon from '../../assets/close.svg';
 import { auth, db } from '../../firebase/config';
 import { serverTimestamp, collection, addDoc } from 'firebase/firestore';
 import { useAgencyData } from '../../hooks/useAgencyData';
@@ -18,12 +18,62 @@ export default function Uupload() {
   const [isUploading, setIsUploading] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
+  
+  /* Drag State */
+  const [isDragging, setIsDragging] = useState(false);  // ← NEW
+  
   const fileInputRef = useRef(null);
   const nav = useNavigate();
 
   const { agencyName, isLocked, currentStep } = useAgencyData();
 
-  /* Remove empty useEffect - was doing nothing */
+  /* Handle File Selection (shared by input and drop) */
+  const processFile = (selectedFile) => {
+    if (!selectedFile) return;
+
+    const isAssessmentName = /Assessment|PRIME/i.test(selectedFile.name);
+
+    if (!isAssessmentName) {
+      setPendingFile(selectedFile);
+      setShowWarningModal(true);
+      return;
+    }
+    
+    setFile(selectedFile);
+    setUploadStatus("");
+  };
+
+  /* File input change handler */
+  const handleFileChange = (e) => {
+    processFile(e.target.files[0]);
+    e.target.value = null; // Clear input
+  };
+
+  /* Drag & Drop Handlers — NEW */
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) {
+      processFile(droppedFile);
+    }
+  };
+
+  /* Upload to Server */
   const handleUpload = async (e) => {
     const fileExtension = file.name.split('.').pop();
     const formattedName = `PRIME-HRM Assessment-(${agencyName}).${fileExtension}`;
@@ -82,30 +132,12 @@ export default function Uupload() {
     }
   };
 
-  /* File input change handler */
+  /* Container Click */
   const handleContainerClick = () => {
     fileInputRef.current.click();
   };
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (!selectedFile) return;
-
-    const isAssessmentName = /Assessment|PRIME/i.test(selectedFile.name);
-
-    if (!isAssessmentName) {
-      // Show modal instead of alert
-      setPendingFile(selectedFile);
-      setShowWarningModal(true);
-      e.target.value = null; // Clear input for now
-      return;
-    }
-    
-    setFile(selectedFile);
-    setUploadStatus("");
-  };
-
-  /* Modal actions */
+  /* Modal Actions */
   const confirmUploadAnyway = () => {
     if (pendingFile) {
       setFile(pendingFile);
@@ -118,7 +150,6 @@ export default function Uupload() {
   const cancelWarning = () => {
     setPendingFile(null);
     setShowWarningModal(false);
-    // Clear the file input
     if (fileInputRef.current) {
       fileInputRef.current.value = null;
     }
@@ -126,23 +157,34 @@ export default function Uupload() {
 
   return (
     <main className="upload-main-content">
-      <div className="upload-file-container" onClick={handleContainerClick}>
+      <div 
+        className={`upload-file-container ${isDragging ? 'dragging' : ''}`}  // ← ADDED dragging class
+        onClick={handleContainerClick}
+        onDragOver={handleDragOver}      // ← NEW
+        onDragLeave={handleDragLeave}    // ← NEW
+        onDrop={handleDrop}              // ← NEW
+      >
         <input 
           type="file" 
           ref={fileInputRef} 
           style={{ display: 'none' }} 
           accept=".xlsx, .xls" 
-          onChange={(e) => {handleFileChange(e); setUploadStatus("");}} 
+          onChange={handleFileChange}
         />
         <img 
           src={uploadIcon} 
           alt="Upload File" 
-          className="upload-icon grey-filter" 
+          className={`upload-icon ${isDragging ? '' : 'grey-filter'}`}  // ← Optional: remove grey when dragging
           width="300" 
           height="300"
         />
         <p className="upload-prompt">
-          {file ? `Selected: ${file.name}` : "Drag and drop your self-assessment file here, or click to browse."}
+          {file 
+            ? `Selected: ${file.name}` 
+            : isDragging 
+              ? "Drop your file here!" 
+              : "Drag and drop your self-assessment file here, or click to browse."
+          }
         </p>
 
         {uploadStatus && (
@@ -151,8 +193,10 @@ export default function Uupload() {
           </p>
         )}
         
-        <button className="upload-file-btn" disabled={!file || isUploading}
-            onClick={(e) => handleUpload(e)}
+        <button 
+          className="upload-file-btn" 
+          disabled={!file || isUploading}
+          onClick={(e) => handleUpload(e)}
         >
           {isUploading ? <div className="spinner"></div> : "Upload File"}
         </button>

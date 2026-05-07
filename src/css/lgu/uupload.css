@@ -267,3 +267,20 @@
     transform: translateY(-2px);
     box-shadow: 0 2px 8px rgba(164, 19, 60, 0.4);
 }
+
+/* Drag state styling */
+.upload-file-container.dragging {
+  border: 3px solid var(--light-blue);
+  background: rgba(102, 155, 188, 0.05);
+  transform: scale(1.02);
+}
+
+.upload-file-container.dragging .upload-icon {
+  filter: none;
+  opacity: 1;
+}
+
+.upload-file-container.dragging .upload-prompt {
+  color: var(--deep-blue);
+  font-weight: 600;
+}
