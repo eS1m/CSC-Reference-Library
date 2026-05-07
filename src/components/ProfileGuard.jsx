@@ -2,22 +2,21 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAgencyData } from '../hooks/useAgencyData';
 
 const ProfileGuard = ({ children }) => {
-  const location = useLocation();
-  const { currentStep, loading } = useAgencyData();
+    const location = useLocation();
+    const { currentStep, loading } = useAgencyData();
 
-  if (loading) return <div className="loading-screen">Verifying Access...</div>;
+    if (loading) return <div className="loading-screen">Verifying Access...</div>;
 
-  if (location.pathname === '/upload-u' && currentStep !== 3) {
-      alert(currentStep === 4 ? "Upload Locked: Review in progress." : "Please complete profiles first.");
-      return <Navigate to="/dashboard-u" replace />;
-  }
+    if (location.pathname === '/upload-u' && currentStep !== 3) {
+        return <Navigate to="/dashboard-u" replace />;
+    }
 
-  const allowed = ['/dashboard-u', '/profile-u', '/employee-u'];
-  if (currentStep < 3 && !allowed.includes(location.pathname)) {
-      return <Navigate to="/dashboard-u" replace />;
-  }
+    const allowed = ['/dashboard-u', '/profile-u', '/employee-u'];
+    if (currentStep < 3 && !allowed.includes(location.pathname)) {
+        return <Navigate to="/dashboard-u" replace />;
+    }
 
-  return children;
+    return children;
 };
 
 export default ProfileGuard;

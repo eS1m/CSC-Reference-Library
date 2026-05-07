@@ -9,14 +9,17 @@ import profileIcon from '../assets/profile.svg';
 import employeeIcon from '../assets/employees.svg'
 import lockIcon from '../assets/lock.svg'
 
+import LockModal from '../components/LockModal';
 import { useAgencyData } from '../hooks/useAgencyData';
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
 
 export default function Ulayout() {
-    /* Navigation */
     const nav = useNavigate();
     const location = useLocation();
+
+    /* Lock Modal State */
+    const [lockModalOpen, setLockModalOpen] = useState(false);
 
     async function logout() {
         try {
@@ -29,10 +32,7 @@ export default function Ulayout() {
 
     /* Side Bar Functionality */
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
-    const toggleSidebar = () => {
-        setIsSidebarOpen(!isSidebarOpen);
-    };
+    const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
     /* Upload Restriction Functionality */
     const { isLocked, currentStep, agencyName, loading } = useAgencyData();
@@ -40,14 +40,11 @@ export default function Ulayout() {
     const handleLockedNav = (e) => {
         if (isLocked) {
             e.preventDefault();
-            const message = currentStep < 3 
-                ? "Please complete both your Agency and Employee profiles first." 
-                : "Upload Locked: Your submission is awaiting review.";
-            alert(message);
+            setLockModalOpen(true);
         }
     };
 
-    /* Dynamic Header Title Functionality */
+    /* Dynamic Header Title */
     const getPageTitle = (path) => {
         switch (path) {
             case '/dashboard-u': return 'Agency Dashboard';
@@ -80,9 +77,7 @@ export default function Ulayout() {
                         <p id="who-am-i-name">{agencyName || 'Agency User'}</p>
                     </div>
                     <div className="divider"></div>
-                    <button id="btn-sign-out" onClick={logout}>
-                        Sign Out
-                    </button>
+                    <button id="btn-sign-out" onClick={logout}>Sign Out</button>
                 </div>
             </header>
               
@@ -90,12 +85,12 @@ export default function Ulayout() {
                 <aside className={`sidebar ${isSidebarOpen ? '' : 'closed'}`}>
                     <div className="sidebar-section">
                         <p className="sidebar-label">HOME</p>
-                    <nav>
-                        <NavLink className="nav-item" to="/dashboard-u">
-                            <img src={dashboardIcon} alt="Dashboard" width="25" height="25" className="deep-blue-filter"/>
-                            Dashboard
-                        </NavLink>
-                    </nav>
+                        <nav>
+                            <NavLink className="nav-item" to="/dashboard-u">
+                                <img src={dashboardIcon} alt="Dashboard" width="25" height="25" className="deep-blue-filter"/>
+                                Dashboard
+                            </NavLink>
+                        </nav>
                     </div>
         
                     <div className="sidebar-section">
@@ -139,6 +134,12 @@ export default function Ulayout() {
                     <Outlet />
                 </main>
             </div>
+
+            <LockModal 
+                isOpen={lockModalOpen} 
+                onClose={() => setLockModalOpen(false)} 
+                currentStep={currentStep} 
+            />
         </div>
     );
 }
