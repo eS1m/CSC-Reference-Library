@@ -113,9 +113,20 @@ export default function Uupload() {
   return (
     <main className="upload-main-content">
           <div className="upload-file-container" onClick={handleContainerClick}>
-            <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".xlsx, .xls" onChange={(e) => {handleFileChange(e); setUploadStatus("");}} 
-        />
-            <img src={uploadIcon} alt="Upload File" className="upload-icon grey-filter" width="300" height="300"/>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              style={{ display: 'none' }} 
+              accept=".xlsx, .xls" 
+              onChange={(e) => {handleFileChange(e); setUploadStatus("");}} 
+              />
+            <img 
+              src={uploadIcon} 
+              alt="Upload File" 
+              className="upload-icon grey-filter" 
+              width="300" 
+              height="300"
+              />
             <p className="upload-prompt">
               {file ? `Selected: ${file.name}` : "Drag and drop your self-assessment file here, or click to browse."}
             </p>

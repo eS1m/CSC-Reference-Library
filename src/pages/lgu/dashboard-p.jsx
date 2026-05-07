@@ -1,0 +1,226 @@
+import '../../css/prime-dashboard.css';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { db } from '../../firebase/config';
+import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
+
+import reviewIcon from '../../assets/review.svg';
+import agencyIcon from '../../assets/agency.svg';
+import fileIcon from '../../assets/file.svg';
+
+export default function Pdashboard() {
+  const nav = useNavigate();
+  
+  /* Stats State */
+  const [stats, setStats] = useState({
+    totalAgencies: 0,
+    completedProfiles: 0,
+    totalSubmissions: 0,
+    pendingReviews: 0,
+    approvedCount: 0,
+    rejectedCount: 0
+  });
+  const [recentSubmissions, setRecentSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  /* Date and Time */
+  const [time, setTime] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString([], { 
+      hour12: false,
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit' 
+    });
+  }
+
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  /* Fetch Stats */
+  useEffect(() => {
+    setLoading(true);
+
+    // 1. Count total users with role "u"
+    const usersQuery = query(collection(db, "users"), where("role", "==", "u"));
+    
+    // 2. Count completed agency profiles
+    const profilesQuery = query(collection(db, "agencyProfiles"));
+    
+    // 3. All submissions
+    const submissionsQuery = query(
+      collection(db, "agencySubmissions"),
+      where("fileType", "==", "Self-Assessment")
+    );
+
+    const unsubUsers = onSnapshot(usersQuery, (snap) => {
+      setStats(prev => ({ ...prev, totalAgencies: snap.size }));
+    });
+
+    const unsubProfiles = onSnapshot(profilesQuery, (snap) => {
+      // Count profiles that have both agencyDetails and employeeData
+      let completed = 0;
+      snap.forEach(doc => {
+        const data = doc.data();
+        const hasAgency = data.agencyDetails?.agencyName && 
+                          data.agencyDetails?.region && 
+                          data.agencyDetails?.sector;
+        completed += hasAgency ? 1 : 0;
+      });
+      setStats(prev => ({ ...prev, completedProfiles: completed }));
+    });
+
+    const unsubSubmissions = onSnapshot(submissionsQuery, (snap) => {
+      let total = 0, pending = 0, approved = 0, rejected = 0;
+      const recent = [];
+      
+      snap.forEach(doc => {
+        const data = doc.data();
+        total++;
+        
+        if (data.status === 'Pending') pending++;
+        else if (data.status === 'Approved') approved++;
+        else if (data.status === 'Rejected') rejected++;
+        
+        recent.push({ id: doc.id, ...data });
+      });
+      
+      // Sort by uploadedAt desc and take top 5
+      recent.sort((a, b) => (b.uploadedAt?.seconds || 0) - (a.uploadedAt?.seconds || 0));
+      
+      setStats(prev => ({ 
+        ...prev, 
+        totalSubmissions: total, 
+        pendingReviews: pending,
+        approvedCount: approved,
+        rejectedCount: rejected
+      }));
+      setRecentSubmissions(recent.slice(0, 5));
+      setLoading(false);
+    });
+
+    return () => {
+      unsubUsers();
+      unsubProfiles();
+      unsubSubmissions();
+    };
+  }, []);
+
+  if (loading) {
+    return <div className="loading-screen">Loading PRIME Dashboard...</div>;
+  }
+
+  return (
+    <main className="main-content">
+      <div className="main-content-header">
+        <h1 id="main-content-title">PRIME-HRM Officer Dashboard</h1>
+        <button 
+          className="prime-dashboard-button" 
+          onClick={() => nav('/review-p')}
+        >
+          <img src={reviewIcon} width="30px" height="30px" alt="Review" className="white-filter"/>
+          Review Submissions
+        </button>
+      </div>
+      
+      <div className="main-content-container prime-stats-grid">
+        {/* Stat Cards */}
+        <div className="stat-card-prime prime-agencies-number">
+          <div className="stat-icon">
+            <img src={agencyIcon} alt="Agencies" width="40" height="40" className="deep-blue-filter"/>
+          </div>
+          <div className="stat-info">
+            <h3>{stats.totalAgencies}</h3>
+            <p>Total Registered Agencies</p>
+          </div>
+        </div>
+
+        <div className="stat-card-prime">
+          <div className="stat-icon">
+            <img src={agencyIcon} alt="Completed" width="40" height="40" className="deep-blue-filter"/>
+          </div>
+          <div className="stat-info">
+            <h3>{stats.completedProfiles}</h3>
+            <p>Completed Profiles</p>
+          </div>
+        </div>
+
+        <div className="stat-card-prime">
+          <div className="stat-icon">
+            <img src={fileIcon} alt="Submissions" width="40" height="40" className="deep-blue-filter"/>
+          </div>
+          <div className="stat-info">
+            <h3>{stats.totalSubmissions}</h3>
+            <p>Total Submissions</p>
+          </div>
+        </div>
+
+        <div className="stat-card-prime pending">
+          <div className="stat-icon">
+            <img src={reviewIcon} alt="Pending" width="40" height="40" className="deep-blue-filter"/>
+          </div>
+          <div className="stat-info">
+            <h3>{stats.pendingReviews}</h3>
+            <p>Pending Reviews</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Submissions Table */}
+      <div className="prime-recent-section">
+        <h2>Recent Submissions</h2>
+        <div className="prime-table-container">
+          <table className="prime-submissions-table">
+            <thead>
+              <tr>
+                <th>Agency Name</th>
+                <th>File Name</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentSubmissions.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="no-data">No submissions yet</td>
+                </tr>
+              ) : (
+                recentSubmissions.map((sub) => (
+                  <tr key={sub.id} onClick={() => window.open(sub.fileUrl, '_blank')}>
+                    <td>{sub.agencyName}</td>
+                    <td>{sub.fileName}</td>
+                    <td>
+                      <span className={`status-badge ${(sub.status || 'Pending').toLowerCase()}`}>
+                        {sub.status || 'Pending'}
+                      </span>
+                    </td>
+                    <td>
+                      {sub.uploadedAt?.toDate().toLocaleDateString() || 'N/A'}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Clock */}
+      <div className="stat-time stat-container">
+        <div className="stat-time-clock">{formatTime(time)}</div>
+        <div className="stat-time-date">{formatDate(time)}</div>
+      </div>
+    </main>
+  );
+}
