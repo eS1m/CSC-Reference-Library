@@ -13,10 +13,10 @@ import Uview from './pages/lgu/view-u'
 
 import Playout from './components/layout-p'
 import Pdashboard from './pages/prime/dashboard-p';
-// import Preview from './pages/lgu/review-p';      // Future
-// import Papproved from './pages/lgu/approved-p';  // Future
-// import Prejected from './pages/lgu/rejected-p';  // Future
-// import Pprofile from './pages/lgu/profile-p';    // Future
+import Preview from './pages/prime/review-p';
+// import Papproved from './pages/prime/approved-p';  // Future
+// import Prejected from './pages/prime/rejected-p';  // Future
+// import Pprofile from './pages/prime/profile-p';    // Future
 
 import ProtectedRoute from './components/ProtectedRoute'
 import ProfileGuard from './components/ProfileGuard';
@@ -69,12 +69,12 @@ function App() {
               </ProtectedRoute> 
             } />
             {/* Future routes - create placeholder components or remove for now */}
-            {/* <Route path="/review-p" element={
+            <Route path="/review-p" element={
               <ProtectedRoute requiredRole="p">
                 <Preview/>
               </ProtectedRoute> 
             } />
-            <Route path="/approved-p" element={
+            {/* <Route path="/approved-p" element={
               <ProtectedRoute requiredRole="p">
                 <Papproved/>
               </ProtectedRoute> 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import '../css/user-layout.css';
+import '../css/lgu/user-layout.css';
 import hamIcon from '../assets/hamburger.svg';
 import dashboardIcon from '../assets/dashboard.svg';
 import addFolderIcon from '../assets/add-folder.svg';
@@ -63,7 +63,7 @@ export default function Ulayout() {
 
     return (
         <div className="user-dashboard-container">
-            <header>
+            <header className='user-header'>
                 <div className="leftside">
                     <div className="hamburger" onClick={toggleSidebar}>
                         <img src={hamIcon} alt="Menu" width="20" height="20" className="white-filter" id="hamburger-icon"/>

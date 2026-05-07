@@ -31,7 +31,7 @@
 }
 
 /* HEADER STYLES */
-header {
+.user-header {
     width: 100%;
     height: 60px;
     background: linear-gradient(to right, var(--deep-blue), var(--light-blue));

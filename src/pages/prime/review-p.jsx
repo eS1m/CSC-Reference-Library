@@ -1,111 +1,243 @@
-import '../../css/prime/review-p';
+import '../../css/prime/review-p.css';
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { db } from '../../firebase/config';
-import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
+import { auth, db } from '../../firebase/config';
+import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 
-export default function Pdashboard() {
-  const nav = useNavigate();
+import fileIcon from '../../assets/file.svg';
+import approveIcon from '../../assets/approved.svg';
+import rejectIcon from '../../assets/rejected.svg';
+import viewIcon from '../../assets/view.svg';
+import downloadIcon from '../../assets/download.svg';
+import closeIcon from '../../assets/close.svg'; // Or reuse min-square.svg
+
+export default function Preview() {
+  const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  /* Fetch ALL pending submissions */
+  useEffect(() => {
+    setLoading(true);
+    
+    const q = query(
+      collection(db, "agencySubmissions"),
+      where("fileType", "==", "Self-Assessment"),
+      where("status", "==", "Pending")
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const pendingFiles = [];
+      snapshot.forEach((docSnap) => {
+        pendingFiles.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      pendingFiles.sort((a, b) => (b.uploadedAt?.seconds || 0) - (a.uploadedAt?.seconds || 0));
+      setSubmissions(pendingFiles);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching submissions:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleStatusChange = async (fileId, newStatus) => {
+    setActionLoading(true);
+    try {
+      const fileRef = doc(db, "agencySubmissions", fileId);
+      await updateDoc(fileRef, {
+        status: newStatus,
+        reviewedAt: new Date(),
+        reviewedBy: auth.currentUser?.uid || 'unknown',
+        reviewerEmail: auth.currentUser?.email || 'unknown'
+      });
+      setSelectedFile(null); // Close modal on success
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("Failed to update status. Please try again.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleView = (fileUrl) => {
+    if (fileUrl) {
+      window.open(fileUrl, '_blank');
+    } else {
+      alert("File URL not available.");
+    }
+  };
+
+  const handleDownload = (fileId, fileName) => {
+    if (!fileId) {
+      alert("File ID not available.");
+      return;
+    }
+    const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = fileName || 'download';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const closeModal = () => {
+    if (!actionLoading) setSelectedFile(null);
+  };
+
   return (
-    <main className="main-content">
-      <div className="main-content-header">
-        <h1 id="main-content-title">PRIME-HRM Officer Dashboard</h1>
-        <button 
-          className="prime-dashboard-button" 
-          onClick={() => nav('/review-p')}
-        >
-          <img src={reviewIcon} width="30px" height="30px" alt="Review" className="white-filter"/>
-          Review Submissions
-        </button>
-      </div>
-      
-      <div className="main-content-container prime-stats-grid">
-        {/* Stat Cards */}
-        <div className="stat-card-prime prime-agencies-number">
-          <div className="stat-icon">
-            <img src={agencyIcon} alt="Agencies" width="40" height="40" className="deep-blue-filter"/>
-          </div>
-          <div className="stat-info">
-            <h3>{stats.totalAgencies}</h3>
-            <p>Total Registered Agencies</p>
-          </div>
-        </div>
-
-        <div className="stat-card-prime">
-          <div className="stat-icon">
-            <img src={agencyIcon} alt="Completed" width="40" height="40" className="deep-blue-filter"/>
-          </div>
-          <div className="stat-info">
-            <h3>{stats.completedProfiles}</h3>
-            <p>Completed Profiles</p>
-          </div>
-        </div>
-
-        <div className="stat-card-prime">
-          <div className="stat-icon">
-            <img src={fileIcon} alt="Submissions" width="40" height="40" className="deep-blue-filter"/>
-          </div>
-          <div className="stat-info">
-            <h3>{stats.totalSubmissions}</h3>
-            <p>Total Submissions</p>
-          </div>
-        </div>
-
-        <div className="stat-card-prime pending">
-          <div className="stat-icon">
-            <img src={reviewIcon} alt="Pending" width="40" height="40" className="deep-blue-filter"/>
-          </div>
-          <div className="stat-info">
-            <h3>{stats.pendingReviews}</h3>
-            <p>Pending Reviews</p>
-          </div>
+    <main className="view-main-content">
+      <div className="pending-header">
+        <h1>Review Submissions</h1>
+        <div className="pending-count">
+          <p className="submission-number">{submissions.length}</p>
+          <p>pending</p>
         </div>
       </div>
 
-      {/* Recent Submissions Table */}
-      <div className="prime-recent-section">
-        <h2>Recent Submissions</h2>
-        <div className="prime-table-container">
-          <table className="prime-submissions-table">
-            <thead>
-              <tr>
-                <th>Agency Name</th>
-                <th>File Name</th>
-                <th>Status</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentSubmissions.length === 0 ? (
-                <tr>
-                  <td colSpan="4" className="no-data">No submissions yet</td>
-                </tr>
-              ) : (
-                recentSubmissions.map((sub) => (
-                  <tr key={sub.id} onClick={() => window.open(sub.fileUrl, '_blank')}>
-                    <td>{sub.agencyName}</td>
-                    <td>{sub.fileName}</td>
-                    <td>
-                      <span className={`status-badge ${(sub.status || 'Pending').toLowerCase()}`}>
-                        {sub.status || 'Pending'}
-                      </span>
-                    </td>
-                    <td>
-                      {sub.uploadedAt?.toDate().toLocaleDateString() || 'N/A'}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {/* Loading state */}
+      {loading && (
+        <div className="loading-container">
+          <p>Fetching pending submissions...</p>
+          <div className="loading-bar-background">
+            <div className="loading-bar-fill"></div>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Clock */}
-      <div className="stat-time stat-container">
-        <div className="stat-time-clock">{formatTime(time)}</div>
-        <div className="stat-time-date">{formatDate(time)}</div>
-      </div>
+      {/* Empty state */}
+      {!loading && submissions.length === 0 && (
+        <div className="no-files-found">
+          <p>No pending submissions to review.</p>
+        </div>
+      )}
+
+      {/* File Grid — cards are compact, click opens modal */}
+      {!loading && submissions.length > 0 && (
+        <div className="current-files-found">
+          {submissions.map((file) => (
+            <div 
+              key={file.id} 
+              className="file-block review-card"
+              onClick={() => setSelectedFile(file)}
+            >
+              <img src={fileIcon} alt="File" width="80" height="80" className="deep-blue-filter"/>
+              <p className="file-name">{file.fileName}</p>
+              <p className="agency-name">{file.agencyName}</p>
+              
+              <span className={`status-badge ${(file.status || 'Pending').toLowerCase()}`}>
+                {file.status || 'Pending'}
+              </span>
+
+              <button className="review-trigger-btn">
+                Review Submission
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* MODAL OVERLAY */}
+      {selectedFile && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            
+            {/* Modal Header */}
+            <div className="modal-header">
+              <h2>Review Submission</h2>
+              <button className="modal-close" onClick={closeModal} disabled={actionLoading}>
+                <img src={closeIcon} alt="Close" width="20" height="20"/>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="modal-body">
+              <div className="modal-file-icon">
+                <img src={fileIcon} alt="File" width="100" height="100" className="deep-blue-filter"/>
+              </div>
+
+              <div className="modal-details">
+                <div className="detail-row">
+                  <span className="detail-label">Agency:</span>
+                  <span className="detail-value">{selectedFile.agencyName}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">File Name:</span>
+                  <span className="detail-value">{selectedFile.fileName}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">File Type:</span>
+                  <span className="detail-value">{selectedFile.fileType}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Submitted:</span>
+                  <span className="detail-value">
+                    {selectedFile.uploadedAt?.toDate().toLocaleString() || 'N/A'}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Status:</span>
+                  <span className={`status-badge ${(selectedFile.status || 'Pending').toLowerCase()}`}>
+                    {selectedFile.status || 'Pending'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="modal-actions">
+              <div className="action-row file-actions">
+                <button 
+                  className="view-btn"
+                  onClick={() => handleView(selectedFile.fileUrl)}
+                  disabled={actionLoading}
+                >
+                  <img src={viewIcon} alt="View" width="16" height="16"/>
+                  View in Drive
+                </button>
+                <button 
+                  className="download-btn"
+                  onClick={() => handleDownload(selectedFile.fileId, selectedFile.fileName)}
+                  disabled={actionLoading}
+                >
+                  <img src={downloadIcon} alt="Download" width="16" height="16"/>
+                  Download
+                </button>
+              </div>
+
+              <div className="action-row decision-actions">
+                <button 
+                  className="approve-btn"
+                  onClick={() => handleStatusChange(selectedFile.id, 'Approved')}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? (
+                    <div className="spinner"></div>
+                  ) : (
+                    <img src={approveIcon} alt="Approve" width="16" height="16"/>
+                  )}
+                  {actionLoading ? 'Processing...' : 'Approve Submission'}
+                </button>
+                <button 
+                  className="reject-btn"
+                  onClick={() => handleStatusChange(selectedFile.id, 'Rejected')}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? (
+                    <div className="spinner"></div>
+                  ) : (
+                    <img src={rejectIcon} alt="Reject" width="16" height="16"/>
+                  )}
+                  {actionLoading ? 'Processing...' : 'Reject Submission'}
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
     </main>
   );
 }
