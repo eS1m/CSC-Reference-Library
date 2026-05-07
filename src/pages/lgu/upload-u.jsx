@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../../css/user-layout.css';
-import '../../css/uupload.css';
+import '../../css/lgu/user-layout.css';
+import '../../css/lgu/uupload.css';
 import uploadIcon from '../../assets/upload.svg';
 import { auth, db } from '../../firebase/config';
 import { serverTimestamp, collection, addDoc } from 'firebase/firestore';

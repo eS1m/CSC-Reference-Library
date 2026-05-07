@@ -1,6 +1,6 @@
 import React from 'react';
-import '../../css/user-layout.css';
-import '../../css/uview.css';
+import '../../css/lgu/user-layout.css';
+import '../../css/lgu/uview.css';
 
 import fileIcon from '../../assets/file.svg';
 import { useAgencyData } from '../../hooks/useAgencyData';

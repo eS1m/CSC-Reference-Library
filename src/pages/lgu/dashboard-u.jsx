@@ -1,5 +1,5 @@
-import '../../css/user-layout.css';
-import '../../css/udashboard.css';
+import '../../css/lgu/user-layout.css';
+import '../../css/lgu/udashboard.css';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 

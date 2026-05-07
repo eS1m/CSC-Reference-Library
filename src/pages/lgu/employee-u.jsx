@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../../css/user-layout.css';
-import '../../css/uemployee.css';
+import '../../css/lgu/user-layout.css';
+import '../../css/lgu/uemployee.css';
 
 import editIcon from '../../assets/edit.svg'
 import addSquare from '../../assets/add-square.svg';
