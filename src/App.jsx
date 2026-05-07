@@ -12,7 +12,7 @@ import Uemployee from './pages/lgu/employee-u';
 import Uview from './pages/lgu/view-u'
 
 import Playout from './components/layout-p'
-import Pdashboard from './pages/lgu/dashboard-p';
+import Pdashboard from './pages/prime/dashboard-p';
 // import Preview from './pages/lgu/review-p';      // Future
 // import Papproved from './pages/lgu/approved-p';  // Future
 // import Prejected from './pages/lgu/rejected-p';  // Future
