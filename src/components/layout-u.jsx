@@ -86,8 +86,8 @@ export default function Ulayout() {
                     <div className="sidebar-section">
                         <p className="sidebar-label">HOME</p>
                         <nav>
-                            <NavLink className="nav-item" to="/dashboard-u">
-                                <img src={dashboardIcon} alt="Dashboard" width="25" height="25" className="deep-blue-filter"/>
+                            <NavLink className="nav-item-user nav-dashboard-user" to="/dashboard-u">
+                                <img src={dashboardIcon} alt="Dashboard" width="20" height="20" className="deep-blue-filter"/>
                                 Dashboard
                             </NavLink>
                         </nav>
@@ -97,19 +97,19 @@ export default function Ulayout() {
                         <p className="sidebar-label">FILE MANAGEMENT</p>
                         <nav>
                             <NavLink 
-                                className={`nav-item nav-item-upload ${isLocked ? 'nav-locked' : ''}`}
+                                className={`nav-item-user nav-item-upload ${isLocked ? 'nav-locked' : ''}`}
                                 to="/upload-u" 
                                 onClick={handleLockedNav}
                             >
-                                <img src={addFolderIcon} alt="Add Folder" width="20" height="20" className="deep-blue-filter"/>
+                                <img src={addFolderIcon} alt="Add Files" width="20" height="20" className="deep-blue-filter"/>
                                 Upload New File
                                 {isLocked && (
                                     <span className="lock-tag">
-                                        <img src={lockIcon} alt="Locked" width="15" height="15" className='grey-filter'/>
+                                        <img src={lockIcon} alt="Locked" width="20" height="20" className='grey-filter'/>
                                     </span>
                                 )}
                             </NavLink>
-                            <NavLink className="nav-item nav-view-files" to="/view-u">
+                            <NavLink className="nav-item-user nav-view-files" to="/view-u">
                                 <img src={folderIcon} alt="View Files" width="20" height="20" className="deep-blue-filter"/>
                                 View Your Files
                             </NavLink>
@@ -119,12 +119,12 @@ export default function Ulayout() {
                     <div className="sidebar-section">
                         <p className="sidebar-label">PROFILE</p>
                         <nav>
-                            <NavLink className="nav-item nav-my-profile" to="/profile-u">
-                                <img src={profileIcon} alt="My Profile" width="15" height="15" className="deep-blue-filter"/>
+                            <NavLink className="nav-item-user nav-my-profile" to="/profile-u">
+                                <img src={profileIcon} alt="My Profile" width="20" height="20" className="deep-blue-filter"/>
                                 Agency Profile
                             </NavLink>
-                            <NavLink className="nav-item nav-employee-profile" to="/employee-u">
-                                <img src={employeeIcon} alt="My Profile" width="20" height="20" className="deep-blue-filter"/>
+                            <NavLink className="nav-item-user nav-employee-profile" to="/employee-u">
+                                <img src={employeeIcon} alt="Employee Profile" width="20" height="20" className="deep-blue-filter"/>
                                 Employee Profile
                             </NavLink>
                         </nav>

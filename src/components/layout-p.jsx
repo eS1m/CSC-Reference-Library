@@ -74,8 +74,8 @@ export default function Playout() {
                     <div className="sidebar-section">
                         <p className="sidebar-label">HOME</p>
                         <nav>
-                            <NavLink className="nav-item" to="/dashboard-p">
-                                <img src={dashboardIcon} alt="Dashboard" width="25" height="25" className="deep-blue-filter"/>
+                            <NavLink className="nav-item-prime nav-dashboard-prime" to="/dashboard-p">
+                                <img src={dashboardIcon} alt="Dashboard" width="20" height="20" className="deep-blue-filter"/>
                                 Dashboard
                             </NavLink>
                         </nav>
@@ -84,15 +84,15 @@ export default function Playout() {
                     <div className="sidebar-section">
                         <p className="sidebar-label">FILE MANAGEMENT</p>
                         <nav>
-                            <NavLink className="nav-item" to="/review-p">
+                            <NavLink className="nav-item-prime nav-review-files" to="/review-p">
                                 <img src={reviewIcon} alt="Review" width="20" height="20" className="deep-blue-filter"/>
                                 Review Submissions
                             </NavLink>
-                            <NavLink className="nav-item" to="/approved-p">
+                            <NavLink className="nav-item-prime nav-approved-files" to="/approved-p">
                                 <img src={approvedIcon} alt="Approved" width="20" height="20" className="deep-blue-filter"/>
                                 Approved Files
                             </NavLink>
-                            <NavLink className="nav-item" to="/rejected-p">
+                            <NavLink className="nav-item-prime nav-rejected-files" to="/rejected-p">
                                 <img src={rejectedIcon} alt="Rejected" width="20" height="20" className="deep-blue-filter"/>
                                 Rejected Files
                             </NavLink>
@@ -102,8 +102,8 @@ export default function Playout() {
                     <div className="sidebar-section">
                         <p className="sidebar-label">PROFILE</p>
                         <nav>
-                            <NavLink className="nav-item" to="/profile-p">
-                                <img src={profileIcon} alt="My Profile" width="15" height="15" className="deep-blue-filter"/>
+                            <NavLink className="nav-item-prime nav-prime-profile" to="/profile-p">
+                                <img src={profileIcon} alt="My Profile" width="20" height="20" className="deep-blue-filter"/>
                                 PRIME Profile
                             </NavLink>
                         </nav>

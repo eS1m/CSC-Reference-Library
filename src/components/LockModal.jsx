@@ -36,7 +36,7 @@ export default function LockModal({ isOpen, onClose, currentStep }) {
 
         <div className="modal-body lock-body">
           <div className="lock-icon-large">
-            <img src={lockIcon} alt="Locked" width="60" height="60" className="grey-filter"/>
+            <img src={lockIcon} alt="Locked" width="45" height="45" className="grey-filter"/>
           </div>
           <p className="lock-message">{message}</p>
           <p className="lock-subtext">{subtext}</p>
