@@ -36,3 +36,6 @@ body {
 .light-blue-filter {
     filter: brightness(0) saturate(100%) invert(60%) sepia(10%) saturate(1652%) hue-rotate(160deg) brightness(96%) contrast(84%);
 }
+.deep-red-filter {
+    filter: brightness(0) saturate(100%) invert(9%) sepia(45%) saturate(4722%) hue-rotate(327deg) brightness(93%) contrast(99%);
+}
