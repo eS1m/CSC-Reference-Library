@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import '../css/admin/admin-layout.css';
 import hamIcon from '../assets/hamburger.svg';
 import dashboardIcon from '../assets/dashboard.svg';
+import profileIcon from '../assets/profile.svg';
 
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
@@ -91,7 +92,8 @@ export default function Alayout() {
                             </NavLink>
                         </nav>
                     </div>
-        
+                    */}
+
                     <div className="sidebar-section">
                         <p className="sidebar-label">PROFILE</p>
                         <nav>
@@ -101,7 +103,6 @@ export default function Alayout() {
                             </NavLink>
                         </nav>
                     </div>
-                    */}
                 </aside>
                 <main className="layout-content-area">
                     <Outlet />

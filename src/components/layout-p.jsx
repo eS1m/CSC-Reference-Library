@@ -55,9 +55,7 @@ export default function Playout() {
                 </div>
                 <div className="rightside">
                     <div 
-                        className="who-am-i-box" 
-                        onClick={() => nav('/profile-p')} 
-                        style={{ cursor: 'pointer' }}
+                        className="who-am-i-box"
                     >
                         <p id="who-am-i">{auth.currentUser?.email}</p>
                         <p id="who-am-i-name">PRIME-HRM Officer</p>
@@ -88,24 +86,24 @@ export default function Playout() {
                                 <img src={reviewIcon} alt="Review" width="20" height="20" className="deep-blue-filter"/>
                                 Review Submissions
                             </NavLink>
-                            <NavLink className="nav-item-prime nav-approved-files" to="/approved-p">
+                            {/* <NavLink className="nav-item-prime nav-approved-files" to="/approved-p">
                                 <img src={approvedIcon} alt="Approved" width="20" height="20" className="deep-blue-filter"/>
                                 Approved Files
                             </NavLink>
                             <NavLink className="nav-item-prime nav-rejected-files" to="/rejected-p">
                                 <img src={rejectedIcon} alt="Rejected" width="20" height="20" className="deep-blue-filter"/>
                                 Rejected Files
-                            </NavLink>
+                            </NavLink> */}
                         </nav>
                     </div>
         
                     <div className="sidebar-section">
                         <p className="sidebar-label">PROFILE</p>
                         <nav>
-                            <NavLink className="nav-item-prime nav-prime-profile" to="/profile-p">
+                            {/* <NavLink className="nav-item-prime nav-prime-profile" to="/profile-p">
                                 <img src={profileIcon} alt="My Profile" width="20" height="20" className="deep-blue-filter"/>
                                 PRIME Profile
-                            </NavLink>
+                            </NavLink> */}
                         </nav>
                     </div>
                 </aside>

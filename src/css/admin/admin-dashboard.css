@@ -98,9 +98,11 @@
 
 /* Role badges */
 .role-badge {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
+  display: inline-block;
+  text-align: center;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -183,9 +185,11 @@
 
 /* Status badges */
 .status-badge {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
+  display: inline-block;
+  text-align: center;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -297,12 +301,12 @@
 
 .activity-logs-table th:nth-child(1),
 .activity-logs-table td:nth-child(1) {
-  width: 20%;
+  width: 18%;
 }
 
 .activity-logs-table th:nth-child(2),
 .activity-logs-table td:nth-child(2) {
-  width: 20%;
+  width: 22%;
 }
 
 .activity-logs-table th:nth-child(3),
@@ -322,13 +326,15 @@
 
 /* Action badges */
 .action-badge {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
+  display: inline-block;
+  text-align: center;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  white-space: nowrap;
+  line-height: 1.4;
 }
 
 .action-badge.action-upload {

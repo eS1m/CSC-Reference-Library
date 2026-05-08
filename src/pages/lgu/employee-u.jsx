@@ -135,13 +135,16 @@ export default function Uemployee() {
   };
 
   // Table Functionality
+  const sanitizeCellValue = (value) => {
+    const numValue = parseInt(value);
+    return isNaN(numValue) || numValue < 0 ? 0 : numValue;
+  };
+
   const handleInputChange = (category, status, gender, value) => {
     const key = `${category}-${status}-${gender}`;
-    const numValue = parseInt(value);
-    const finalValue = isNaN(numValue) || numValue < 0 ? 0 : numValue;
     setTableData(prev => ({
       ...prev,
-      [key]: parseInt(value) || 0
+      [key]: sanitizeCellValue(value)
     }));
   };
 
@@ -246,9 +249,11 @@ export default function Uemployee() {
                               className="table-input" 
                               min="0"
                               onChange={(e) => handleInputChange(cat, status, 'M', e.target.value)}
+                              onBlur={(e) => handleInputChange(cat, status, 'M', e.target.value)}
+                              onFocus={(e) => e.target.select()}
                               required
                               placeholder="0"
-                              value={tableData[`${cat}-${status}-M`] || ''}
+                              value={tableData[`${cat}-${status}-M`] ?? ''}
                               disabled={!isEditing}
                             />
                           </td>
@@ -258,9 +263,11 @@ export default function Uemployee() {
                               className="table-input" 
                               min="0"
                               onChange={(e) => handleInputChange(cat, status, 'F', e.target.value)}
+                              onBlur={(e) => handleInputChange(cat, status, 'F', e.target.value)}
+                              onFocus={(e) => e.target.select()}
                               required
                               placeholder="0"
-                              value={tableData[`${cat}-${status}-F`] || ''}
+                              value={tableData[`${cat}-${status}-F`] ?? ''}
                               disabled={!isEditing}
                             />
                           </td>

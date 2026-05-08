@@ -133,9 +133,11 @@
 
 /* Status badges matching uview.css */
 .status-badge {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
+  display: inline-block;
+  text-align: center;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
 }

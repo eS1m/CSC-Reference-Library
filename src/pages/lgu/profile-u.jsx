@@ -77,6 +77,8 @@ export default function Uprofile() {
   /* Saving Agency Profile Functionality */
   const handleSaveAll = async (e) => {
     e.preventDefault();
+    setMessage({ text: '', type: '' });
+
     const isAgencyIncomplete = Object.values(agencyData).some(val => !val || val.trim() === '');
     const isHrmIncomplete = hrmOfficers.some(off => !off.name || off.name.trim() === '');
 
@@ -88,30 +90,6 @@ export default function Uprofile() {
         window.scrollTo(0, 0);
         return; 
     }
-    e.preventDefault();
-    setMessage({ text: '', type: '' });
-
-    const requiredIds = [
-        'agency-name', 'agency-region', 'agency-sector', 
-        'agency-status', 'agency-reso-status', 
-        'head-name', 'head-designation'
-    ];
-
-    for (const id of requiredIds) {
-        const element = document.getElementById(id);
-        if (!element || !element.value.trim()) {
-            alert(`Please fill out the ${element?.previousSibling?.innerText || id} field.`);
-            element?.focus();
-            return;
-        }
-    }
-    
-    if (isAgencyIncomplete) {
-        setMessage({ text: 'Please fill in all Agency Details before saving.', type: 'error' });
-        return;
-    }
-
-    setIsSaving(true);
 
     const user = auth.currentUser;
     if (!user) {
@@ -119,26 +97,28 @@ export default function Uprofile() {
         return;
     }
 
+    setIsSaving(true);
+
     try {
-        const agencyData = {
-            agencyName: document.getElementById('agency-name').value,
-            region: document.getElementById('agency-region').value,
-            sector: document.getElementById('agency-sector').value,
-            status: document.getElementById('agency-status').value,
-            resolutionStatus: document.getElementById('agency-reso-status').value,
+        const agencyDetails = {
+            agencyName: agencyData.agencyName,
+            region: agencyData.region,
+            sector: agencyData.sector,
+            status: agencyData.status,
+            resolutionStatus: agencyData.resolutionStatus,
         };
 
-        const headData = {
-            name: document.getElementById('head-name')?.value || '',
-            designation: document.getElementById('head-designation')?.value || '',
+        const headDetails = {
+            name: agencyData.headName,
+            designation: agencyData.headDesignation,
         };
 
         const masterProfile = {
             uid: user.uid,
             email: user.email,
-            agencyDetails: agencyData,
-            headDetails: headData,
-            hrmOfficers: hrmOfficers,
+            agencyDetails,
+            headDetails,
+            hrmOfficers,
             lastUpdated: serverTimestamp()
         };
 
@@ -149,9 +129,9 @@ export default function Uprofile() {
           userEmail: user.email,
           userRole: 'u',
           action: 'UPDATE_PROFILE',
-          targetAgencyName: agencyData.agencyName,
-          details: { agencyName: agencyData.agencyName },
-          message: `Agency ${agencyData.agencyName} updated their profile`
+          targetAgencyName: agencyDetails.agencyName,
+          details: { agencyName: agencyDetails.agencyName },
+          message: `Agency ${agencyDetails.agencyName} updated their profile`
         });
 
         setMessage({ text: "Profile updated successfully!", type: 'success' });

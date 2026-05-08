@@ -20,6 +20,7 @@ import Preview from './pages/prime/review-p';
 
 import Alayout from './components/layout-a'
 import Adashboard from './pages/admin/dashboard-a';
+import Aprofile from './pages/admin/profile-a';
 
 import ProtectedRoute from './components/ProtectedRoute'
 import ProfileGuard from './components/ProfileGuard';
