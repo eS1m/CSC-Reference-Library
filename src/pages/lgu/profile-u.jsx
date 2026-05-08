@@ -10,6 +10,7 @@ import { auth, db } from '../../firebase/config';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useAgencyData } from '../../hooks/useAgencyData';
+import { logActivity } from '../../firebase/activityLog';
 
 export default function Uprofile() {
   const { profile, loading, isAgencyDone } = useAgencyData();
@@ -106,7 +107,7 @@ export default function Uprofile() {
     }
     
     if (isAgencyIncomplete) {
-        setBanner({ show: true, type: 'error', message: 'Please fill in all Agency Details before saving.' });
+        setMessage({ text: 'Please fill in all Agency Details before saving.', type: 'error' });
         return;
     }
 
@@ -142,6 +143,16 @@ export default function Uprofile() {
         };
 
         await setDoc(doc(db, "agencyProfiles", user.uid), masterProfile, { merge: true });
+
+        await logActivity({
+          userId: user.uid,
+          userEmail: user.email,
+          userRole: 'u',
+          action: 'UPDATE_PROFILE',
+          targetAgencyName: agencyData.agencyName,
+          details: { agencyName: agencyData.agencyName },
+          message: `Agency ${agencyData.agencyName} updated their profile`
+        });
 
         setMessage({ text: "Profile updated successfully!", type: 'success' });
         setIsEditing(false);

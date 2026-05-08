@@ -8,6 +8,7 @@ import closeIcon from '../../assets/close.svg';
 import { auth, db } from '../../firebase/config';
 import { serverTimestamp, collection, addDoc } from 'firebase/firestore';
 import { useAgencyData } from '../../hooks/useAgencyData';
+import { logActivity } from '../../firebase/activityLog';
 
 export default function Uupload() {
 
@@ -118,6 +119,17 @@ export default function Uupload() {
       };
 
       await addDoc(collection(db, "agencySubmissions"), submissionData);
+
+      await logActivity({
+        userId: auth.currentUser.uid,
+        userEmail: auth.currentUser.email,
+        userRole: 'u',
+        action: 'UPLOAD_FILE',
+        targetAgencyName: agencyName,
+        details: { fileName: formattedName, fileType: 'Self-Assessment', fileId: driveData.fileId },
+        message: `Agency ${agencyName} uploaded Self-Assessment: ${formattedName}`
+      });
+
       nav('/dashboard-u');
 
       setUploadStatus("File successfully uploaded and recorded!");

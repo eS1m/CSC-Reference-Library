@@ -1,0 +1,78 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to get user role
+    function getRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return getRole() == 'admin';
+    }
+
+    function isPrime() {
+      return getRole() == 'p';
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isAdminOrPrime() {
+      return isAdmin() || isPrime();
+    }
+
+    // 1. User Profiles
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      // Users can create/update their own profile; admins can update any (for approvals)
+      allow create: if request.auth != null && isOwner(userId);
+      allow update: if request.auth != null && (isOwner(userId) || isAdmin());
+      allow delete: if request.auth != null && isAdmin();
+    }
+
+    // 2. Agency Profiles - PRIME can read all (for review stats)
+    match /agencyProfiles/{userId} {
+      allow read: if request.auth != null && (isOwner(userId) || isAdminOrPrime());
+      allow write: if request.auth != null && isOwner(userId);
+    }
+
+    // 3. Agency Employees - PRIME can read all (for verification)
+    match /agencyEmployees/{userId} {
+      allow read: if request.auth != null && (isOwner(userId) || isAdminOrPrime());
+      allow write: if request.auth != null && isOwner(userId);
+    }
+
+    // 4. Document Submissions
+    match /agencySubmissions/{submissionId} {
+      // Any logged-in user can create
+      allow create: if request.auth != null;
+
+      // Users read their own; PRIME and admin read all
+      allow read: if request.auth != null && (
+        isOwner(resource.data.userId) || isAdminOrPrime()
+      );
+
+      // PRIME and admin can update status (approve/reject/return)
+      allow update: if request.auth != null && isAdminOrPrime();
+
+      // Only admin can delete
+      allow delete: if request.auth != null && isAdmin();
+    }
+
+    // 5. Activity Logs - audit trail
+    match /activityLogs/{logId} {
+      // Any authenticated user can create a log, but only for themselves
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+
+      // Only admins can read the audit trail
+      allow read: if request.auth != null && isAdmin();
+
+      // Logs are immutable
+      allow update, delete: if false;
+    }
+  }
+}

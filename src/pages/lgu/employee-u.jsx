@@ -9,6 +9,7 @@ import removeSquare from '../../assets/min-square.svg';
 import { auth, db } from '../../firebase/config';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useAgencyData } from '../../hooks/useAgencyData';
+import { logActivity } from '../../firebase/activityLog';
 
 export default function Uemployee() {
 
@@ -112,6 +113,15 @@ export default function Uemployee() {
           secondLevelEM: total2ndLevelEM,
           thirdLevelPA: total3rdLevelPA
         }
+      });
+
+      await logActivity({
+        userId: user.uid,
+        userEmail: user.email,
+        userRole: 'u',
+        action: 'UPDATE_EMPLOYEES',
+        details: { dataAsOf },
+        message: `Agency user ${user.email} updated employee data`
       });
 
       setMessage({ text: "All employee information and summaries saved!", type: "success" });

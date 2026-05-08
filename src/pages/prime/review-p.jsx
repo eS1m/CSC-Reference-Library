@@ -2,6 +2,7 @@ import '../../css/prime/review-p.css';
 import React, { useState, useEffect } from 'react';
 import { auth, db } from '../../firebase/config';
 import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { logActivity } from '../../firebase/activityLog';
 
 import fileIcon from '../../assets/file.svg';
 import approveIcon from '../../assets/approved.svg';
@@ -52,6 +53,22 @@ export default function Preview() {
         reviewedBy: auth.currentUser?.uid || 'unknown',
         reviewerEmail: auth.currentUser?.email || 'unknown'
       });
+
+      await logActivity({
+        userId: auth.currentUser?.uid,
+        userEmail: auth.currentUser?.email,
+        userRole: 'p',
+        action: newStatus === 'Approved' ? 'APPROVE_FILE' : 'REJECT_FILE',
+        targetUserId: selectedFile.userId,
+        targetAgencyName: selectedFile.agencyName,
+        details: {
+          fileName: selectedFile.fileName,
+          fileType: selectedFile.fileType,
+          submissionId: fileId,
+        },
+        message: `PRIME officer ${auth.currentUser?.email || 'unknown'} ${newStatus.toLowerCase()} ${selectedFile.fileType} for ${selectedFile.agencyName}`
+      });
+
       setSelectedFile(null); // Close modal on success
     } catch (error) {
       console.error("Error updating status:", error);

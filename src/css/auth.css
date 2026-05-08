@@ -35,11 +35,17 @@ body {
 
 .auth-card-register{
     background: linear-gradient(to top left, var(--light-red), var(--deep-red));
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .auth-container {
     width: 100%;
     max-width: 440px;
+}
+
+.auth-container-register {
+    max-width: 560px;
 }
 
 .auth-header {
@@ -109,6 +115,11 @@ body {
 
 .auth-group {
     margin-bottom: 20px;
+    /* border: 2px solid white; */
+}
+
+.auth-group:has(.auth-input-register){
+    width: 100%;
 }
 
 .auth-label {
@@ -124,7 +135,6 @@ body {
     padding: 12px;
     background: var(--glass-cream);
     border-radius: 10px;
-    box-sizing: border-box;
     color: var(--cream-white);
     font-family:inherit;
     font-size: 16px;
@@ -138,6 +148,7 @@ body {
 
 .auth-input-register{
     border: 1px solid var(--light-red);
+    width: 100%;
 }
 
 .auth-input:focus {
@@ -224,6 +235,49 @@ body {
     color: var(--cream-white)
 }
 
+/* Role Selector Cards */
+.role-selector {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    width: 100%;
+}
+
+.role-card {
+    padding: 14px 8px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.role-card:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.role-card.selected {
+    border-color: var(--cream-white);
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.role-card-title {
+    display: block;
+    font-weight: 600;
+    color: white;
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+}
+
+.role-card-desc {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
 /* Register Functionality */
 
 .account-exist {
@@ -253,3 +307,5 @@ body {
 .account-exist a:hover {
     color: var(--cream-white)
 }
+
+

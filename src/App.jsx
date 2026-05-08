@@ -18,6 +18,9 @@ import Preview from './pages/prime/review-p';
 // import Prejected from './pages/prime/rejected-p';  // Future
 // import Pprofile from './pages/prime/profile-p';    // Future
 
+import Alayout from './components/layout-a'
+import Adashboard from './pages/admin/dashboard-a';
+
 import ProtectedRoute from './components/ProtectedRoute'
 import ProfileGuard from './components/ProfileGuard';
 
@@ -89,6 +92,15 @@ function App() {
                 <Pprofile/>
               </ProtectedRoute> 
             } /> */}
+          </Route>
+
+          {/* A Routes - Strictly for System Administrators */}
+          <Route element={<Alayout/>}>
+            <Route path="/dashboard-a" element={
+              <ProtectedRoute requiredRole="admin">
+                <Adashboard/>
+              </ProtectedRoute> 
+            } />
           </Route>
 
         </Routes>

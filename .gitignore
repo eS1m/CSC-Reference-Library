@@ -26,3 +26,6 @@ dist-ssr
 
 # Secret Keys
 .env
+
+# .md
+AGENTS.md

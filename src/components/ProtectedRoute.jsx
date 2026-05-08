@@ -51,7 +51,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   if (requiredRole && role !== requiredRole) {
     switch (role) {
       case "admin":
-        return <Navigate to="/dashboard-admin" replace />;
+        return <Navigate to="/dashboard-a" replace />;
       case "p":
         return <Navigate to="/dashboard-p" replace />;
       case "u":

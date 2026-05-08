@@ -2,10 +2,14 @@ import { useState } from 'react';
 import '../css/auth.css';
 import logo from '../assets/logo.svg';
 import googleIcon from '../assets/google-icon.svg';
-import { signInWithPopup, signInWithEmailAndPassword, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithPopup, signInWithEmailAndPassword, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { auth, googleProvider, db } from '../firebase/config.js';
 import { useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { logActivity } from '../firebase/activityLog';
+import '../css/lock-modal.css';
+import closeIcon from '../assets/close.svg';
+import warningIcon from '../assets/warning.svg';
 
 
 export default function Login() {
@@ -14,6 +18,7 @@ export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [showPendingModal, setShowPendingModal] = useState(false);
 
     const handleUserRoleAndRedirect = async (user) => {
         const userRef = doc(db, "users", user.uid);
@@ -25,14 +30,43 @@ export default function Login() {
             await setDoc(userRef, {
                 email: user.email,
                 role: role,
+                approvalStatus: 'pending',
                 createdAt: new Date(),
+            });
+
+            await logActivity({
+                userId: user.uid,
+                userEmail: user.email,
+                userRole: role,
+                action: 'REGISTER',
+                message: `New user ${user.email} registered via Google`
             });
         } else {
             role = userSnap.data().role;
         }
 
+        const approvalStatus = userSnap.data().approvalStatus || 'approved';
+        if (approvalStatus !== 'approved') {
+            await signOut(auth);
+            setShowPendingModal(true);
+            return;
+        }
+
+        const displayEmail = user.email || user.providerData?.[0]?.email || 'unknown';
+        await logActivity({
+            userId: user.uid,
+            userEmail: displayEmail,
+            userRole: role,
+            action: 'LOGIN',
+            message: `User ${displayEmail} logged in`
+        });
+
         if (role === "xu") {
             nav('/xu-dash');
+        } else if (role === 'admin') {
+            nav('/dashboard-a');
+        } else if (role === 'p') {
+            nav('/dashboard-p');
         } else {
             nav('/dashboard-u');
         }
@@ -40,7 +74,6 @@ export default function Login() {
    
     const signIn = async () => {
         try {
-            googleProvider.addScope('https://www.googleapis.com/auth/drive.file');
             const result = await signInWithPopup(auth, googleProvider);
 
             const credential = GoogleAuthProvider.credentialFromResult(result);
@@ -53,7 +86,7 @@ export default function Login() {
             await handleUserRoleAndRedirect(result.user);
         } catch (error) {
             console.log(error);
-            set.error("Google sign-in failed. Please try again.");
+            setError("Google sign-in failed. Please try again.");
         }
     };
 
@@ -131,6 +164,32 @@ export default function Login() {
                     </button>
                 </div>
             </div>
+
+            {/* Account Pending Approval Modal */}
+            {showPendingModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content lock-modal">
+                        <div className="modal-header">
+                            <h2>Account Under Review</h2>
+                            <button className="modal-close" onClick={() => setShowPendingModal(false)}>
+                                <img src={closeIcon} alt="Close" width="20" height="20"/>
+                            </button>
+                        </div>
+                        <div className="lock-body">
+                            <div className="lock-icon-large">
+                                <img src={warningIcon} alt="Pending" width="45" height="45" className="grey-filter"/>
+                            </div>
+                            <p className="lock-message">Your account is pending approval</p>
+                            <p className="lock-subtext">Your account has not yet been approved by an administrator. Please wait for approval or contact your system administrator.</p>
+                        </div>
+                        <div className="modal-actions lock-actions">
+                            <button className="understood-btn" onClick={() => setShowPendingModal(false)}>
+                                OK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
     }
