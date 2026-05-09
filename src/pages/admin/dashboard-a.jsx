@@ -1,5 +1,6 @@
 import '../../css/admin/admin-dashboard.css';
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { db, auth } from '../../firebase/config';
 import { collection, query, where, onSnapshot, orderBy, doc, updateDoc } from 'firebase/firestore';
 import { logActivity } from '../../firebase/activityLog';
@@ -407,7 +408,7 @@ export default function Adashboard() {
 
         {/* Activity Logs Section */}
         <div className="admin-logs-section">
-          <h2>Activity Logs ({activityLogs.length})</h2>
+          <h2>Recent Activity Logs</h2>
           <div className="admin-table-container">
             <table className="admin-submissions-table activity-logs-table">
               <thead>
@@ -424,7 +425,7 @@ export default function Adashboard() {
                     <td colSpan="4" className="no-data">No activity logs yet</td>
                   </tr>
                 ) : (
-                  activityLogs.map((log) => (
+                  activityLogs.slice(0, 10).map((log) => (
                     <tr key={log.id}>
                       <td>
                         {log.timestamp?.toDate().toLocaleString() || 'N/A'}
@@ -441,6 +442,11 @@ export default function Adashboard() {
                 )}
               </tbody>
             </table>
+            {activityLogs.length > 10 && (
+              <div className="view-all-logs-link">
+                <Link to="/activity-logs-a">View All Activity Logs →</Link>
+              </div>
+            )}
           </div>
         </div>
       </div>

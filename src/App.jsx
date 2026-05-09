@@ -21,6 +21,8 @@ import Preview from './pages/prime/review-p';
 import Alayout from './components/layout-a'
 import Adashboard from './pages/admin/dashboard-a';
 import Aprofile from './pages/admin/profile-a';
+import ActivityLogsA from './pages/admin/activity-logs-a';
+
 
 import ProtectedRoute from './components/ProtectedRoute'
 import ProfileGuard from './components/ProfileGuard';
@@ -100,6 +102,11 @@ function App() {
             <Route path="/dashboard-a" element={
               <ProtectedRoute requiredRole="admin">
                 <Adashboard/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/activity-logs-a" element={
+              <ProtectedRoute requiredRole="admin">
+                <ActivityLogsA/>
               </ProtectedRoute> 
             } />
           </Route>

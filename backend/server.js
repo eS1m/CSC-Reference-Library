@@ -4,6 +4,8 @@ const { google } = require('googleapis');
 const multer = require('multer');
 const stream = require('stream');
 const cors = require('cors');
+const xlsx = require('xlsx');
+const path = require('path');
 
 const app = express();
 app.use(cors());
@@ -134,6 +136,30 @@ app.get('/list-files', async (req, res) => {
         console.error('List Files Error:', error);
         res.status(500).send("Failed to fetch files from Drive.");
     }
+});
+
+app.get('/read-excel', async (req, res) => {
+  try {
+    const filePath = path.join(__dirname, '..', 'excel_test_data', 'PRIME-HRM EXAMPLE DATA.xlsx');
+    const workbook = xlsx.readFile(filePath);
+    const worksheet = workbook.Sheets['Assessment Results'];
+
+    if (!worksheet) {
+      return res.status(404).json({ error: 'Sheet "Assessment Results" not found.' });
+    }
+
+    const cells = {
+      H8: worksheet['H8']?.v ?? null,
+      N8: worksheet['N8']?.v ?? null,
+      T8: worksheet['T8']?.v ?? null,
+      Z8: worksheet['Z8']?.v ?? null
+    };
+
+    res.status(200).json({ cells });
+  } catch (error) {
+    console.error('Read Excel Error:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 const PORT = process.env.PORT || 5000; 

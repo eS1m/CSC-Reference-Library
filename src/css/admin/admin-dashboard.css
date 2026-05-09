@@ -282,6 +282,26 @@
   transform: translateY(-1px);
 }
 
+/* View All Logs Link */
+.view-all-logs-link {
+  text-align: right;
+  margin-top: 12px;
+}
+
+.view-all-logs-link a {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--deep-blue);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.view-all-logs-link a:hover {
+  color: var(--light-red);
+  text-decoration: underline;
+}
+
 /* Activity Logs Section */
 .admin-logs-section {
   width: 100%;

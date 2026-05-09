@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import '../css/admin/admin-layout.css';
 import hamIcon from '../assets/hamburger.svg';
 import dashboardIcon from '../assets/dashboard.svg';
+import reviewIcon from '../assets/review.svg';
 import profileIcon from '../assets/profile.svg';
 
 import { auth } from '../firebase/config';
@@ -32,6 +33,7 @@ export default function Alayout() {
     const getPageTitle = (path) => {
         switch (path) {
             case '/dashboard-a': return 'Admin Dashboard';
+            case '/activity-logs-a': return 'Activity Logs';
             default: return 'Admin Portal';
         }
     };
@@ -69,6 +71,16 @@ export default function Alayout() {
                             <NavLink className="nav-item-admin nav-dashboard-admin" to="/dashboard-a">
                                 <img src={dashboardIcon} alt="Dashboard" width="20" height="20" className="deep-blue-filter"/>
                                 Dashboard
+                            </NavLink>
+                        </nav>
+                    </div>
+
+                    <div className="sidebar-section">
+                        <p className="sidebar-label">MONITORING</p>
+                        <nav>
+                            <NavLink className="nav-item-admin nav-activity-logs" to="/activity-logs-a">
+                                <img src={reviewIcon} alt="Activity Logs" width="20" height="20" className="deep-blue-filter"/>
+                                Activity Logs
                             </NavLink>
                         </nav>
                     </div>
