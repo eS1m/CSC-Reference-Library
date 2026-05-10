@@ -22,7 +22,6 @@ import Alayout from './components/layout-a'
 import Adashboard from './pages/admin/dashboard-a';
 import Aprofile from './pages/admin/profile-a';
 import ActivityLogsA from './pages/admin/activity-logs-a';
-import TestPageA from './pages/admin/test-page-a';
 
 import ProtectedRoute from './components/ProtectedRoute'
 import ProfileGuard from './components/ProfileGuard';
@@ -107,11 +106,6 @@ function App() {
             <Route path="/activity-logs-a" element={
               <ProtectedRoute requiredRole="admin">
                 <ActivityLogsA/>
-              </ProtectedRoute> 
-            } />
-            <Route path="/test-page-a" element={
-              <ProtectedRoute requiredRole="admin">
-                <TestPageA/>
               </ProtectedRoute> 
             } />
             <Route path="/profile-a" element={
