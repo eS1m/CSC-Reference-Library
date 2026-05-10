@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { db, auth } from '../../firebase/config';
 import { collection, query, where, onSnapshot, orderBy, doc, updateDoc } from 'firebase/firestore';
 import { logActivity } from '../../firebase/activityLog';
+import { validateAgency } from '../../utils/validateAgency';
+import { formatFirestoreDate } from '../../utils/formatFirestoreDate';
 
 import agencyIcon from '../../assets/agency.svg';
 import fileIcon from '../../assets/file.svg';
@@ -158,11 +160,7 @@ export default function Adashboard() {
     const unsubProfiles = onSnapshot(profilesQuery, (snap) => {
       let completed = 0;
       snap.forEach(doc => {
-        const data = doc.data();
-        const hasAgency = data.agencyDetails?.agencyName && 
-                          data.agencyDetails?.region && 
-                          data.agencyDetails?.sector;
-        completed += hasAgency ? 1 : 0;
+        completed += validateAgency(doc.data()) ? 1 : 0;
       });
       setStats(prev => ({ ...prev, completedProfiles: completed }));
     });
@@ -294,7 +292,7 @@ export default function Adashboard() {
                           {formatRole(user.role)}
                         </span>
                       </td>
-                      <td>{user.createdAt?.toDate().toLocaleDateString() || 'N/A'}</td>
+                      <td>{formatFirestoreDate(user.createdAt)}</td>
                       <td>
                         <div className="approval-actions">
                           <button 
@@ -354,7 +352,7 @@ export default function Adashboard() {
                         </span>
                       </td>
                       <td>
-                        {user.createdAt?.toDate().toLocaleDateString() || 'N/A'}
+                        {formatFirestoreDate(user.createdAt)}
                       </td>
                     </tr>
                   ))
@@ -396,7 +394,7 @@ export default function Adashboard() {
                         </span>
                       </td>
                       <td>
-                        {sub.uploadedAt?.toDate().toLocaleDateString() || 'N/A'}
+                        {formatFirestoreDate(sub.uploadedAt)}
                       </td>
                     </tr>
                   ))
@@ -428,7 +426,7 @@ export default function Adashboard() {
                   activityLogs.slice(0, 10).map((log) => (
                     <tr key={log.id}>
                       <td>
-                        {log.timestamp?.toDate().toLocaleString() || 'N/A'}
+                        {formatFirestoreDate(log.timestamp, { includeTime: true })}
                       </td>
                       <td>
                         <span className={`action-badge ${getActionBadgeClass(log.action)}`}>

@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { auth, db } from '../firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot, collection, query, where, orderBy } from 'firebase/firestore';
+import { validateAgency } from '../utils/validateAgency';
 
 export const useAgencyData = () => {
     const [user, setUser] = useState(null);
@@ -11,15 +12,6 @@ export const useAgencyData = () => {
     const [submissions, setSubmissions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
-    const validateAgency = useCallback((p) => {
-        if (!p) return false;
-        const fields = ['agencyName', 'region', 'resolutionStatus', 'sector', 'status'];
-        const agencyDone = fields.every(f => p.agencyDetails?.[f]?.toString().trim());
-        const headDone = !!(p.headDetails?.name?.trim() && p.headDetails?.designation?.trim());
-        const hrmDone = !!(p.hrmOfficers?.[0]?.name?.trim() && p.hrmOfficers?.[0]?.email?.trim());
-        return agencyDone && headDone && hrmDone;
-    }, []);
 
     const validateEmployees = useCallback((e) => {
         return !!(e?.employeeData && Object.keys(e.employeeData).length > 0);
@@ -125,7 +117,7 @@ export const useAgencyData = () => {
             assistPlanStatus: assistPlan?.status || null,
             agencyName: profile?.agencyDetails?.agencyName || "Agency User",
         };
-    }, [profile, employees, submissions, validateAgency, validateEmployees]);
+    }, [profile, employees, submissions, validateEmployees]);
 
     return {
         user,

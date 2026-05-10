@@ -4,6 +4,7 @@ import '../css/admin/admin-layout.css';
 import hamIcon from '../assets/hamburger.svg';
 import dashboardIcon from '../assets/dashboard.svg';
 import reviewIcon from '../assets/review.svg';
+import editIcon from '../assets/edit.svg';
 import profileIcon from '../assets/profile.svg';
 
 import { auth } from '../firebase/config';
@@ -34,6 +35,7 @@ export default function Alayout() {
         switch (path) {
             case '/dashboard-a': return 'Admin Dashboard';
             case '/activity-logs-a': return 'Activity Logs';
+            case '/test-page-a': return 'Test Page';
             default: return 'Admin Portal';
         }
     };
@@ -105,6 +107,16 @@ export default function Alayout() {
                         </nav>
                     </div>
                     */}
+
+                    <div className="sidebar-section">
+                        <p className="sidebar-label">DEVELOPMENT</p>
+                        <nav>
+                            <NavLink className="nav-item-admin nav-test-page" to="/test-page-a">
+                                <img src={editIcon} alt="Test Page" width="20" height="20" className="deep-blue-filter"/>
+                                Test Page
+                            </NavLink>
+                        </nav>
+                    </div>
 
                     <div className="sidebar-section">
                         <p className="sidebar-label">PROFILE</p>

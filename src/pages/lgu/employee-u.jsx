@@ -90,6 +90,12 @@ export default function Uemployee() {
         return;
     }
 
+    const allZero = Object.values(tableData).every(val => val === 0);
+    if (allZero) {
+        const confirmSave = window.confirm("All employee values are 0. Are you sure you want to save?");
+        if (!confirmSave) return;
+    }
+
     setIsSaving(true);
     try {
       const docRef = doc(db, "agencyEmployees", user.uid);
@@ -249,7 +255,6 @@ export default function Uemployee() {
                               className="table-input" 
                               min="0"
                               onChange={(e) => handleInputChange(cat, status, 'M', e.target.value)}
-                              onBlur={(e) => handleInputChange(cat, status, 'M', e.target.value)}
                               onFocus={(e) => e.target.select()}
                               required
                               placeholder="0"
@@ -263,7 +268,6 @@ export default function Uemployee() {
                               className="table-input" 
                               min="0"
                               onChange={(e) => handleInputChange(cat, status, 'F', e.target.value)}
-                              onBlur={(e) => handleInputChange(cat, status, 'F', e.target.value)}
                               onFocus={(e) => e.target.select()}
                               required
                               placeholder="0"

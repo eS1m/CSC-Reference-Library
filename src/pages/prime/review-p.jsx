@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { auth, db } from '../../firebase/config';
 import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { logActivity } from '../../firebase/activityLog';
+import { formatFirestoreDate } from '../../utils/formatFirestoreDate';
 
 import fileIcon from '../../assets/file.svg';
 import approveIcon from '../../assets/approved.svg';
@@ -191,7 +192,7 @@ export default function Preview() {
                 <div className="detail-row">
                   <span className="detail-label">Submitted:</span>
                   <span className="detail-value">
-                    {selectedFile.uploadedAt?.toDate().toLocaleString() || 'N/A'}
+                    {formatFirestoreDate(selectedFile.uploadedAt, { includeTime: true })}
                   </span>
                 </div>
                 <div className="detail-row">

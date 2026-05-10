@@ -2,6 +2,7 @@ import '../../css/admin/admin-dashboard.css';
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase/config';
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { formatFirestoreDate } from '../../utils/formatFirestoreDate';
 
 export default function ActivityLogsA() {
   const [activityLogs, setActivityLogs] = useState([]);
@@ -83,7 +84,7 @@ export default function ActivityLogsA() {
                 activityLogs.map((log) => (
                   <tr key={log.id}>
                     <td>
-                      {log.timestamp?.toDate().toLocaleString() || 'N/A'}
+                      {formatFirestoreDate(log.timestamp, { includeTime: true })}
                     </td>
                     <td>
                       <span className={`action-badge ${getActionBadgeClass(log.action)}`}>

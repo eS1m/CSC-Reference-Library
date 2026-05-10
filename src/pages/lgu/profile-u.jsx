@@ -80,7 +80,13 @@ export default function Uprofile() {
     setMessage({ text: '', type: '' });
 
     const isAgencyIncomplete = Object.values(agencyData).some(val => !val || val.trim() === '');
-    const isHrmIncomplete = hrmOfficers.some(off => !off.name || off.name.trim() === '');
+    const isHrmIncomplete = hrmOfficers.some(off =>
+        !off.name?.trim() ||
+        !off.number?.trim() ||
+        !off.email?.trim() ||
+        !off.position?.trim() ||
+        !off.status?.trim()
+    );
 
     if (isAgencyIncomplete || isHrmIncomplete) {
         setMessage({

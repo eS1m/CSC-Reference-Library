@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../../firebase/config';
 import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
+import { validateAgency } from '../../utils/validateAgency';
+import { formatFirestoreDate } from '../../utils/formatFirestoreDate';
 
 import reviewIcon from '../../assets/review.svg';
 import agencyIcon from '../../assets/agency.svg';
@@ -69,14 +71,9 @@ export default function Pdashboard() {
     });
 
     const unsubProfiles = onSnapshot(profilesQuery, (snap) => {
-      // Count profiles that have both agencyDetails and employeeData
       let completed = 0;
       snap.forEach(doc => {
-        const data = doc.data();
-        const hasAgency = data.agencyDetails?.agencyName && 
-                          data.agencyDetails?.region && 
-                          data.agencyDetails?.sector;
-        completed += hasAgency ? 1 : 0;
+        completed += validateAgency(doc.data()) ? 1 : 0;
       });
       setStats(prev => ({ ...prev, completedProfiles: completed }));
     });
@@ -206,7 +203,7 @@ export default function Pdashboard() {
                       </span>
                     </td>
                     <td>
-                      {sub.uploadedAt?.toDate().toLocaleDateString() || 'N/A'}
+                      {formatFirestoreDate(sub.uploadedAt)}
                     </td>
                   </tr>
                 ))

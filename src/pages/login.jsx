@@ -19,14 +19,20 @@ export default function Login() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [showPendingModal, setShowPendingModal] = useState(false);
+    const [showFirstTimeModal, setShowFirstTimeModal] = useState(false);
 
     const handleUserRoleAndRedirect = async (user) => {
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
 
-        let role = "u"
+        let role = "u";
+        let approvalStatus;
+        let isFirstTimeGoogle = false;
 
         if (!userSnap.exists()) {
+            isFirstTimeGoogle = true;
+            approvalStatus = 'pending';
+
             await setDoc(userRef, {
                 email: user.email,
                 role: role,
@@ -43,12 +49,16 @@ export default function Login() {
             });
         } else {
             role = userSnap.data().role;
+            approvalStatus = userSnap.data().approvalStatus || 'approved';
         }
 
-        const approvalStatus = userSnap.data().approvalStatus || 'approved';
         if (approvalStatus !== 'approved') {
             await signOut(auth);
-            setShowPendingModal(true);
+            if (isFirstTimeGoogle) {
+                setShowFirstTimeModal(true);
+            } else {
+                setShowPendingModal(true);
+            }
             return;
         }
 
@@ -120,7 +130,7 @@ export default function Login() {
                         <span>email and password</span>
                     </div>
 
-                    {error && <p id="error-message"style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
+                    {error && <p id="error-message" style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
 
                     <form className="auth-form" onSubmit={handleLoginEP}>
                         <div className="auth-group">
@@ -190,7 +200,36 @@ export default function Login() {
                     </div>
                 </div>
             )}
+
+            {/* First-Time Google Sign-In Modal */}
+            {showFirstTimeModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content lock-modal">
+                        <div className="modal-header">
+                            <h2>Welcome</h2>
+                            <button className="modal-close" onClick={() => setShowFirstTimeModal(false)}>
+                                <img src={closeIcon} alt="Close" width="20" height="20"/>
+                            </button>
+                        </div>
+                        <div className="lock-body">
+                            <div className="lock-icon-large">
+                                <img src={warningIcon} alt="Welcome" width="45" height="45" className="grey-filter"/>
+                            </div>
+                            <p className="lock-message">Account created successfully!</p>
+                            <p className="lock-subtext">
+                                This is the first time you are logging in with this google account,
+                                it will be approved first before you can enter.
+                            </p>
+                        </div>
+                        <div className="modal-actions lock-actions">
+                            <button className="understood-btn" onClick={() => setShowFirstTimeModal(false)}>
+                                OK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
-    }
+}
 
