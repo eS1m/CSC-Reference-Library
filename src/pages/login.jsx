@@ -134,7 +134,7 @@ export default function Login() {
 
                     <form className="auth-form" onSubmit={handleLoginEP}>
                         <div className="auth-group">
-                            <label className="auth-label" htmlFor="email">Username</label>
+                            <label className="auth-label" htmlFor="email">Email</label>
                             <input 
                                 className="auth-input auth-input-login" 
                                 type="email" 
@@ -142,7 +142,7 @@ export default function Login() {
                                 value={email} 
                                 onChange={(e) => setEmail(e.target.value)} 
                                 name="email" 
-                                placeholder="Enter your email" 
+                                placeholder="Enter your email"
                                 required/>
                         </div>
                         <div className="auth-group">
@@ -166,7 +166,7 @@ export default function Login() {
                     </form>
 
                     <div className="auth-divider" id="auth-other">
-                        <span>OR login with</span>
+                        <span>OR</span>
                     </div>
 
                     <button className="auth-button" id="google-login" onClick={signIn}>

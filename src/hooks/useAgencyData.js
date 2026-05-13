@@ -14,7 +14,19 @@ export const useAgencyData = () => {
     const [error, setError] = useState(null);
 
     const validateEmployees = useCallback((e) => {
-        return !!(e?.employeeData && Object.keys(e.employeeData).length > 0);
+        if (!e?.employeeData || Object.keys(e.employeeData).length === 0) return false;
+        
+        const hrmFields = ['permanent', 'tempContractCasual', 'coterminusOthers'];
+        const hasHrmSummary = e.hrmSummary && hrmFields.every(f => 
+            typeof e.hrmSummary[f] === 'number' && !isNaN(e.hrmSummary[f])
+        );
+        
+        const complementFields = ['firstLevel', 'secondLevelPT', 'secondLevelEM', 'thirdLevelPA'];
+        const hasPersonnelComplement = e.personnelComplement && complementFields.every(f => 
+            typeof e.personnelComplement[f] === 'number' && !isNaN(e.personnelComplement[f])
+        );
+        
+        return hasHrmSummary && hasPersonnelComplement;
     }, []);
 
     useEffect(() => {

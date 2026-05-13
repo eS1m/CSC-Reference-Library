@@ -42,6 +42,18 @@ export default function Uemployee() {
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
 
+  const [hrmSummary, setHrmSummary] = useState({
+    permanent: '',
+    tempContractCasual: '',
+    coterminusOthers: ''
+  });
+  const [personnelComplement, setPersonnelComplement] = useState({
+    firstLevel: '',
+    secondLevelPT: '',
+    secondLevelEM: '',
+    thirdLevelPA: ''
+  });
+
   const filledCells = Object.keys(tableData).length;
 
   // Fetching data from Firebase/Firestore via hook
@@ -51,6 +63,17 @@ export default function Uemployee() {
     if (employees) {
       setTableData(employees.employeeData || {});
       setDataAsOf(employees.dataAsOf || '');
+      setHrmSummary({
+        permanent: employees.hrmSummary?.permanent ?? '',
+        tempContractCasual: employees.hrmSummary?.tempContractCasual ?? '',
+        coterminusOthers: employees.hrmSummary?.coterminusOthers ?? ''
+      });
+      setPersonnelComplement({
+        firstLevel: employees.personnelComplement?.firstLevel ?? '',
+        secondLevelPT: employees.personnelComplement?.secondLevelPT ?? '',
+        secondLevelEM: employees.personnelComplement?.secondLevelEM ?? '',
+        thirdLevelPA: employees.personnelComplement?.thirdLevelPA ?? ''
+      });
       setIsEditing(false);
     } else {
       setIsEditing(true);
@@ -90,6 +113,17 @@ export default function Uemployee() {
         return;
     }
 
+    const hrmFields = ['permanent', 'tempContractCasual', 'coterminusOthers'];
+    const complementFields = ['firstLevel', 'secondLevelPT', 'secondLevelEM', 'thirdLevelPA'];
+    
+    const isHrmComplete = hrmFields.every(f => hrmSummary[f] !== '');
+    const isComplementComplete = complementFields.every(f => personnelComplement[f] !== '');
+
+    if (!isHrmComplete || !isComplementComplete) {
+      setMessage({ text: "Please fill in all HRM Office and Personnel Complement fields.", type: "error" });
+      return;
+    }
+
     const allZero = Object.values(tableData).every(val => val === 0);
     if (allZero) {
         const confirmSave = window.confirm("All employee values are 0. Are you sure you want to save?");
@@ -108,16 +142,16 @@ export default function Uemployee() {
         employeeData: tableData,
 
         hrmSummary: {
-          permanent: totalPermanent,
-          tempContractCasual: totalTempContractCasual,
-          coterminusOthers: totalCoterminusOthers
+          permanent: Number(hrmSummary.permanent),
+          tempContractCasual: Number(hrmSummary.tempContractCasual),
+          coterminusOthers: Number(hrmSummary.coterminusOthers)
         },
 
         personnelComplement: {
-          firstLevel: total1stLevel,
-          secondLevelPT: total2ndLevelPT,
-          secondLevelEM: total2ndLevelEM,
-          thirdLevelPA: total3rdLevelPA
+          firstLevel: Number(personnelComplement.firstLevel),
+          secondLevelPT: Number(personnelComplement.secondLevelPT),
+          secondLevelEM: Number(personnelComplement.secondLevelEM),
+          thirdLevelPA: Number(personnelComplement.thirdLevelPA)
         }
       });
 
@@ -154,27 +188,21 @@ export default function Uemployee() {
     }));
   };
 
-  const getSumByStatus = (statuses) => {
-    return Object.keys(tableData).reduce((acc, key) => {
-      const isMatch = statuses.some(status => key.includes(status));
-      return isMatch ? acc + tableData[key] : acc;
-    }, 0);
+  const handleHrmChange = (field, value) => {
+    const num = parseInt(value);
+    setHrmSummary(prev => ({
+      ...prev,
+      [field]: value === '' ? '' : (isNaN(num) || num < 0 ? 0 : num)
+    }));
   };
 
-  const getSumByCategory = (category) => {
-    return Object.keys(tableData).reduce((acc, key) => {
-      return key.includes(category) ? acc + tableData[key] : acc;
-    }, 0);
+  const handleComplementChange = (field, value) => {
+    const num = parseInt(value);
+    setPersonnelComplement(prev => ({
+      ...prev,
+      [field]: value === '' ? '' : (isNaN(num) || num < 0 ? 0 : num)
+    }));
   };
-
-  const totalPermanent = getSumByStatus(["Permanent"]);
-  const totalTempContractCasual = getSumByStatus(["Temporary", "Contractuals", "Casuals"]);
-  const totalCoterminusOthers = getSumByStatus(["Co-Terminus","Elective", "Job Order"]);
-
-  const total1stLevel = getSumByCategory(categories[0]);
-  const total2ndLevelPT = getSumByCategory(categories[1]);
-  const total2ndLevelEM = getSumByCategory(categories[2]);
-  const total3rdLevelPA = getSumByCategory(categories[3]);
 
   if (loading) {
     return <div className="loading-screen">Loading Employee Data...</div>;
@@ -200,17 +228,101 @@ export default function Uemployee() {
             )}
             <p className="profile-employee-title">No. of Employees in HRM office:</p>
             <div className="profile-employee-input-container sum">
-              <p>Permanent: <span>{totalPermanent}</span></p>
-              <p>Temporary, Contractual, Casual: <span>{totalTempContractCasual}</span></p>
-              <p>Co-Terminus, Others: <span>{totalCoterminusOthers}</span></p>
+              <div className="profile-employee-group">
+                <label className="employee-label">Permanent</label>
+                <input 
+                  type="number" 
+                  className="summary-input"
+                  min="0"
+                  onChange={(e) => handleHrmChange('permanent', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  value={hrmSummary.permanent ?? ''}
+                  disabled={!isEditing}
+                  placeholder="0"
+                />
+              </div>
+              <div className="profile-employee-group">
+                <label className="employee-label">Temporary, Contractual, Casual</label>
+                <input 
+                  type="number" 
+                  className="summary-input"
+                  min="0"
+                  onChange={(e) => handleHrmChange('tempContractCasual', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  value={hrmSummary.tempContractCasual ?? ''}
+                  disabled={!isEditing}
+                  placeholder="0"
+                />
+              </div>
+              <div className="profile-employee-group">
+                <label className="employee-label">Co-Terminus, Others</label>
+                <input 
+                  type="number" 
+                  className="summary-input"
+                  min="0"
+                  onChange={(e) => handleHrmChange('coterminusOthers', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  value={hrmSummary.coterminusOthers ?? ''}
+                  disabled={!isEditing}
+                  placeholder="0"
+                />
+              </div>
             </div>
 
             <p className="profile-employee-title">Agency Personnel Complement:</p>
             <div className="profile-employee-input-container sum">
-              <p>1st Level: <span>{total1stLevel}</span></p>
-              <p>2nd Level Professional/Technical: <span>{total2ndLevelPT}</span></p>
-              <p>2nd Level Executive/Managerial (SG-25 and above): <span>{total2ndLevelEM}</span></p>
-              <p>3rd Level (Presidential Appointees): <span>{total3rdLevelPA}</span></p>
+              <div className="profile-employee-group">
+                <label className="employee-label">1st Level</label>
+                <input 
+                  type="number" 
+                  className="summary-input"
+                  min="0"
+                  onChange={(e) => handleComplementChange('firstLevel', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  value={personnelComplement.firstLevel ?? ''}
+                  disabled={!isEditing}
+                  placeholder="0"
+                />
+              </div>
+              <div className="profile-employee-group">
+                <label className="employee-label">2nd Level Professional/Technical</label>
+                <input 
+                  type="number" 
+                  className="summary-input"
+                  min="0"
+                  onChange={(e) => handleComplementChange('secondLevelPT', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  value={personnelComplement.secondLevelPT ?? ''}
+                  disabled={!isEditing}
+                  placeholder="0"
+                />
+              </div>
+              <div className="profile-employee-group">
+                <label className="employee-label">2nd Level Executive/Managerial (SG-25 and above)</label>
+                <input 
+                  type="number" 
+                  className="summary-input"
+                  min="0"
+                  onChange={(e) => handleComplementChange('secondLevelEM', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  value={personnelComplement.secondLevelEM ?? ''}
+                  disabled={!isEditing}
+                  placeholder="0"
+                />
+              </div>
+              <div className="profile-employee-group">
+                <label className="employee-label">3rd Level (Presidential Appointees)</label>
+                <input 
+                  type="number" 
+                  className="summary-input"
+                  min="0"
+                  onChange={(e) => handleComplementChange('thirdLevelPA', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  value={personnelComplement.thirdLevelPA ?? ''}
+                  disabled={!isEditing}
+                  placeholder="0"
+                />
+              </div>
             </div>
 
             <div className="employee-main-content-header table">
