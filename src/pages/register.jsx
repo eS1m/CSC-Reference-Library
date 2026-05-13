@@ -108,7 +108,7 @@ export default function Register() {
                                     className={`role-card ${role === 'p' ? 'selected' : ''}`}
                                     onClick={() => setRole('p')}
                                 >
-                                    <span className="role-card-title">PRIME Officer</span>
+                                    <span className="role-card-title">CSC RO X</span>
                                     <span className="role-card-desc">CSC reviewer</span>
                                 </div>
                                 <div 

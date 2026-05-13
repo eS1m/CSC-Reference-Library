@@ -6,6 +6,7 @@ import dashboardIcon from '../assets/dashboard.svg';
 import reviewIcon from '../assets/review.svg';
 import editIcon from '../assets/edit.svg';
 import profileIcon from '../assets/profile.svg';
+import folderIcon from '../assets/folder.svg';
 
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
@@ -36,6 +37,7 @@ export default function Alayout() {
             case '/dashboard-a': return 'Admin Dashboard';
             case '/activity-logs-a': return 'Activity Logs';
             case '/test-page-a': return 'Test Page';
+            case '/drive-browser-a': return 'Google Drive Browser';
             default: return 'Admin Portal';
         }
     };
@@ -107,6 +109,16 @@ export default function Alayout() {
                         </nav>
                     </div>
                     */}
+
+                    <div className="sidebar-section">
+                        <p className="sidebar-label">FILE MANAGEMENT</p>
+                        <nav>
+                            <NavLink className="nav-item-admin nav-drive-browser" to="/drive-browser-a">
+                                <img src={folderIcon} alt="Drive Browser" width="20" height="20" className="deep-blue-filter"/>
+                                Drive Browser
+                            </NavLink>
+                        </nav>
+                    </div>
 
                     <div className="sidebar-section">
                         <p className="sidebar-label">DEVELOPMENT</p>

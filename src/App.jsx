@@ -13,7 +13,7 @@ import Uview from './pages/lgu/view-u'
 
 import Playout from './components/layout-p'
 import Pdashboard from './pages/prime/dashboard-p';
-import Preview from './pages/prime/review-p';
+import DriveBrowserCSC from './pages/prime/drive-browser-csc';
 // import Papproved from './pages/prime/approved-p';  // Future
 // import Prejected from './pages/prime/rejected-p';  // Future
 // import Pprofile from './pages/prime/profile-p';    // Future
@@ -22,6 +22,7 @@ import Alayout from './components/layout-a'
 import Adashboard from './pages/admin/dashboard-a';
 import Aprofile from './pages/admin/profile-a';
 import ActivityLogsA from './pages/admin/activity-logs-a';
+import DriveBrowserA from './pages/admin/drive-browser-a';
 
 import ProtectedRoute from './components/ProtectedRoute'
 import ProfileGuard from './components/ProfileGuard';
@@ -66,17 +67,16 @@ function App() {
             } />
           </Route>
 
-          {/* P Routes - Strictly for PRIME-HRM officers */}
+          {/* P Routes - Strictly for CSC RO X */}
           <Route element={<Playout/>}>
             <Route path="/dashboard-p" element={
               <ProtectedRoute requiredRole="p">
                 <Pdashboard/>
               </ProtectedRoute> 
             } />
-            {/* Future routes - create placeholder components or remove for now */}
-            <Route path="/review-p" element={
+            <Route path="/drive-browser-csc" element={
               <ProtectedRoute requiredRole="p">
-                <Preview/>
+                <DriveBrowserCSC/>
               </ProtectedRoute> 
             } />
             {/* <Route path="/approved-p" element={
@@ -111,6 +111,11 @@ function App() {
             <Route path="/profile-a" element={
               <ProtectedRoute requiredRole="admin">
                 <Aprofile/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/drive-browser-a" element={
+              <ProtectedRoute requiredRole="admin">
+                <DriveBrowserA/>
               </ProtectedRoute> 
             } />
           </Route>

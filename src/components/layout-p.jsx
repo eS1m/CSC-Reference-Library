@@ -35,12 +35,12 @@ export default function Playout() {
     /* Dynamic Header Title Functionality */
     const getPageTitle = (path) => {
         switch (path) {
-            case '/dashboard-p': return 'PRIME-HRM Dashboard';
-            case '/review-p': return 'Review Submissions';
+            case '/dashboard-p': return 'CSC RO X Dashboard';
+            case '/drive-browser-csc': return 'Drive Browser';
             case '/approved-p': return 'Approved Files';
             case '/rejected-p': return 'Rejected Files';
-            case '/profile-p': return 'PRIME Profile';
-            default: return 'PRIME-HRM Portal';
+            case '/profile-p': return 'CSC RO X Profile';
+            default: return 'CSC RO X Portal';
         }
     };
 
@@ -58,7 +58,7 @@ export default function Playout() {
                         className="who-am-i-box"
                     >
                         <p id="who-am-i">{auth.currentUser?.email}</p>
-                        <p id="who-am-i-name">PRIME-HRM Officer</p>
+                        <p id="who-am-i-name">CSC RO X</p>
                     </div>
                     <div className="divider"></div>
                     <button id="btn-sign-out" onClick={logout}>
@@ -82,9 +82,9 @@ export default function Playout() {
                     <div className="sidebar-section">
                         <p className="sidebar-label">FILE MANAGEMENT</p>
                         <nav>
-                            <NavLink className="nav-item-prime nav-review-files" to="/review-p">
-                                <img src={reviewIcon} alt="Review" width="20" height="20" className="deep-blue-filter"/>
-                                Review Submissions
+                            <NavLink className="nav-item-prime nav-drive-browser-csc" to="/drive-browser-csc">
+                                <img src={folderIcon} alt="Drive Browser" width="20" height="20" className="deep-blue-filter"/>
+                                Drive Browser
                             </NavLink>
                             {/* <NavLink className="nav-item-prime nav-approved-files" to="/approved-p">
                                 <img src={approvedIcon} alt="Approved" width="20" height="20" className="deep-blue-filter"/>

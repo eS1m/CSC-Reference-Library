@@ -17,8 +17,6 @@ export default function Pdashboard() {
   const [stats, setStats] = useState({
     totalAgencies: 0,
     completedProfiles: 0,
-    totalSubmissions: 0,
-    pendingReviews: 0,
     approvedCount: 0,
     rejectedCount: 0
   });
@@ -79,15 +77,13 @@ export default function Pdashboard() {
     });
 
     const unsubSubmissions = onSnapshot(submissionsQuery, (snap) => {
-      let total = 0, pending = 0, approved = 0, rejected = 0;
+      let approved = 0, rejected = 0;
       const recent = [];
       
       snap.forEach(doc => {
         const data = doc.data();
-        total++;
         
-        if (data.status === 'Pending') pending++;
-        else if (data.status === 'Approved') approved++;
+        if (data.status === 'Approved') approved++;
         else if (data.status === 'Rejected') rejected++;
         
         recent.push({ id: doc.id, ...data });
@@ -98,8 +94,6 @@ export default function Pdashboard() {
       
       setStats(prev => ({ 
         ...prev, 
-        totalSubmissions: total, 
-        pendingReviews: pending,
         approvedCount: approved,
         rejectedCount: rejected
       }));
@@ -115,19 +109,19 @@ export default function Pdashboard() {
   }, []);
 
   if (loading) {
-    return <div className="loading-screen">Loading PRIME Dashboard...</div>;
+    return <div className="loading-screen">Loading CSC RO X Dashboard...</div>;
   }
 
   return (
     <main className="main-content">
       <div className="main-content-header">
-        <h1 id="main-content-title">PRIME-HRM Officer Dashboard</h1>
+        <h1 id="main-content-title">CSC RO X Dashboard</h1>
         <button 
           className="prime-dashboard-button" 
-          onClick={() => nav('/review-p')}
+          onClick={() => nav('/drive-browser-csc')}
         >
-          <img src={reviewIcon} width="30px" height="30px" alt="Review" className="white-filter"/>
-          Review Submissions
+          <img src={reviewIcon} width="30px" height="30px" alt="Drive Browser" className="white-filter"/>
+          Drive Browser
         </button>
       </div>
       
@@ -153,30 +147,12 @@ export default function Pdashboard() {
           </div>
         </div>
 
-        <div className="stat-card-prime">
-          <div className="stat-icon">
-            <img src={fileIcon} alt="Submissions" width="40" height="40" className="deep-blue-filter"/>
-          </div>
-          <div className="stat-info">
-            <h3>{stats.totalSubmissions}</h3>
-            <p>Total Submissions</p>
-          </div>
-        </div>
 
-        <div className="stat-card-prime pending">
-          <div className="stat-icon">
-            <img src={reviewIcon} alt="Pending" width="40" height="40" className="deep-blue-filter"/>
-          </div>
-          <div className="stat-info">
-            <h3>{stats.pendingReviews}</h3>
-            <p>Pending Reviews</p>
-          </div>
-        </div>
       </div>
 
       {/* Recent Submissions Table */}
       <div className="prime-recent-section">
-        <h2>Recent Submissions</h2>
+        <h2>Recent Uploads</h2>
         <div className="prime-table-container">
           <table className="prime-submissions-table">
             <thead>
@@ -190,7 +166,7 @@ export default function Pdashboard() {
             <tbody>
               {recentSubmissions.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="no-data">No submissions yet</td>
+                  <td colSpan="4" className="no-data">No uploads yet</td>
                 </tr>
               ) : (
                 recentSubmissions.map((sub) => (

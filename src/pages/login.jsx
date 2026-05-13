@@ -20,6 +20,7 @@ export default function Login() {
     const [error, setError] = useState('');
     const [showPendingModal, setShowPendingModal] = useState(false);
     const [showFirstTimeModal, setShowFirstTimeModal] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleUserRoleAndRedirect = async (user) => {
         const userRef = doc(db, "users", user.uid);
@@ -102,13 +103,17 @@ export default function Login() {
 
     const handleLoginEP = async (e) => {
         e.preventDefault();
+        if (isLoading) return;
         setError('');
+        setIsLoading(true);
         try {
             const result = await signInWithEmailAndPassword(auth, email, password);
             await handleUserRoleAndRedirect(result.user);
         } catch (err) {
             setError("Invalid email or password");
             console.error(err);
+        } finally {
+            setIsLoading(false);
         }
     };
     
@@ -157,8 +162,12 @@ export default function Login() {
                                 required 
                                 placeholder="Enter your password" />
                         </div>
-                        <button type="submit" className="auth-button" id="email-login">
-                            Login
+                        <button type="submit" className="auth-button" id="email-login" disabled={isLoading}>
+                            {isLoading ? (
+                                <div className="auth-button-spinner"></div>
+                            ) : (
+                                "Login"
+                            )}
                         </button>
                         <div className="register">
                             <span>No Account? <a href="/register">Register here</a></span>

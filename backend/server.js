@@ -9,6 +9,7 @@ const path = require('path');
 
 const app = express();
 app.use(cors());
+app.use(express.json());
 const upload = multer();
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
@@ -28,6 +29,34 @@ const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
 function escapeDriveQuery(str) {
   return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+async function collectFileIds(folderId) {
+  const fileIds = [];
+  let pageToken = null;
+  
+  do {
+    const response = await drive.files.list({
+      q: `'${folderId}' in parents and trashed = false`,
+      fields: 'nextPageToken, files(id, mimeType)',
+      pageSize: 1000,
+      pageToken
+    });
+    
+    const items = response.data.files || [];
+    for (const item of items) {
+      if (item.mimeType === 'application/vnd.google-apps.folder') {
+        const subFileIds = await collectFileIds(item.id);
+        fileIds.push(...subFileIds);
+      } else {
+        fileIds.push(item.id);
+      }
+    }
+    
+    pageToken = response.data.nextPageToken;
+  } while (pageToken);
+  
+  return fileIds;
 }
 
 async function getOrCreateFolder(folderName, parentId = null) {
@@ -140,6 +169,78 @@ app.get('/list-files', async (req, res) => {
         console.error('List Files Error:', error);
         res.status(500).send("Failed to fetch files from Drive.");
     }
+});
+
+app.get('/drive/browse', async (req, res) => {
+  try {
+    const folderId = req.query.folderId || process.env.GOOGLE_FOLDER_ID;
+    
+    let currentFolderName = 'Root';
+    if (folderId !== process.env.GOOGLE_FOLDER_ID) {
+      try {
+        const folderInfo = await drive.files.get({
+          fileId: folderId,
+          fields: 'name'
+        });
+        currentFolderName = folderInfo.data.name;
+      } catch (err) {
+        console.error('Error fetching folder name:', err);
+      }
+    }
+
+    const response = await drive.files.list({
+      q: `'${folderId}' in parents and trashed = false`,
+      fields: 'files(id, name, mimeType, webViewLink, modifiedTime, size, webContentLink)',
+      pageSize: 1000,
+      orderBy: 'folder,name'
+    });
+
+    const items = response.data.files || [];
+    const folders = items.filter(item => item.mimeType === 'application/vnd.google-apps.folder');
+    const files = items.filter(item => item.mimeType !== 'application/vnd.google-apps.folder');
+
+    res.status(200).json({
+      currentFolderId: folderId,
+      currentFolderName,
+      folders,
+      files
+    });
+  } catch (error) {
+    console.error('Drive browse error:', error);
+    res.status(500).json({ error: 'Failed to browse folder' });
+  }
+});
+
+app.post('/drive/delete', async (req, res) => {
+  try {
+    const { fileId } = req.body;
+    if (!fileId) {
+      return res.status(400).json({ error: 'fileId is required' });
+    }
+
+    const fileMeta = await drive.files.get({
+      fileId,
+      fields: 'mimeType, name'
+    });
+
+    let nestedFileIds = [];
+    if (fileMeta.data.mimeType === 'application/vnd.google-apps.folder') {
+      nestedFileIds = await collectFileIds(fileId);
+    }
+
+    await drive.files.delete({ fileId });
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Item deleted successfully',
+      mimeType: fileMeta.data.mimeType,
+      name: fileMeta.data.name,
+      nestedFileIds
+    });
+  } catch (error) {
+    console.error('Drive delete error:', error);
+    res.status(500).json({ error: 'Failed to delete item' });
+  }
 });
 
 app.get('/read-excel', async (req, res) => {

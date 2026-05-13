@@ -17,7 +17,7 @@ export default function LockModal({ isOpen, onClose, currentStep }) {
     return {
       title: "Upload Locked",
       message: "Your submission is awaiting review.",
-      subtext: "You cannot upload new files while a previous submission is being reviewed by PRIME-HRM."
+      subtext: "You cannot upload new files while a previous submission is being reviewed by CSC RO X."
     };
   };
 

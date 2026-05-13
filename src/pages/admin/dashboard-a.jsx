@@ -59,7 +59,7 @@ export default function Adashboard() {
   const formatRole = (role) => {
     switch (role) {
       case 'u': return 'Agency User';
-      case 'p': return 'PRIME Officer';
+      case 'p': return 'CSC RO X';
       case 'admin': return 'Administrator';
       default: return role || 'Unknown';
     }
@@ -239,11 +239,11 @@ export default function Adashboard() {
 
         <div className="stat-card-admin">
           <div className="stat-icon">
-            <img src={profileIcon} alt="PRIME Officers" width="40" height="40" className="deep-blue-filter"/>
+            <img src={profileIcon} alt="CSC RO X" width="40" height="40" className="deep-blue-filter"/>
           </div>
           <div className="stat-info">
             <h3>{stats.primeOfficers}</h3>
-            <p>PRIME Officers</p>
+            <p>CSC RO X</p>
           </div>
         </div>
 
