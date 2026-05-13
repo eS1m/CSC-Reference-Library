@@ -100,17 +100,30 @@
     max-width: none;
 }
 
-.profile-employee-input-container.sum p{
-    font-weight: 370;
-    font-size: 1.1rem;
-    margin:0;
-    width: auto;
+.summary-input {
+    margin-top: 8px;
+    width: 200px;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.027);
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.062);
+    color: #555;
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    transition: 0.15s ease;
+    box-sizing: border-box;
 }
 
-.profile-employee-input-container.sum span{
-    font-weight: 500;
-    font-size: 1.3rem;
-    color: var(--light-blue);
+.summary-input:focus {
+    outline: none;
+    box-shadow: 0 0 6px var(--light-blue);
+}
+
+.summary-input:disabled {
+    background: rgba(0, 0, 0, 0.05);
+    color: #888;
+    cursor: not-allowed;
+    border-color: transparent;
 }
 
 .profile-employee-group {
