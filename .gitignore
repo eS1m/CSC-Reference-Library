@@ -31,7 +31,7 @@ dist-ssr
 AGENTS.md
 
 # Folders
-excel_test_data
+src/excel_test_data
 
 # Test Pages
 src/css/admin/test-page.css

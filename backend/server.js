@@ -40,7 +40,9 @@ async function collectFileIds(folderId) {
       q: `'${folderId}' in parents and trashed = false`,
       fields: 'nextPageToken, files(id, mimeType)',
       pageSize: 1000,
-      pageToken
+      pageToken,
+      includeItemsFromAllDrives: true,
+      supportsAllDrives: true
     });
     
     const items = response.data.files || [];
@@ -62,7 +64,12 @@ async function collectFileIds(folderId) {
 async function getOrCreateFolder(folderName, parentId = null) {
   const searchParent = parentId || process.env.GOOGLE_FOLDER_ID;
   const query = `name = '${escapeDriveQuery(folderName)}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false and '${searchParent}' in parents`;
-  const res = await drive.files.list({ q: query, fields: 'files(id)' });
+  const res = await drive.files.list({ 
+    q: query, 
+    fields: 'files(id)',
+    includeItemsFromAllDrives: true,
+    supportsAllDrives: true
+  });
   
   if (res.data.files.length > 0) {
     return res.data.files[0].id;
@@ -192,7 +199,9 @@ app.get('/drive/browse', async (req, res) => {
       q: `'${folderId}' in parents and trashed = false`,
       fields: 'files(id, name, mimeType, webViewLink, modifiedTime, size, webContentLink)',
       pageSize: 1000,
-      orderBy: 'folder,name'
+      orderBy: 'folder,name',
+      includeItemsFromAllDrives: true,
+      supportsAllDrives: true
     });
 
     const items = response.data.files || [];
@@ -245,7 +254,7 @@ app.post('/drive/delete', async (req, res) => {
 
 app.get('/read-excel', async (req, res) => {
   try {
-    const filePath = path.join(__dirname, '..', 'excel_test_data', 'PRIME-HRM EXAMPLE DATA.xlsx');
+    const filePath = path.join(__dirname, '..', 'src', 'excel_test_data', 'PRIME-HRM EXAMPLE DATA.xlsx');
     const workbook = xlsx.readFile(filePath);
     const worksheet = workbook.Sheets['Assessment Results'];
 
@@ -257,7 +266,9 @@ app.get('/read-excel', async (req, res) => {
       H8: worksheet['H8']?.v ?? null,
       N8: worksheet['N8']?.v ?? null,
       T8: worksheet['T8']?.v ?? null,
-      Z8: worksheet['Z8']?.v ?? null
+      Z8: worksheet['Z8']?.v ?? null,
+      H53: worksheet['H53']?.v ?? null,
+      Y53: worksheet['Y53']?.v ?? null
     };
 
     res.status(200).json({ cells });
@@ -269,6 +280,6 @@ app.get('/read-excel', async (req, res) => {
 
 const PORT = process.env.PORT || 5000; 
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
 });
