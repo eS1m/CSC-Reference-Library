@@ -80,21 +80,6 @@ function App() {
                 <DriveBrowserCSC/>
               </ProtectedRoute> 
             } />
-            {/* <Route path="/approved-p" element={
-              <ProtectedRoute requiredRole="p">
-                <Papproved/>
-              </ProtectedRoute> 
-            } />
-            <Route path="/rejected-p" element={
-              <ProtectedRoute requiredRole="p">
-                <Prejected/>
-              </ProtectedRoute> 
-            } />
-            <Route path="/profile-p" element={
-              <ProtectedRoute requiredRole="p">
-                <Pprofile/>
-              </ProtectedRoute> 
-            } /> */}
           </Route>
 
           {/* A Routes - Strictly for System Administrators */}
@@ -119,11 +104,11 @@ function App() {
                 <DriveBrowserA/>
               </ProtectedRoute> 
             } />
-            <Route path="/test-page-a" element={
+            {/* <Route path="/test-page-a" element={
               <ProtectedRoute requiredRole="admin">
                 <TestPageA/>
               </ProtectedRoute> 
-            } />
+            } /> */}
           </Route>
 
         </Routes>

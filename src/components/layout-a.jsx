@@ -120,7 +120,7 @@ export default function Alayout() {
                         </nav>
                     </div>
 
-                    <div className="sidebar-section">
+                    {/* <div className="sidebar-section">
                         <p className="sidebar-label">DEVELOPMENT</p>
                         <nav>
                             <NavLink className="nav-item-admin nav-test-page" to="/test-page-a">
@@ -128,7 +128,7 @@ export default function Alayout() {
                                 Test Page
                             </NavLink>
                         </nav>
-                    </div>
+                    </div> */}
 
                     <div className="sidebar-section">
                         <p className="sidebar-label">PROFILE</p>
