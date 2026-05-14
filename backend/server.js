@@ -237,7 +237,20 @@ app.post('/drive/delete', async (req, res) => {
       nestedFileIds = await collectFileIds(fileId);
     }
 
-    await drive.files.delete({ fileId });
+    try {
+      await drive.files.delete({ fileId });
+    } catch (deleteErr) {
+      if (deleteErr.code === 403 || deleteErr.message?.includes('Insufficient permissions')) {
+        return res.status(403).json({
+          error: 'Cannot delete this item because it is owned by a different Google account. Only the file owner can delete it.',
+          code: 'NOT_OWNER',
+          mimeType: fileMeta.data.mimeType,
+          name: fileMeta.data.name,
+          nestedFileIds
+        });
+      }
+      throw deleteErr;
+    }
 
     res.status(200).json({ 
       success: true, 

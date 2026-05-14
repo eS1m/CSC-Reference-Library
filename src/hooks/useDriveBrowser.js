@@ -70,8 +70,14 @@ export function useDriveBrowser() {
       body: JSON.stringify({ fileId: item.id })
     });
     
-    if (!res.ok) throw new Error('Failed to delete item');
     const data = await res.json();
+    
+    if (!res.ok) {
+      if (res.status === 403 && data.code === 'NOT_OWNER') {
+        throw new Error(data.error || 'Cannot delete: this file is owned by a different Google account.');
+      }
+      throw new Error(data.error || 'Failed to delete item');
+    }
 
     const fileIdsToClean = [];
     if (data.mimeType === 'application/vnd.google-apps.folder') {
