@@ -1,6 +1,6 @@
 import '../../css/admin/admin-dashboard.css';
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase/config';
 import { collection, query, where, onSnapshot, orderBy, doc, updateDoc } from 'firebase/firestore';
 import { logActivity } from '../../firebase/activityLog';
@@ -13,6 +13,8 @@ import reviewIcon from '../../assets/review.svg';
 import profileIcon from '../../assets/profile.svg';
 
 export default function Adashboard() {
+  const nav = useNavigate();
+
   /* Stats State */
   const [stats, setStats] = useState({
     totalAgencies: 0,
@@ -29,6 +31,7 @@ export default function Adashboard() {
   const [recentSubmissions, setRecentSubmissions] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [activityLogs, setActivityLogs] = useState([]);
+  const [pendingDeletions, setPendingDeletions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   /* Date and Time */
@@ -193,10 +196,22 @@ export default function Adashboard() {
       setLoading(false);
     });
 
+    const deletionsQuery = query(
+      collection(db, 'deletionRequests'),
+      where('status', '==', 'pending')
+    );
+    const unsubDeletions = onSnapshot(deletionsQuery, (snap) => {
+      const data = [];
+      snap.forEach(doc => data.push({ id: doc.id, ...doc.data() }));
+      data.sort((a, b) => (b.requestedAt?.seconds || 0) - (a.requestedAt?.seconds || 0));
+      setPendingDeletions(data);
+    });
+
     return () => {
       unsubUsers();
       unsubProfiles();
       unsubSubmissions();
+      unsubDeletions();
     };
   }, []);
 
@@ -448,6 +463,40 @@ export default function Adashboard() {
           </div>
         </div>
       </div>
+
+      {/* Pending Deletion Requests */}
+      {pendingDeletions.length > 0 && (
+        <div className="deletion-preview-section">
+          <h2>Pending Deletion Requests ({pendingDeletions.length})</h2>
+          <div className="deletion-preview-table-wrapper">
+            <table className="deletion-preview-table">
+              <thead>
+                <tr>
+                  <th>Agency</th>
+                  <th>File</th>
+                  <th>Reason</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingDeletions.slice(0, 5).map((req) => (
+                  <tr key={req.id}>
+                    <td>{req.agencyName}</td>
+                    <td>{req.fileName}</td>
+                    <td className="reason-cell">{req.reason}</td>
+                    <td>{formatFirestoreDate(req.requestedAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="view-all-link">
+            <button onClick={() => nav('/deletion-requests-a')}>
+              View All Deletion Requests →
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Clock */}
       <div className="stat-time stat-container">

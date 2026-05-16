@@ -50,10 +50,12 @@ export default function DriveBrowserA() {
   const confirmDelete = async () => {
     if (!deleteModal.item) return;
     setDeleteLoading(true);
+    setDeleteModal(prev => ({ ...prev, error: '' }));
     try {
       await deleteItem(deleteModal.item);
       closeDeleteModal();
     } catch (err) {
+      console.error('Delete failed:', err);
       setDeleteModal(prev => ({ ...prev, error: err.message }));
     } finally {
       setDeleteLoading(false);
@@ -211,6 +213,11 @@ export default function DriveBrowserA() {
               </div>
               <p className="lock-message">Are you sure you want to delete this item?</p>
               <p className="lock-subtext">{deleteModal.item?.name}</p>
+              {deleteModal.error && (
+                <p className="lock-subtext" style={{ color: '#c0392b', marginTop: '12px', fontWeight: 500 }}>
+                  {deleteModal.error}
+                </p>
+              )}
             </div>
             <div className="modal-actions lock-actions" style={{ gap: '12px' }}>
               <button className="understood-btn secondary" onClick={closeDeleteModal}>

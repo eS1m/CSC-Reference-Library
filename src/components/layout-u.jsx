@@ -8,6 +8,8 @@ import folderIcon from '../assets/folder.svg';
 import profileIcon from '../assets/profile.svg';
 import employeeIcon from '../assets/employees.svg'
 import lockIcon from '../assets/lock.svg'
+import fileIcon from '../assets/file.svg'
+import editIcon from '../assets/edit.svg'
 
 import LockModal from '../components/LockModal';
 import { useAgencyData } from '../hooks/useAgencyData';
@@ -20,6 +22,7 @@ export default function Ulayout() {
 
     /* Lock Modal State */
     const [lockModalOpen, setLockModalOpen] = useState(false);
+    const [lockModalConfig, setLockModalConfig] = useState(null);
 
     async function logout() {
         try {
@@ -37,9 +40,29 @@ export default function Ulayout() {
     /* Upload Restriction Functionality */
     const { isLocked, currentStep, agencyName, loading } = useAgencyData();
 
+    const isActionPlanLocked = currentStep < 4;
+
     const handleLockedNav = (e) => {
         if (isLocked) {
             e.preventDefault();
+            setLockModalConfig(null);
+            setLockModalOpen(true);
+        }
+    };
+
+    const handleActionPlanLockedNav = (e) => {
+        if (isActionPlanLocked) {
+            e.preventDefault();
+            const needsProfile = currentStep < 3;
+            setLockModalConfig({
+                title: 'Action Plan Locked',
+                message: needsProfile 
+                    ? 'Please complete the previous steps first.'
+                    : 'Please upload your Self-Assessment first.',
+                subtext: needsProfile
+                    ? 'You need to finish your Agency Profile and Employee Profile before you can access the Action Plan.'
+                    : 'You need to upload your Self-Assessment file before you can generate an Action Plan.'
+            });
             setLockModalOpen(true);
         }
     };
@@ -52,6 +75,8 @@ export default function Ulayout() {
             case '/view-u': return 'Document Library';
             case '/profile-u': return 'Agency Profile';
             case '/employee-u': return 'Employee Information';
+            case '/action-plan-u': return 'Action Plan';
+            case '/test-page-u': return 'Agency Test Page';
             default: return 'Agency Screen';
         }
     };
@@ -113,6 +138,19 @@ export default function Ulayout() {
                                 <img src={folderIcon} alt="View Files" width="20" height="20" className="deep-blue-filter"/>
                                 View Your Files
                             </NavLink>
+                            <NavLink 
+                                className={`nav-item-user nav-action-plan ${isActionPlanLocked ? 'nav-locked' : ''}`}
+                                to="/action-plan-u"
+                                onClick={handleActionPlanLockedNav}
+                            >
+                                <img src={fileIcon} alt="Action Plan" width="20" height="20" className="deep-blue-filter"/>
+                                Action Plan
+                                {isActionPlanLocked && (
+                                    <span className="lock-tag">
+                                        <img src={lockIcon} alt="Locked" width="20" height="20" className='grey-filter'/>
+                                    </span>
+                                )}
+                            </NavLink>
                         </nav>
                     </div>
         
@@ -129,6 +167,16 @@ export default function Ulayout() {
                             </NavLink>
                         </nav>
                     </div>
+
+                    <div className="sidebar-section">
+                        <p className="sidebar-label">DEVELOPMENT</p>
+                        <nav>
+                            <NavLink className="nav-item-user nav-test-page" to="/test-page-u">
+                                <img src={editIcon} alt="Test Page" width="20" height="20" className="deep-blue-filter"/>
+                                Test Page
+                            </NavLink>
+                        </nav>
+                    </div>
                 </aside>
                 <main className="layout-content-area">
                     <Outlet />
@@ -138,7 +186,8 @@ export default function Ulayout() {
             <LockModal 
                 isOpen={lockModalOpen} 
                 onClose={() => setLockModalOpen(false)} 
-                currentStep={currentStep} 
+                currentStep={currentStep}
+                customMessage={lockModalConfig}
             />
         </div>
     );

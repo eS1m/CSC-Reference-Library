@@ -21,6 +21,7 @@ export default function Pdashboard() {
     rejectedCount: 0
   });
   const [recentSubmissions, setRecentSubmissions] = useState([]);
+  const [pendingDeletions, setPendingDeletions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   /* Date and Time */
@@ -101,10 +102,22 @@ export default function Pdashboard() {
       setLoading(false);
     });
 
+    const deletionsQuery = query(
+      collection(db, 'deletionRequests'),
+      where('status', '==', 'pending')
+    );
+    const unsubDeletions = onSnapshot(deletionsQuery, (snap) => {
+      const data = [];
+      snap.forEach(doc => data.push({ id: doc.id, ...doc.data() }));
+      data.sort((a, b) => (b.requestedAt?.seconds || 0) - (a.requestedAt?.seconds || 0));
+      setPendingDeletions(data);
+    });
+
     return () => {
       unsubUsers();
       unsubProfiles();
       unsubSubmissions();
+      unsubDeletions();
     };
   }, []);
 
@@ -188,6 +201,40 @@ export default function Pdashboard() {
           </table>
         </div>
       </div>
+
+      {/* Pending Deletion Requests */}
+      {pendingDeletions.length > 0 && (
+        <div className="deletion-preview-section">
+          <h2>Pending Deletion Requests ({pendingDeletions.length})</h2>
+          <div className="deletion-preview-table-wrapper">
+            <table className="deletion-preview-table">
+              <thead>
+                <tr>
+                  <th>Agency</th>
+                  <th>File</th>
+                  <th>Reason</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingDeletions.slice(0, 5).map((req) => (
+                  <tr key={req.id}>
+                    <td>{req.agencyName}</td>
+                    <td>{req.fileName}</td>
+                    <td className="reason-cell">{req.reason}</td>
+                    <td>{formatFirestoreDate(req.requestedAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="view-all-link">
+            <button onClick={() => nav('/deletion-requests-p')}>
+              View All Deletion Requests →
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Clock */}
       <div className="stat-time stat-container">

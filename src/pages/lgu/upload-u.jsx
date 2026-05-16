@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 import '../../css/lgu/user-layout.css';
 import '../../css/lgu/uupload.css';
 import uploadIcon from '../../assets/upload.svg';
@@ -74,6 +75,31 @@ export default function Uupload() {
     }
   };
 
+  /* Parse H53 and Y53 from Excel for Action Plan pre-fill */
+  const parseAssessmentCells = (fileBlob) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const worksheet = workbook.Sheets['Assessment Results'];
+          if (!worksheet) {
+            resolve({ currentMaturityLevel: null, targetMaturityLevel: null });
+            return;
+          }
+          resolve({
+            currentMaturityLevel: worksheet['H53']?.v != null ? String(worksheet['H53'].v) : null,
+            targetMaturityLevel: worksheet['Y53']?.v != null ? String(worksheet['Y53'].v) : null
+          });
+        } catch {
+          resolve({ currentMaturityLevel: null, targetMaturityLevel: null });
+        }
+      };
+      reader.readAsArrayBuffer(fileBlob);
+    });
+  };
+
   /* Upload to Server */
   const handleUpload = async (e) => {
     const fileExtension = file.name.split('.').pop();
@@ -89,6 +115,9 @@ export default function Uupload() {
     setIsUploading(true);
     setUploadStatus("Uploading to Google Drive...");
     setStatusType("");
+
+    /* Parse Excel cells before uploading */
+    const parsedData = await parseAssessmentCells(file);
 
     const formData = new FormData();
     const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -115,7 +144,10 @@ export default function Uupload() {
         fileType: "Self-Assessment",
         uploadedAt: serverTimestamp(),
         assessmentYear: new Date().getFullYear(),
-        status: 'Pending'
+        status: 'Pending',
+        parsedData: parsedData.currentMaturityLevel || parsedData.targetMaturityLevel
+          ? { currentMaturityLevel: parsedData.currentMaturityLevel, targetMaturityLevel: parsedData.targetMaturityLevel }
+          : null
       };
 
       await addDoc(collection(db, "agencySubmissions"), submissionData);
@@ -130,7 +162,7 @@ export default function Uupload() {
         message: `Agency ${agencyName} uploaded Self-Assessment: ${formattedName}`
       });
 
-      nav('/dashboard-u');
+      nav('/action-plan-u');
 
       setUploadStatus("File successfully uploaded and recorded!");
       setStatusType("success");

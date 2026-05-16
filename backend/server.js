@@ -152,6 +152,84 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
+app.post('/approve-deletion', async (req, res) => {
+  try {
+    const { fileId } = req.body;
+    if (!fileId) {
+      return res.status(400).json({ error: 'fileId is required' });
+    }
+
+    try {
+      await drive.files.delete({ fileId });
+    } catch (deleteErr) {
+      if (deleteErr.code === 403 || deleteErr.message?.includes('Insufficient permissions')) {
+        return res.status(403).json({
+          error: 'Cannot delete this file because it is owned by a different Google account. Only the file owner can delete it.',
+          code: 'NOT_OWNER'
+        });
+      }
+      throw deleteErr;
+    }
+
+    res.status(200).json({ success: true, message: 'File deleted from Google Drive' });
+  } catch (error) {
+    console.error('Approve deletion error:', error);
+    res.status(500).json({ error: 'Failed to delete file from Google Drive' });
+  }
+});
+
+app.post('/upload-action-plan', upload.single('file'), async (req, res) => {
+  try {
+    const { agencyName } = req.body;
+    const currentYear = new Date().getFullYear().toString();
+
+    if (!agencyName) {
+      return res.status(400).send('Agency Name is required.');
+    }
+
+    if (!req.file) {
+      return res.status(400).send('No file provided.');
+    }
+
+    const finalFileName = `Action Plan-(${agencyName}).docx`;
+
+    const agencyFolderId = await getOrCreateFolder(agencyName);
+    const yearFolderId = await getOrCreateFolder(currentYear, agencyFolderId);
+
+    const bufferStream = new stream.PassThrough();
+    bufferStream.end(req.file.buffer);
+
+    const response = await drive.files.create({
+      requestBody: {
+        name: finalFileName,
+        parents: [yearFolderId],
+      },
+      media: {
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        body: bufferStream,
+      },
+      fields: 'id, webViewLink',
+    });
+
+    const fileId = response.data.id;
+
+    await drive.permissions.create({
+      fileId: fileId,
+      requestBody: { role: 'reader', type: 'anyone' },
+    });
+
+    res.status(200).json({
+      fileId: fileId,
+      webViewLink: response.data.webViewLink,
+      fileName: finalFileName
+    });
+
+  } catch (error) {
+    console.error('Upload Action Plan Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/list-files', async (req, res) => {
     const userAccessToken = req.headers.authorization?.split(' ')[1];
     const SHARED_FOLDER_ID = process.env.GOOGLE_FOLDER_ID;

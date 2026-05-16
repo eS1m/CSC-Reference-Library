@@ -109,24 +109,23 @@ export const useAgencyData = () => {
         const isAgencyDone = validateAgency(profile);
         const isEmployeeDone = validateEmployees(employees);
         const selfAssessment = submissions.find(s => s.fileType === "Self-Assessment");
-        const assistPlan = submissions.find(s => s.fileType === "Assist-Plan");
+        const actionPlan = submissions.find(s => s.fileType === "Action-Plan");
 
         let step = 1;
         if (isAgencyDone) step = 2;
         if (isAgencyDone && isEmployeeDone) step = 3;
-        if (selfAssessment?.status === "Pending") step = 4;
-        else if (selfAssessment?.status === "Approved") step = 5;
-        if (assistPlan?.status === "Pending") step = 6;
+        if (selfAssessment) step = 4;
+        if (actionPlan) step = 5;
 
         return {
             currentStep: step,
-            isLocked: step !== 3 && step !== 5,
+            isLocked: step !== 3,
             isAgencyDone,
             isEmployeeDone,
             hasSelfAssessment: !!selfAssessment,
-            hasAssistPlan: !!assistPlan,
+            hasActionPlan: !!actionPlan,
             selfAssessmentStatus: selfAssessment?.status || null,
-            assistPlanStatus: assistPlan?.status || null,
+            actionPlanStatus: actionPlan?.status || null,
             agencyName: profile?.agencyDetails?.agencyName || "Agency User",
         };
     }, [profile, employees, submissions, validateEmployees]);
@@ -147,8 +146,8 @@ export const useAgencyData = () => {
         agencyName: derived.agencyName,
         
         hasSelfAssessment: derived.hasSelfAssessment,
-        hasAssistPlan: derived.hasAssistPlan,
+        hasActionPlan: derived.hasActionPlan,
         selfAssessmentStatus: derived.selfAssessmentStatus,
-        assistPlanStatus: derived.assistPlanStatus,
+        actionPlanStatus: derived.actionPlanStatus,
     };
 };

@@ -3,10 +3,13 @@ import '../css/lock-modal.css';
 import lockIcon from '../assets/lock.svg';
 import closeIcon from '../assets/close.svg';
 
-export default function LockModal({ isOpen, onClose, currentStep }) {
+export default function LockModal({ isOpen, onClose, currentStep, customMessage }) {
   if (!isOpen) return null;
 
   const getLockMessage = () => {
+    if (customMessage) {
+      return customMessage;
+    }
     if (currentStep < 3) {
       return {
         title: "Upload Locked",
@@ -16,8 +19,8 @@ export default function LockModal({ isOpen, onClose, currentStep }) {
     }
     return {
       title: "Upload Locked",
-      message: "Your submission is awaiting review.",
-      subtext: "You cannot upload new files while a previous submission is being reviewed by CSC RO X."
+      message: "Self-Assessment already uploaded.",
+      subtext: "You have already submitted your Self-Assessment. Please proceed to the Action Plan page to generate your next document."
     };
   };
 

@@ -8,6 +8,7 @@ import folderIcon from '../assets/folder.svg';
 import approvedIcon from '../assets/approved.svg';
 import rejectedIcon from '../assets/rejected.svg';
 import profileIcon from '../assets/profile.svg';
+import deleteIcon from '../assets/rejected.svg';
 
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
@@ -37,6 +38,7 @@ export default function Playout() {
         switch (path) {
             case '/dashboard-p': return 'CSC RO X Dashboard';
             case '/drive-browser-csc': return 'Drive Browser';
+            case '/deletion-requests-p': return 'Deletion Requests';
             case '/approved-p': return 'Approved Files';
             case '/rejected-p': return 'Rejected Files';
             case '/profile-p': return 'CSC RO X Profile';
@@ -97,6 +99,16 @@ export default function Playout() {
                         </nav>
                     </div>
         
+                    <div className="sidebar-section">
+                        <p className="sidebar-label">REVIEWS</p>
+                        <nav>
+                            <NavLink className="nav-item-prime nav-deletion-requests" to="/deletion-requests-p">
+                                <img src={deleteIcon} alt="Deletion Requests" width="20" height="20" className="deep-blue-filter"/>
+                                Deletion Requests
+                            </NavLink>
+                        </nav>
+                    </div>
+
                     <div className="sidebar-section">
                         <p className="sidebar-label">PROFILE</p>
                         <nav>

@@ -3,11 +3,15 @@ import { useAgencyData } from '../hooks/useAgencyData';
 
 const ProfileGuard = ({ children }) => {
     const location = useLocation();
-    const { currentStep, loading } = useAgencyData();
+    const { currentStep, hasSelfAssessment, isAgencyDone, isEmployeeDone, loading } = useAgencyData();
 
     if (loading) return <div className="loading-screen">Verifying Access...</div>;
 
     if (location.pathname === '/upload-u' && currentStep !== 3) {
+        return <Navigate to="/dashboard-u" replace />;
+    }
+
+    if (location.pathname === '/action-plan-u' && (!isAgencyDone || !isEmployeeDone || !hasSelfAssessment)) {
         return <Navigate to="/dashboard-u" replace />;
     }
 
