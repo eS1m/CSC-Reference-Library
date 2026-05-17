@@ -482,8 +482,7 @@ export default function ActionPlanU() {
         fileUrl: driveData.fileId ? `https://drive.google.com/file/d/${driveData.fileId}/view` : driveData.webViewLink,
         fileType: 'Action-Plan',
         uploadedAt: serverTimestamp(),
-        assessmentYear: year,
-        status: 'Pending'
+        assessmentYear: year
       });
 
       await logActivity({

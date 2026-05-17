@@ -149,10 +149,6 @@ export default function Uview() {
                 <img src={fileIcon} alt="File" width="80" height="80" className="deep-blue-filter"/>
                 <p>{file.fileName}</p>
                 
-                <span className={`status-badge ${(file.status || 'Pending').toLowerCase()}`}>
-                  {file.status || 'Pending'}
-                </span>
-
                 {delStatus && (
                   <span className={`deletion-badge ${delStatus}`}>
                     Deletion {delStatus}

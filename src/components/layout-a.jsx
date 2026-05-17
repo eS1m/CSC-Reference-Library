@@ -38,7 +38,7 @@ export default function Alayout() {
         switch (path) {
             case '/dashboard-a': return 'Admin Dashboard';
             case '/activity-logs-a': return 'Activity Logs';
-            case '/test-page-a': return 'Test Page';
+            // case '/test-page-a': return 'Test Page';
             case '/drive-browser-a': return 'Google Drive Browser';
             case '/deletion-requests-a': return 'Deletion Requests';
             default: return 'Admin Portal';
@@ -135,7 +135,7 @@ export default function Alayout() {
                         </nav>
                     </div>
 
-                    <div className="sidebar-section">
+                    {/* <div className="sidebar-section">
                         <p className="sidebar-label">DEVELOPMENT</p>
                         <nav>
                             <NavLink className="nav-item-admin nav-test-page" to="/test-page-a">
@@ -143,7 +143,7 @@ export default function Alayout() {
                                 Test Page
                             </NavLink>
                         </nav>
-                    </div>
+                    </div> */}
 
                     <div className="sidebar-section">
                         <p className="sidebar-label">PROFILE</p>

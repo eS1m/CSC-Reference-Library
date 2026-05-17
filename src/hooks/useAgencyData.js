@@ -133,8 +133,7 @@ export const useAgencyData = () => {
             isEmployeeDone,
             hasSelfAssessment: !!selfAssessment,
             hasActionPlan: !!actionPlan,
-            selfAssessmentStatus: selfAssessment?.status || null,
-            actionPlanStatus: actionPlan?.status || null,
+
             agencyName: profile?.agencyDetails?.agencyName || "Agency User",
         };
     }, [profile, employees, submissions, validateEmployees]);
@@ -153,7 +152,6 @@ export const useAgencyData = () => {
         agencyName: derived.agencyName,
         hasSelfAssessment: derived.hasSelfAssessment,
         hasActionPlan: derived.hasActionPlan,
-        selfAssessmentStatus: derived.selfAssessmentStatus,
-        actionPlanStatus: derived.actionPlanStatus,
+
     };
 };

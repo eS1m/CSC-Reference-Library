@@ -94,7 +94,7 @@ export default function Ulayout() {
             case '/profile-u': return 'Agency Profile';
             case '/employee-u': return 'Employee Information';
             case '/action-plan-u': return 'Action Plan';
-            case '/test-page-u': return 'Agency Test Page';
+            // case '/test-page-u': return 'Agency Test Page';
             default: return 'Agency Screen';
         }
     };
@@ -188,7 +188,7 @@ export default function Ulayout() {
                         </nav>
                     </div>
 
-                    <div className="sidebar-section">
+                    {/* <div className="sidebar-section">
                         <p className="sidebar-label">DEVELOPMENT</p>
                         <nav>
                             <NavLink className="nav-item-user nav-test-page" to="/test-page-u">
@@ -196,7 +196,7 @@ export default function Ulayout() {
                                 Test Page
                             </NavLink>
                         </nav>
-                    </div>
+                    </div> */}
                 </aside>
                 <main className="layout-content-area">
                     <Outlet />

@@ -216,28 +216,17 @@ export default function Adashboard() {
     });
 
     const unsubSubmissions = onSnapshot(submissionsQuery, (snap) => {
-      let total = 0, pending = 0, approved = 0, rejected = 0;
       const recent = [];
       
       snap.forEach(doc => {
-        const data = doc.data();
-        total++;
-        
-        if (data.status === 'Pending') pending++;
-        else if (data.status === 'Approved') approved++;
-        else if (data.status === 'Rejected') rejected++;
-        
-        recent.push({ id: doc.id, ...data });
+        recent.push({ id: doc.id, ...doc.data() });
       });
       
       recent.sort((a, b) => (b.uploadedAt?.seconds || 0) - (a.uploadedAt?.seconds || 0));
       
       setStats(prev => ({ 
         ...prev, 
-        totalSubmissions: total, 
-        pendingReviews: pending,
-        approvedCount: approved,
-        rejectedCount: rejected
+        totalSubmissions: recent.length
       }));
       setRecentSubmissions(recent.slice(0, 5));
       setLoading(false);
@@ -319,15 +308,7 @@ export default function Adashboard() {
           </div>
         </div>
 
-        <div className="stat-card-admin pending">
-          <div className="stat-icon">
-            <img src={reviewIcon} alt="Pending" width="40" height="40" className="deep-blue-filter"/>
-          </div>
-          <div className="stat-info">
-            <h3>{stats.pendingReviews}</h3>
-            <p>Pending Reviews</p>
-          </div>
-        </div>
+
       </div>
 
       {/* Tables Row — Pending + All Users */}
@@ -448,25 +429,19 @@ export default function Adashboard() {
                 <tr>
                   <th>Agency Name</th>
                   <th>File Name</th>
-                  <th>Status</th>
                   <th>Date</th>
                 </tr>
               </thead>
               <tbody>
                 {recentSubmissions.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className="no-data">No submissions yet</td>
+                    <td colSpan="3" className="no-data">No submissions yet</td>
                   </tr>
                 ) : (
                   recentSubmissions.map((sub) => (
                     <tr key={sub.id} onClick={() => window.open(sub.fileUrl, '_blank')}>
                       <td>{sub.agencyName}</td>
                       <td>{sub.fileName}</td>
-                      <td>
-                        <span className={`status-badge ${(sub.status || 'Pending').toLowerCase()}`}>
-                          {sub.status || 'Pending'}
-                        </span>
-                      </td>
                       <td>
                         {formatFirestoreDate(sub.uploadedAt)}
                       </td>

@@ -11,7 +11,7 @@ import Uprofile from './pages/lgu/profile-u';
 import Uemployee from './pages/lgu/employee-u';
 import Uview from './pages/lgu/view-u'
 import ActionPlanU from './pages/lgu/action-plan-u';
-import TestPageU from './excel_test_data/test_pages/test-page-u';
+// import TestPageU from './excel_test_data/test_pages/test-page-u';
 
 import Playout from './components/layout-p'
 import Pdashboard from './pages/prime/dashboard-p';
@@ -24,7 +24,7 @@ import Aprofile from './pages/admin/profile-a';
 import ActivityLogsA from './pages/admin/activity-logs-a';
 import DriveBrowserA from './pages/admin/drive-browser-a';
 import DeletionRequestsA from './pages/admin/deletion-requests-a';
-import TestPageA from './excel_test_data/test_pages/test-page-a';
+// import TestPageA from './excel_test_data/test_pages/test-page-a';
 
 import ProtectedRoute from './components/ProtectedRoute'
 import ProfileGuard from './components/ProfileGuard';
@@ -74,11 +74,11 @@ function App() {
                 </ProfileGuard>
               </ProtectedRoute> 
             } />
-            <Route path="/test-page-u" element={
+            {/* <Route path="/test-page-u" element={
               <ProtectedRoute requiredRole="u">
                 <TestPageU/>
               </ProtectedRoute> 
-            } />
+            } /> */}
           </Route>
 
           {/* P Routes - Strictly for CSC RO X */}
@@ -127,11 +127,11 @@ function App() {
                 <DeletionRequestsA/>
               </ProtectedRoute> 
             } />
-            <Route path="/test-page-a" element={
+            {/* <Route path="/test-page-a" element={
               <ProtectedRoute requiredRole="admin">
                 <TestPageA/>
               </ProtectedRoute> 
-            } />
+            } /> */}
           </Route>
 
         </Routes>

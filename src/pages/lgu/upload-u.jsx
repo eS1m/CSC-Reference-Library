@@ -208,7 +208,6 @@ export default function Uupload() {
         fileType: fileType,
         uploadedAt: serverTimestamp(),
         assessmentYear: new Date().getFullYear(),
-        status: 'Pending'
       };
 
       /* Parse Excel only for Self-Assessment */
