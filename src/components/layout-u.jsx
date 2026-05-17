@@ -9,7 +9,6 @@ import profileIcon from '../assets/profile.svg';
 import employeeIcon from '../assets/employees.svg'
 import lockIcon from '../assets/lock.svg'
 import fileIcon from '../assets/file.svg'
-import editIcon from '../assets/edit.svg'
 import notifIcon from '../assets/notification.svg';
 
 import LockModal from '../components/LockModal';
