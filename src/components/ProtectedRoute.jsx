@@ -1,42 +1,91 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-// Import your custom instances
 import { auth, db } from '../firebase/config'; 
-// Import functions from the actual Firebase library
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import '../css/lock-modal.css';
+import warningIcon from '../assets/warning.svg';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showNoRoleModal, setShowNoRoleModal] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      try {
-        if (currentUser) {
-          setUser(currentUser);
-          // Fetch role from Firestore
-          const userRef = doc(db, "users", currentUser.uid);
-          const userSnap = await getDoc(userRef);
-          
-          if (userSnap.exists()) {
-            setRole(userSnap.data().role);
-          } else {
-            setRole("u"); // Fallback if no doc exists yet
-          }
-        } else {
+    let isMounted = true;
+    let timeoutId = null;
+
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+
+      if (!currentUser) {
+        if (isMounted) {
           setUser(null);
           setRole(null);
+          setLoading(false);
+          setError(null);
+          setShowNoRoleModal(false);
         }
-      } catch (error) {
-        console.error("Error fetching user role:", error);
-      } finally {
-        setLoading(false);
+        return;
       }
+
+      let retries = 0;
+      const MAX_RETRIES = 3;
+      const DELAY = 1000;
+
+      const attemptFetch = async () => {
+        try {
+          if (!isMounted) return;
+          setUser(currentUser);
+
+          const userRef = doc(db, "users", currentUser.uid);
+          const userSnap = await getDoc(userRef);
+
+          if (!isMounted) return;
+
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            if (userData.role) {
+              setRole(userData.role);
+              setShowNoRoleModal(false);
+            } else {
+              setRole(null);
+              setShowNoRoleModal(true);
+            }
+          } else {
+            setRole("u");
+            setShowNoRoleModal(false);
+          }
+
+          setError(null);
+          setLoading(false);
+        } catch (err) {
+          console.error("Error fetching user role:", err);
+          if (!isMounted) return;
+
+          if (retries < MAX_RETRIES) {
+            retries++;
+            timeoutId = setTimeout(attemptFetch, DELAY);
+          } else {
+            setError(err.message || "Failed to verify access");
+            setLoading(false);
+          }
+        }
+      };
+
+      attemptFetch();
     });
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+      unsubscribe();
+    };
   }, []);
 
   if (loading) {
@@ -47,15 +96,62 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     );
   }
 
-  // If not logged in, boot to login page
+  if (error) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '50px', gap: '12px' }}>
+        <h3 style={{ color: '#cc0000' }}>Unable to Verify Access</h3>
+        <p style={{ color: '#666', maxWidth: '400px', textAlign: 'center' }}>{error}</p>
+      </div>
+    );
+  }
+
+  if (showNoRoleModal) {
+    return (
+      <div className="modal-overlay">
+        <div className="modal-content lock-modal">
+          <div className="modal-header">
+            <h2>Access Error</h2>
+          </div>
+          <div className="lock-body">
+            <div className="lock-icon-large">
+              <img src={warningIcon} alt="Warning" width="45" height="45" className="grey-filter" />
+            </div>
+            <p className="lock-message">No Role Assigned</p>
+            <p className="lock-subtext">
+              This account currently has no role attached, please contact an administrator.
+            </p>
+          </div>
+          <div className="modal-actions lock-actions">
+            <button
+              className="understood-btn"
+              onClick={async () => {
+                await signOut(auth);
+                setShowNoRoleModal(false);
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!user) {
     return <Navigate to="/" replace />;
   }
 
-  // If they have the wrong role, redirect or show error
   if (requiredRole && role !== requiredRole) {
-    // Optional: Redirect them to their proper dashboard instead of just showing a message
-    return <Navigate to={role === "admin" ? "/xu-dash" : "/dashboard"} replace />;
+    switch (role) {
+      case "admin":
+        return <Navigate to="/dashboard-a" replace />;
+      case "p":
+        return <Navigate to="/dashboard-p" replace />;
+      case "u":
+        return <Navigate to="/dashboard-u" replace />;
+      default:
+        return <Navigate to="/" replace />;
+    }
   }
 
   return children;

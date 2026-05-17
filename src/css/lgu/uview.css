@@ -1,0 +1,343 @@
+.view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.view-header h1 {
+    width: 100%;
+    text-align: left;
+    font-size: 2rem;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    color: var(--deep-blue);
+    margin-top: 7px;
+
+    /* border: 2px solid red; */
+}
+
+.loading-text {
+    margin-top: 20px;
+    font-size: 1.2rem;
+    color: var(--stat-description);
+}
+
+.no-files-found p, .no-files-found {
+    color: var(--stat-description);
+    display:block;
+}
+
+.no-files-found p {
+    margin-top: 26px;
+}
+
+.current-files-found {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: flex-start;
+    margin-top: 24px;
+    /* border: 2px solid lightgreen; */
+}
+
+.disable {
+    display: none;
+}
+
+
+.file-block {
+    width: 100%;
+    height: 100%;
+    max-height: auto;
+    max-width: 150px;
+    padding: 15px;
+
+    background: white;
+    border: 2px solid var(--deep-blue);
+    border-radius: 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 0 4px var(--deep-blue);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; 
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+.file-block p {
+    margin-top: 10px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--deep-blue);
+    text-align: center;
+    transition: 0.3s;
+}
+
+.file-block img {
+    transition: 0.3s;
+}
+
+.file-block:hover {
+    border-color: var(--light-blue);
+    transform: translateY(-3px);
+}
+
+.file-block:hover img{
+    filter: brightness(0) saturate(100%) invert(54%) sepia(50%) saturate(344%) hue-rotate(159deg) brightness(98%) contrast(84%);
+}
+
+.file-block:hover p{
+    color: var(--light-blue);
+}
+
+/* Loading Container */
+.loading-container {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding-bottom: 100px;
+}
+
+.loading-container p {
+    font-family: 'Outfit', sans-serif;
+    color: var(--stat-description);
+    font-size: 1rem;
+    font-weight: 500;
+    text-align: center;
+    margin: 0;
+}
+
+/* The Background of the bar */
+.loading-bar-background {
+    width: 100%;
+    max-width: 400px;
+    height: 8px;
+    background-color: #e0e4f0;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+/* The Animated Fill */
+.loading-bar-fill {
+    height: 100%;
+    width: 35%;
+    background: linear-gradient(90deg, var(--light-blue), var(--deep-blue));
+    border-radius: 10px;
+    
+    animation: loading-shimmer 1.5s infinite ease-in-out;
+}
+
+@keyframes loading-shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    50% {
+        transform: translateX(150%);
+    }
+    100% {
+        transform: translateX(350%);
+    }
+}
+
+/* Status Badge */
+
+.status-badge {
+    display: inline-block;
+    text-align: center;
+    margin-top: 8px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.pending {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+.status-badge.approved, .status-badge.validated {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-badge.rejected, .status-badge.returned {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Request Delete Button */
+.request-delete-btn {
+    margin-top: 10px;
+    padding: 5px 12px;
+    background: white;
+    color: #c0392b;
+    border: 1.5px solid #c0392b;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: 'Outfit', sans-serif;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.request-delete-btn:hover {
+    background: #c0392b;
+    color: white;
+}
+
+/* Deletion Status Badge */
+.deletion-badge {
+    display: inline-block;
+    text-align: center;
+    margin-top: 6px;
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.deletion-badge.pending {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+.deletion-badge.approved {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.deletion-badge.rejected {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Deletion Request Modal */
+.deletion-request-modal {
+    max-width: 480px;
+    width: 100%;
+}
+
+.deletion-request-modal .modal-body {
+    padding: 24px;
+}
+
+.deletion-request-modal .modal-actions {
+    padding: 0 24px 24px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.deletion-request-modal .cancel-btn {
+    padding: 12px 20px;
+    background: #f0f0f0;
+    color: #555;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.deletion-request-modal .cancel-btn:hover {
+    background: #e0e0e0;
+}
+
+.deletion-file-name {
+    font-size: 0.95rem;
+    color: var(--deep-blue);
+    margin-bottom: 16px;
+    word-break: break-word;
+}
+
+.deletion-reason-label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--deep-blue);
+    margin-bottom: 6px;
+}
+
+.deletion-reason-label .required {
+    color: #c0392b;
+}
+
+.deletion-reason-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Outfit', sans-serif;
+    resize: vertical;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.deletion-reason-input:focus {
+    border-color: var(--light-blue);
+    box-shadow: 0 0 0 3px rgba(102, 155, 188, 0.15);
+    outline: none;
+}
+
+.deletion-status-msg {
+    margin-top: 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.deletion-status-msg.success {
+    color: #155724;
+}
+
+.deletion-status-msg.error {
+    color: #721c24;
+}
+
+.submit-request-btn {
+    padding: 12px 20px;
+    background: linear-gradient(135deg, var(--light-blue), var(--deep-blue));
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: 'Outfit', sans-serif;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.submit-request-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(26, 54, 93, 0.25);
+}
+
+.submit-request-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}

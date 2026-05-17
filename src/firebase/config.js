@@ -20,4 +20,5 @@ export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 googleProvider.addScope('https://www.googleapis.com/auth/drive.file');

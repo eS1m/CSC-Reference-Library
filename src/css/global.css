@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
+:root {
+    /* Brand Colors */
+    --deep-blue: #003049;
+    --light-blue: #669bbc;
+    --deep-red: #590d22;
+    --light-red: #a4133c;
+    --cream-white: #fdf0d5;
+    --light-brown: #f3d5b5;
+    
+    /* Functional Colors */
+    --stat-description: rgb(163, 163, 163);
+    --text-muted: rgba(255, 255, 255, 0.603);
+    --glass-cream-ham: rgba(255, 255, 255, 0.281);
+    --glass-border-ham: rgba(255, 255, 255, 0.5);
+}
+
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+}
+
+/* Shared Utility Filters */
+.white-filter { filter: brightness(0) invert(1); }
+.deep-blue-filter { 
+    filter: brightness(0) saturate(100%) invert(13%) sepia(58%) saturate(2014%) hue-rotate(174deg) brightness(97%) contrast(103%); 
+}
+.grey-filter { filter: grayscale(1); opacity: 0.5; }
+
+.light-blue-filter {
+    filter: brightness(0) saturate(100%) invert(60%) sepia(10%) saturate(1652%) hue-rotate(160deg) brightness(96%) contrast(84%);
+}
+.deep-red-filter {
+    filter: brightness(0) saturate(100%) invert(9%) sepia(45%) saturate(4722%) hue-rotate(327deg) brightness(93%) contrast(99%);
+}

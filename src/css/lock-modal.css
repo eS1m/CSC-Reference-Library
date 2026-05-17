@@ -1,0 +1,142 @@
+/* ===== LOCK MODAL ===== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background: white;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+    overflow: hidden;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Lock modal specific */
+.lock-modal {
+    max-width: 420px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-header h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--deep-blue);
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.modal-close img {
+    filter: brightness(0) saturate(100%) invert(13%) sepia(58%) saturate(2014%) hue-rotate(174deg) brightness(97%) contrast(103%);
+}
+
+/* Lock body */
+.lock-body {
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+}
+
+.lock-icon-large {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 48, 73, 0.1);
+    border-radius: 50%;
+}
+
+.lock-icon-large img {
+    filter: brightness(0) saturate(100%) invert(13%) sepia(58%) saturate(2014%) hue-rotate(174deg) brightness(97%) contrast(103%);
+    opacity: 0.6;
+}
+
+.lock-message {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--deep-blue);
+    margin: 0;
+}
+
+.lock-subtext {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem;
+    color: var(--stat-description);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Lock actions */
+.lock-actions {
+    padding: 0 24px 24px;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.understood-btn {
+    width: 100%;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    background: linear-gradient(to right, var(--deep-blue), var(--light-blue));
+    color: white;
+}
+
+.understood-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 48, 73, 0.4);
+}

@@ -1,20 +1,27 @@
 {
-  "name": "google-auth-testing",
+  "name": "prime-hrm-reference-library",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint .",
+    "start": "vite preview --port 8080 --host",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@slosarek/docxtemplater-image-module-free": "^1.2.0",
+    "docxtemplater": "^3.68.7",
+    "file-saver": "^2.0.5",
     "firebase": "^12.12.0",
+    "mammoth": "^1.12.0",
+    "pizzip": "^3.2.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-firebase-hooks": "^5.1.1",
-    "react-router-dom": "^7.14.0"
+    "react-router-dom": "^7.14.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",

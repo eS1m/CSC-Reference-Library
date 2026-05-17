@@ -1,0 +1,335 @@
+body {
+    background-image:url(../assets/background.jpg);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+
+    overflow: hidden;
+
+    color: var(--text-primary)
+}
+
+.auth-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+}
+
+.auth-card {
+    border: 1px solid white;
+    box-shadow: 0 0 5px black;
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.auth-card-login{
+    background: linear-gradient(to bottom left, var(--light-blue), var(--deep-blue));
+}
+
+.auth-card-register{
+    background: linear-gradient(to top left, var(--light-red), var(--deep-red));
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 440px;
+}
+
+.auth-container-register {
+    max-width: 560px;
+}
+
+.auth-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.auth-logo {
+    background: linear-gradient(to bottom right, var(--light-blue), var(--cream-white));
+    border-radius: 20px;
+    height: 100px;
+    width: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.auth-logo-register {
+    background: linear-gradient(to bottom right, var(--cream-white), var(--light-red));
+}
+
+.auth-title h1 {
+    color: white;
+    margin-top: 12px;
+    margin-bottom: 0px;
+    font: inherit;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.auth-title p{
+    margin-top: 15px;
+    margin-bottom: 0px;
+    color: var(--text-muted);
+    font-size: .9rem;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 15px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background-color: var(--text-muted);
+}
+
+.auth-divider span {
+    color: var(--text-muted);
+    font-size: .8rem;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.auth-group {
+    margin-bottom: 20px;
+    /* border: 2px solid white; */
+}
+
+.auth-group:has(.auth-input-register){
+    width: 100%;
+}
+
+.auth-label {
+    display: block;
+    font-size: 14px;
+    text-align: left;
+    color: white;
+    margin-bottom: 12px;
+}
+
+.auth-input {
+    width: 100%;
+    padding: 12px;
+    background: var(--glass-cream);
+    border-radius: 10px;
+    color: var(--cream-white);
+    font-family:inherit;
+    font-size: 16px;
+    margin-bottom: 12px;
+    transition: 0.15s ease;
+}
+
+.auth-input-login{
+    border: 1px solid var(--light-blue);
+}
+
+.auth-input-register{
+    border: 1px solid var(--light-red);
+    width: 100%;
+}
+
+.auth-input:focus {
+    outline: none;
+}
+
+.auth-input-login:focus {
+    border-color: var(--light-blue);
+    box-shadow: 0 0 5px var(--light-blue);
+} 
+
+.auth-input-register:focus {
+    border-color: var(--light-red);
+    box-shadow: 0 0 5px var(--light-red);
+}
+
+.auth-input::placeholder {
+    color: var(--text-muted);
+}
+
+.auth-button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+
+    font-family: inherit;
+    font-weight: 500;
+    background: linear-gradient(to bottom right, var(--cream-white), var(--light-blue));
+    border: none;
+    border-radius: 10px;
+    color:black;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s ease;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-button-register {
+    background: linear-gradient(to bottom left, var(--cream-white), var(--light-red));
+    color: var(--cream-white);
+    margin-top: 0px;
+}
+
+.auth-button:hover {
+    box-shadow: 0 0 10px var(--light-blue);
+    transform: translateY(-2px);
+}
+
+.auth-button-register:hover {
+    box-shadow: 0 0 10px var(--cream-white);
+    transform: translateY(-2px);
+}
+
+.auth-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.auth-button-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    border-top-color: #000;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Login Functionality */
+
+#email-login {
+    margin-top: 0px;
+}
+
+#google-login {
+    margin: 0;
+}
+
+.register {
+    margin: 0;
+    margin-top: 10px;
+    width: 100%;
+    font-size: 14px;
+    /* border: 2px solid white; */
+    display: flex;
+    justify-content: space-between;
+}
+
+.register span {
+    color: var(--text-muted);
+}
+
+.register a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.register a:hover {
+    color: var(--cream-white)
+}
+
+/* Role Selector Cards */
+.role-selector {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    width: 100%;
+}
+
+.role-card {
+    padding: 14px 8px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.role-card:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.role-card.selected {
+    border-color: var(--cream-white);
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.role-card-title {
+    display: block;
+    font-weight: 600;
+    color: white;
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+}
+
+.role-card-desc {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+/* Register Functionality */
+
+.account-exist {
+    /* border: 2px solid white; */
+    display: flex;
+    align-items: center;
+    height: 1rem;
+    margin-top: 10px;
+    padding: 0;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 15px;
+}
+
+.account-exist p {
+    margin: 0;
+    padding: 0;
+    color: var(--text-muted);
+}
+
+.account-exist a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.account-exist a:hover {
+    color: var(--cream-white)
+}
+
+
