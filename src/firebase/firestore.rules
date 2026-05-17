@@ -62,7 +62,35 @@ service cloud.firestore {
       allow delete: if request.auth != null && isAdmin();
     }
 
-    // 5. Activity Logs - audit trail
+    // 5. Deletion Requests
+    match /deletionRequests/{requestId} {
+      // Agencies can only create requests for themselves
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+
+      // Agencies read their own; PRIME and admin read all
+      allow read: if request.auth != null && (
+        isOwner(resource.data.userId) || isAdminOrPrime()
+      );
+
+      // PRIME and admin can update status (approve/reject)
+      allow update: if request.auth != null && isAdminOrPrime();
+
+      // Only admin can delete
+      allow delete: if request.auth != null && isAdmin();
+    }
+
+    // 6. Notifications (stored under each user's subcollection)
+    match /users/{userId}/notifications/{notifId} {
+      // Any authenticated user can CREATE (agency users trigger notifications for admins/CSC)
+      allow create: if request.auth != null;
+
+      // Users can only READ, UPDATE, and DELETE their own notifications
+      allow read, update, delete: if request.auth != null
+        && request.auth.uid == userId;
+    }
+
+    // 7. Activity Logs - audit trail
     match /activityLogs/{logId} {
       // Any authenticated user can create a log, but only for themselves
       allow create: if request.auth != null

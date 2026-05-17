@@ -10,6 +10,7 @@ import { auth, db } from '../../firebase/config';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useAgencyData } from '../../hooks/useAgencyData';
 import { logActivity } from '../../firebase/activityLog';
+import { createAdminNotifications } from '../../firebase/notifications';
 
 export default function Uemployee() {
 
@@ -57,7 +58,7 @@ export default function Uemployee() {
   const filledCells = Object.keys(tableData).length;
 
   // Fetching data from Firebase/Firestore via hook
-  const { employees, loading } = useAgencyData();
+  const { employees, loading, isEmployeeDone, agencyName } = useAgencyData();
   
   useEffect(() => {
     if (employees) {
@@ -162,6 +163,13 @@ export default function Uemployee() {
         action: 'UPDATE_EMPLOYEES',
         details: { dataAsOf },
         message: `Agency user ${user.email} updated employee data`
+      });
+
+      const wasAlreadyComplete = isEmployeeDone;
+      await createAdminNotifications({
+        type: wasAlreadyComplete ? 'EMPLOYEE_UPDATE' : 'EMPLOYEE_COMPLETE',
+        agencyId: user.uid,
+        agencyName: agencyName || user.email
       });
 
       setMessage({ text: "All employee information and summaries saved!", type: "success" });

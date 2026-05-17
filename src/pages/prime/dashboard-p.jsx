@@ -16,11 +16,10 @@ export default function Pdashboard() {
   /* Stats State */
   const [stats, setStats] = useState({
     totalAgencies: 0,
-    completedProfiles: 0,
-    approvedCount: 0,
-    rejectedCount: 0
+    completedProfiles: 0
   });
   const [recentSubmissions, setRecentSubmissions] = useState([]);
+  const [pendingDeletions, setPendingDeletions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   /* Date and Time */
@@ -77,34 +76,35 @@ export default function Pdashboard() {
     });
 
     const unsubSubmissions = onSnapshot(submissionsQuery, (snap) => {
-      let approved = 0, rejected = 0;
       const recent = [];
       
       snap.forEach(doc => {
-        const data = doc.data();
-        
-        if (data.status === 'Approved') approved++;
-        else if (data.status === 'Rejected') rejected++;
-        
-        recent.push({ id: doc.id, ...data });
+        recent.push({ id: doc.id, ...doc.data() });
       });
       
       // Sort by uploadedAt desc and take top 5
       recent.sort((a, b) => (b.uploadedAt?.seconds || 0) - (a.uploadedAt?.seconds || 0));
       
-      setStats(prev => ({ 
-        ...prev, 
-        approvedCount: approved,
-        rejectedCount: rejected
-      }));
       setRecentSubmissions(recent.slice(0, 5));
       setLoading(false);
+    });
+
+    const deletionsQuery = query(
+      collection(db, 'deletionRequests'),
+      where('status', '==', 'pending')
+    );
+    const unsubDeletions = onSnapshot(deletionsQuery, (snap) => {
+      const data = [];
+      snap.forEach(doc => data.push({ id: doc.id, ...doc.data() }));
+      data.sort((a, b) => (b.requestedAt?.seconds || 0) - (a.requestedAt?.seconds || 0));
+      setPendingDeletions(data);
     });
 
     return () => {
       unsubUsers();
       unsubProfiles();
       unsubSubmissions();
+      unsubDeletions();
     };
   }, []);
 
@@ -159,25 +159,19 @@ export default function Pdashboard() {
               <tr>
                 <th>Agency Name</th>
                 <th>File Name</th>
-                <th>Status</th>
                 <th>Date</th>
               </tr>
             </thead>
             <tbody>
               {recentSubmissions.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="no-data">No uploads yet</td>
+                  <td colSpan="3" className="no-data">No uploads yet</td>
                 </tr>
               ) : (
                 recentSubmissions.map((sub) => (
                   <tr key={sub.id} onClick={() => window.open(sub.fileUrl, '_blank')}>
                     <td>{sub.agencyName}</td>
                     <td>{sub.fileName}</td>
-                    <td>
-                      <span className={`status-badge ${(sub.status || 'Pending').toLowerCase()}`}>
-                        {sub.status || 'Pending'}
-                      </span>
-                    </td>
                     <td>
                       {formatFirestoreDate(sub.uploadedAt)}
                     </td>
@@ -188,6 +182,40 @@ export default function Pdashboard() {
           </table>
         </div>
       </div>
+
+      {/* Pending Deletion Requests */}
+      {pendingDeletions.length > 0 && (
+        <div className="deletion-preview-section">
+          <h2>Pending Deletion Requests ({pendingDeletions.length})</h2>
+          <div className="deletion-preview-table-wrapper">
+            <table className="deletion-preview-table">
+              <thead>
+                <tr>
+                  <th>Agency</th>
+                  <th>File</th>
+                  <th>Reason</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingDeletions.slice(0, 5).map((req) => (
+                  <tr key={req.id}>
+                    <td>{req.agencyName}</td>
+                    <td>{req.fileName}</td>
+                    <td className="reason-cell">{req.reason}</td>
+                    <td>{formatFirestoreDate(req.requestedAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="view-all-link">
+            <button onClick={() => nav('/deletion-requests-p')}>
+              View All Deletion Requests →
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Clock */}
       <div className="stat-time stat-container">

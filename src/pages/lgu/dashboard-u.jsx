@@ -35,16 +35,15 @@ export default function Udashboard() {
   };
 
     /* Progress Bar Functionality */
-    const totalSteps = 6;
+    const totalSteps = 5;
     const progressWidth = ((currentStep - 1) / (totalSteps - 1)) * 100;
 
     const stepLabels = {
       1: "Agency Profile is empty/not updated",
       2: "Employee Profile is empty/not updated",
       3: "No Self-Assessment file uploaded",
-      4: "Awaiting Review",
-      5: "No Assist Plan file uploaded",
-      6: "Awaiting Review"
+      4: "Self-Assessment uploaded — Generate Action Plan",
+      5: "Action Plan generated"
     };
 
   if (loading) {
@@ -57,15 +56,15 @@ export default function Udashboard() {
             <h1 id="main-content-title">Welcome back, <b>{agencyName}</b>!</h1>
               <button 
                 className="new-submission-btn" 
-                onClick={() => nav('/upload-u')}
-                disabled={currentStep !== 3} 
+                onClick={() => nav(currentStep === 4 ? '/action-plan-u' : '/upload-u')}
+                disabled={currentStep !== 3 && currentStep !== 4} 
                 style={{ 
-                  opacity: currentStep === 3 ? 1 : 0.5,
-                  cursor: currentStep === 3 ? 'pointer' : 'not-allowed'
+                  opacity: (currentStep === 3 || currentStep === 4) ? 1 : 0.5,
+                  cursor: (currentStep === 3 || currentStep === 4) ? 'pointer' : 'not-allowed'
                 }}
               >
                 <img src={addCircleIcon} width="30px" height="30px" alt="Add" className="white-filter"/>
-                {currentStep === 4 ? "Review in Progress" : "Add Assessment"}
+                {currentStep === 3 ? "Upload Self-Assessment" : currentStep === 4 ? "Generate Action Plan" : "Complete"}
               </button>
           </div>
           
@@ -73,7 +72,7 @@ export default function Udashboard() {
             <div className="stat-tracker stat-container">
               <div className="tracker">
                 <div className="tracker-steps">
-                  {[1, 2, 3, 4, 5, 6].map((step) => (
+                  {[1, 2, 3, 4, 5].map((step) => (
                     <span key={step} className={`circle ${currentStep >= step ? 'active' : ''}`}>
                       {step}
                     </span>

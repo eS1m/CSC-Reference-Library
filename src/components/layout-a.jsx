@@ -7,7 +7,9 @@ import reviewIcon from '../assets/review.svg';
 import editIcon from '../assets/edit.svg';
 import profileIcon from '../assets/profile.svg';
 import folderIcon from '../assets/folder.svg';
+import deleteIcon from '../assets/rejected.svg';
 
+import NotificationBell from '../components/NotificationBell';
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
 
@@ -36,8 +38,9 @@ export default function Alayout() {
         switch (path) {
             case '/dashboard-a': return 'Admin Dashboard';
             case '/activity-logs-a': return 'Activity Logs';
-            case '/test-page-a': return 'Test Page';
+            // case '/test-page-a': return 'Test Page';
             case '/drive-browser-a': return 'Google Drive Browser';
+            case '/deletion-requests-a': return 'Deletion Requests';
             default: return 'Admin Portal';
         }
     };
@@ -52,6 +55,8 @@ export default function Alayout() {
                     <p className='dashboard-title'>{getPageTitle(location.pathname)}</p>
                 </div>
                 <div className="rightside">
+                    <NotificationBell user={auth.currentUser} />
+                    <div className="divider"></div>
                     <div 
                         className="who-am-i-box" 
                         onClick={() => nav('/profile-a')} 
@@ -120,6 +125,15 @@ export default function Alayout() {
                         </nav>
                     </div>
 
+                    <div className="sidebar-section">
+                        <p className="sidebar-label">REVIEWS</p>
+                        <nav>
+                            <NavLink className="nav-item-admin nav-deletion-requests" to="/deletion-requests-a">
+                                <img src={deleteIcon} alt="Deletion Requests" width="20" height="20" className="deep-blue-filter"/>
+                                Deletion Requests
+                            </NavLink>
+                        </nav>
+                    </div>
                     {/* <div className="sidebar-section">
                         <p className="sidebar-label">DEVELOPMENT</p>
                         <nav>

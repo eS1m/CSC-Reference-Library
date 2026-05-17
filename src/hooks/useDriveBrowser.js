@@ -55,12 +55,14 @@ export function useDriveBrowser() {
     }
   };
 
-  const handleView = (webViewLink) => {
-    if (webViewLink) window.open(webViewLink, '_blank');
+  const handleView = (item) => {
+    const url = item.webViewLink || (item.id ? `https://drive.google.com/file/d/${item.id}/view` : null);
+    if (url) window.open(url, '_blank');
   };
 
-  const handleDownload = (webContentLink) => {
-    if (webContentLink) window.open(webContentLink, '_blank');
+  const handleDownload = (item) => {
+    const url = item.webContentLink || (item.id ? `https://drive.google.com/uc?export=download&id=${item.id}` : null);
+    if (url) window.open(url, '_blank');
   };
 
   const deleteItem = async (item) => {
@@ -70,8 +72,18 @@ export function useDriveBrowser() {
       body: JSON.stringify({ fileId: item.id })
     });
     
-    if (!res.ok) throw new Error('Failed to delete item');
     const data = await res.json();
+    
+    if (!res.ok) {
+      if (res.status === 403 && data.code === 'NOT_OWNER') {
+        const err = new Error(data.error || 'Cannot delete: this file is owned by a different Google account.');
+        err.code = 'NOT_OWNER';
+        err.location = data.location;
+        err.webViewLink = data.webViewLink;
+        throw err;
+      }
+      throw new Error(data.error || 'Failed to delete item');
+    }
 
     const fileIdsToClean = [];
     if (data.mimeType === 'application/vnd.google-apps.folder') {

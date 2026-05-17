@@ -11,6 +11,7 @@ import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useAgencyData } from '../../hooks/useAgencyData';
 import { logActivity } from '../../firebase/activityLog';
+import { createAdminNotifications } from '../../firebase/notifications';
 
 export default function Uprofile() {
   const { profile, loading, isAgencyDone } = useAgencyData();
@@ -138,6 +139,13 @@ export default function Uprofile() {
           targetAgencyName: agencyDetails.agencyName,
           details: { agencyName: agencyDetails.agencyName },
           message: `Agency ${agencyDetails.agencyName} updated their profile`
+        });
+
+        const wasAlreadyComplete = isAgencyDone;
+        await createAdminNotifications({
+          type: wasAlreadyComplete ? 'PROFILE_UPDATE' : 'PROFILE_COMPLETE',
+          agencyId: user.uid,
+          agencyName: agencyDetails.agencyName
         });
 
         setMessage({ text: "Profile updated successfully!", type: 'success' });

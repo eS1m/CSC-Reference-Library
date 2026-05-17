@@ -125,14 +125,14 @@ export default function DriveBrowserCSC() {
                         <div className="drive-file-actions">
                           <button 
                             className="drive-action-btn view"
-                            onClick={() => handleView(file.webViewLink)}
+                            onClick={() => handleView(file)}
                             title="View"
                           >
                             <img src={viewIcon} alt="View" width="16" height="16" />
                           </button>
                           <button 
                             className="drive-action-btn download"
-                            onClick={() => handleDownload(file.webContentLink)}
+                            onClick={() => handleDownload(file)}
                             title="Download"
                             disabled={!file.webContentLink}
                           >

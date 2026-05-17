@@ -282,6 +282,24 @@
   transform: translateY(-1px);
 }
 
+.reset-user-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  background: #fff3cd;
+  color: #856404;
+}
+
+.reset-user-btn:hover {
+  background: #ffeeba;
+  transform: translateY(-1px);
+}
+
 /* View All Logs Link */
 .view-all-logs-link {
   text-align: right;

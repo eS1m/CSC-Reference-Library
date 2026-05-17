@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { auth, db } from '../firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -14,7 +13,8 @@ export const useAgencyData = () => {
     const [error, setError] = useState(null);
 
     const validateEmployees = useCallback((e) => {
-        if (!e?.employeeData || Object.keys(e.employeeData).length === 0) return false;
+        if (!e || typeof e !== 'object') return false;
+        if (!e.employeeData || Object.keys(e.employeeData).length === 0) return false;
         
         const hrmFields = ['permanent', 'tempContractCasual', 'coterminusOthers'];
         const hasHrmSummary = e.hrmSummary && hrmFields.every(f => 
@@ -80,11 +80,20 @@ export const useAgencyData = () => {
                         const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                         setSubmissions(data);
                         setLoading(false);
+                        setError(prev => {
+                            if (prev && prev.includes('submissions')) return null;
+                            return prev;
+                        });
                     },
                     (err) => {
                         console.error("Submissions listener error:", err);
                         setSubmissions([]);
                         setLoading(false);
+                        let msg = 'Failed to load submissions.';
+                        if (err.message?.includes('index')) {
+                            msg += ' A required Firestore index may be missing. Please contact an administrator.';
+                        }
+                        setError(msg);
                     }
                 );
 
@@ -109,24 +118,22 @@ export const useAgencyData = () => {
         const isAgencyDone = validateAgency(profile);
         const isEmployeeDone = validateEmployees(employees);
         const selfAssessment = submissions.find(s => s.fileType === "Self-Assessment");
-        const assistPlan = submissions.find(s => s.fileType === "Assist-Plan");
+        const actionPlan = submissions.find(s => s.fileType === "Action-Plan");
 
         let step = 1;
         if (isAgencyDone) step = 2;
         if (isAgencyDone && isEmployeeDone) step = 3;
-        if (selfAssessment?.status === "Pending") step = 4;
-        else if (selfAssessment?.status === "Approved") step = 5;
-        if (assistPlan?.status === "Pending") step = 6;
+        if (selfAssessment) step = 4;
+        if (actionPlan) step = 5;
 
         return {
             currentStep: step,
-            isLocked: step !== 3 && step !== 5,
+            isLocked: step < 3,
             isAgencyDone,
             isEmployeeDone,
             hasSelfAssessment: !!selfAssessment,
-            hasAssistPlan: !!assistPlan,
-            selfAssessmentStatus: selfAssessment?.status || null,
-            assistPlanStatus: assistPlan?.status || null,
+            hasActionPlan: !!actionPlan,
+
             agencyName: profile?.agencyDetails?.agencyName || "Agency User",
         };
     }, [profile, employees, submissions, validateEmployees]);
@@ -136,19 +143,15 @@ export const useAgencyData = () => {
         profile,
         employees,
         submissions,
-        
         loading,
         error,
-        
         currentStep: derived.currentStep,
         isLocked: derived.isLocked,
         isAgencyDone: derived.isAgencyDone,
         isEmployeeDone: derived.isEmployeeDone,
         agencyName: derived.agencyName,
-        
         hasSelfAssessment: derived.hasSelfAssessment,
-        hasAssistPlan: derived.hasAssistPlan,
-        selfAssessmentStatus: derived.selfAssessmentStatus,
-        assistPlanStatus: derived.assistPlanStatus,
+        hasActionPlan: derived.hasActionPlan,
+
     };
 };

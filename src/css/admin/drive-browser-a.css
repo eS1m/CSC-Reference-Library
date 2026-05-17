@@ -302,6 +302,33 @@
     transform: none;
 }
 
+/* NOT_OWNER path display */
+.drive-notowner-path {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.04);
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-top: 8px;
+    max-width: 100%;
+}
+
+.drive-notowner-path strong {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.8rem;
+    color: var(--deep-blue);
+    font-weight: 600;
+}
+
+.drive-notowner-path span {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    color: var(--stat-description);
+    word-break: break-word;
+    line-height: 1.4;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .drive-folder-grid {

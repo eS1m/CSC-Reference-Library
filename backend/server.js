@@ -61,6 +61,29 @@ async function collectFileIds(folderId) {
   return fileIds;
 }
 
+async function buildDrivePath(fileId) {
+  const parts = [];
+  let currentId = fileId;
+  
+  try {
+    while (currentId) {
+      const res = await drive.files.get({
+        fileId: currentId,
+        fields: 'name, parents'
+      });
+      parts.unshift(res.data.name || 'Unknown');
+      const parents = res.data.parents || [];
+      if (parents.length === 0) break;
+      currentId = parents[0];
+    }
+  } catch (err) {
+    console.error('Drive path build error:', err);
+    if (parts.length === 0) parts.push('Unknown location');
+  }
+  
+  return parts.join(' > ');
+}
+
 async function getOrCreateFolder(folderName, parentId = null) {
   const searchParent = parentId || process.env.GOOGLE_FOLDER_ID;
   const query = `name = '${escapeDriveQuery(folderName)}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false and '${searchParent}' in parents`;
@@ -114,6 +137,17 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     else if (fileType === 'Assist-Plan') {
       finalFileName = `PRIME-HRM Assist Plan-(${agencyName})${fileExtension}`;
     }
+    else if (fileType === 'Action-Plan') {
+      const allowedMimeTypes = [
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/msword',
+          'application/pdf'
+      ];
+      if (!allowedMimeTypes.includes(req.file.mimetype)) {
+          return res.status(400).send('Invalid file type. Action Plans must be Word or PDF files.');
+      }
+      finalFileName = `Action Plan-(${agencyName})${fileExtension}`;
+    }
 
     const agencyFolderId = await getOrCreateFolder(agencyName);
     const yearFolderId = await getOrCreateFolder(currentYear, agencyFolderId);
@@ -148,6 +182,99 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
   } catch (error) {
     console.error('Secure Upload Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/approve-deletion', async (req, res) => {
+  try {
+    const { fileId } = req.body;
+    if (!fileId) {
+      return res.status(400).json({ error: 'fileId is required' });
+    }
+
+    let fileMeta;
+    try {
+      fileMeta = await drive.files.get({
+        fileId,
+        fields: 'mimeType, name, webViewLink'
+      });
+    } catch (metaErr) {
+      console.error('Approve deletion metadata fetch error:', metaErr);
+    }
+
+    try {
+      await drive.files.delete({ fileId });
+    } catch (deleteErr) {
+      if (deleteErr.code === 403 || deleteErr.message?.includes('Insufficient permissions')) {
+        const location = fileMeta ? await buildDrivePath(fileId) : 'Unknown location';
+        return res.status(403).json({
+          error: 'Cannot delete this file because it is owned by a different Google account. Only the file owner can delete it.',
+          code: 'NOT_OWNER',
+          mimeType: fileMeta?.data?.mimeType,
+          name: fileMeta?.data?.name,
+          webViewLink: fileMeta?.data?.webViewLink,
+          location
+        });
+      }
+      throw deleteErr;
+    }
+
+    res.status(200).json({ success: true, message: 'File deleted from Google Drive' });
+  } catch (error) {
+    console.error('Approve deletion error:', error);
+    res.status(500).json({ error: 'Failed to delete file from Google Drive' });
+  }
+});
+
+app.post('/upload-action-plan', upload.single('file'), async (req, res) => {
+  try {
+    const { agencyName } = req.body;
+    const currentYear = new Date().getFullYear().toString();
+
+    if (!agencyName) {
+      return res.status(400).send('Agency Name is required.');
+    }
+
+    if (!req.file) {
+      return res.status(400).send('No file provided.');
+    }
+
+    const finalFileName = `Action Plan-(${agencyName}).docx`;
+
+    const agencyFolderId = await getOrCreateFolder(agencyName);
+    const yearFolderId = await getOrCreateFolder(currentYear, agencyFolderId);
+
+    const bufferStream = new stream.PassThrough();
+    bufferStream.end(req.file.buffer);
+
+    const response = await drive.files.create({
+      requestBody: {
+        name: finalFileName,
+        parents: [yearFolderId],
+      },
+      media: {
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        body: bufferStream,
+      },
+      fields: 'id, webViewLink',
+    });
+
+    const fileId = response.data.id;
+
+    await drive.permissions.create({
+      fileId: fileId,
+      requestBody: { role: 'reader', type: 'anyone' },
+    });
+
+    res.status(200).json({
+      fileId: fileId,
+      webViewLink: response.data.webViewLink,
+      fileName: finalFileName
+    });
+
+  } catch (error) {
+    console.error('Upload Action Plan Error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -229,7 +356,7 @@ app.post('/drive/delete', async (req, res) => {
 
     const fileMeta = await drive.files.get({
       fileId,
-      fields: 'mimeType, name'
+      fields: 'mimeType, name, webViewLink'
     });
 
     let nestedFileIds = [];
@@ -237,7 +364,23 @@ app.post('/drive/delete', async (req, res) => {
       nestedFileIds = await collectFileIds(fileId);
     }
 
-    await drive.files.delete({ fileId });
+    try {
+      await drive.files.delete({ fileId });
+    } catch (deleteErr) {
+      if (deleteErr.code === 403 || deleteErr.message?.includes('Insufficient permissions')) {
+        const location = await buildDrivePath(fileId);
+        return res.status(403).json({
+          error: 'Cannot delete this item because it is owned by a different Google account. Only the file owner can delete it.',
+          code: 'NOT_OWNER',
+          mimeType: fileMeta.data.mimeType,
+          name: fileMeta.data.name,
+          webViewLink: fileMeta.data.webViewLink,
+          location,
+          nestedFileIds
+        });
+      }
+      throw deleteErr;
+    }
 
     res.status(200).json({ 
       success: true, 
