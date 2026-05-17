@@ -2,7 +2,7 @@ import '../../css/admin/admin-dashboard.css';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase/config';
-import { collection, query, where, onSnapshot, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, doc, updateDoc, getDocs, deleteDoc } from 'firebase/firestore';
 import { logActivity } from '../../firebase/activityLog';
 import { validateAgency } from '../../utils/validateAgency';
 import { formatFirestoreDate } from '../../utils/formatFirestoreDate';
@@ -11,6 +11,7 @@ import agencyIcon from '../../assets/agency.svg';
 import fileIcon from '../../assets/file.svg';
 import reviewIcon from '../../assets/review.svg';
 import profileIcon from '../../assets/profile.svg';
+import warningIcon from '../../assets/warning.svg';
 
 export default function Adashboard() {
   const nav = useNavigate();
@@ -33,6 +34,10 @@ export default function Adashboard() {
   const [activityLogs, setActivityLogs] = useState([]);
   const [pendingDeletions, setPendingDeletions] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  /* Reset Modal State */
+  const [resetModal, setResetModal] = useState({ open: false, user: null });
+  const [resetLoading, setResetLoading] = useState(false);
 
   /* Date and Time */
   const [time, setTime] = useState(new Date());
@@ -104,6 +109,48 @@ export default function Adashboard() {
       case 'APPROVE_USER': return 'action-approve';
       case 'REJECT_USER': return 'action-reject';
       default: return '';
+    }
+  };
+
+  const openResetModal = (user) => {
+    setResetModal({ open: true, user });
+  };
+
+  const closeResetModal = () => {
+    setResetModal({ open: false, user: null });
+  };
+
+  const confirmReset = async () => {
+    if (!resetModal.user) return;
+    const targetUser = resetModal.user;
+    setResetLoading(true);
+
+    try {
+      const submissionsRef = collection(db, 'agencySubmissions');
+      const q = query(submissionsRef, where('userId', '==', targetUser.id));
+      const snap = await getDocs(q);
+
+      const deletePromises = snap.docs.map(d => deleteDoc(d.ref));
+      await Promise.all(deletePromises);
+
+      await logActivity({
+        userId: auth.currentUser?.uid,
+        userEmail: auth.currentUser?.email,
+        userRole: 'admin',
+        action: 'UPDATE_PROFILE',
+        targetUserId: targetUser.id,
+        targetAgencyName: targetUser.email,
+        details: { deletedSubmissions: snap.docs.length },
+        message: `Admin reset submission progress for ${targetUser.email} (${snap.docs.length} submissions deleted)`
+      });
+
+      alert(`Reset complete. ${snap.docs.length} submission(s) deleted for ${targetUser.email}.`);
+      closeResetModal();
+    } catch (err) {
+      console.error('Reset error:', err);
+      alert('Failed to reset progress: ' + err.message);
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -344,12 +391,13 @@ export default function Adashboard() {
                   <th>Role</th>
                   <th>Approval Status</th>
                   <th>Registered</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {allUsers.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="no-data">No users found</td>
+                    <td colSpan="6" className="no-data">No users found</td>
                   </tr>
                 ) : (
                   allUsers.map((user) => (
@@ -368,6 +416,17 @@ export default function Adashboard() {
                       </td>
                       <td>
                         {formatFirestoreDate(user.createdAt)}
+                      </td>
+                      <td>
+                        {user.role === 'u' && (
+                          <button
+                            className="reset-user-btn"
+                            onClick={() => openResetModal(user)}
+                            title="Delete all submissions and reset workflow progress"
+                          >
+                            Reset
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -494,6 +553,45 @@ export default function Adashboard() {
             <button onClick={() => nav('/deletion-requests-a')}>
               View All Deletion Requests →
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Confirmation Modal */}
+      {resetModal.open && (
+        <div className="modal-overlay" onClick={closeResetModal}>
+          <div className="modal-content warning-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Reset Agency Progress</h2>
+            </div>
+            <div className="modal-body warning-body">
+              <div className="warning-icon-large">
+                <img src={warningIcon} alt="Warning" width="60" height="60" />
+              </div>
+              <p className="warning-text">
+                Are you sure you want to reset progress for:
+              </p>
+              <p style={{ fontWeight: 700, color: 'var(--deep-blue)', margin: '8px 0' }}>
+                {resetModal.user?.email}
+              </p>
+              <p className="warning-subtext">
+                This will permanently delete all submission records (Self-Assessment and Action Plan)
+                from Firestore for this agency. The files in Google Drive will NOT be deleted.
+                This action cannot be undone.
+              </p>
+            </div>
+            <div className="modal-actions warning-actions">
+              <button className="cancel-btn" onClick={closeResetModal}>
+                Cancel
+              </button>
+              <button
+                className="proceed-btn"
+                onClick={confirmReset}
+                disabled={resetLoading}
+              >
+                {resetLoading ? 'Resetting...' : 'Confirm Reset'}
+              </button>
+            </div>
           </div>
         </div>
       )}

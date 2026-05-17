@@ -10,6 +10,7 @@ import employeeIcon from '../assets/employees.svg'
 import lockIcon from '../assets/lock.svg'
 import fileIcon from '../assets/file.svg'
 import editIcon from '../assets/edit.svg'
+import notifIcon from '../assets/notification.svg';
 
 import LockModal from '../components/LockModal';
 import { useAgencyData } from '../hooks/useAgencyData';
@@ -38,31 +39,48 @@ export default function Ulayout() {
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
     /* Upload Restriction Functionality */
-    const { isLocked, currentStep, agencyName, loading } = useAgencyData();
+    const { isLocked, currentStep, hasActionPlan, agencyName, loading } = useAgencyData();
 
-    const isActionPlanLocked = currentStep < 4;
+    const isUploadNavLocked = isLocked || hasActionPlan;
+    const isActionPlanNavLocked = currentStep < 4 || hasActionPlan;
 
     const handleLockedNav = (e) => {
-        if (isLocked) {
+        if (isUploadNavLocked) {
             e.preventDefault();
-            setLockModalConfig(null);
+            if (hasActionPlan) {
+                setLockModalConfig({
+                    title: 'Upload Locked',
+                    message: 'Your Action Plan has been successfully submitted.',
+                    subtext: 'Please wait for the CSC RO X for any updates.'
+                });
+            } else {
+                setLockModalConfig(null);
+            }
             setLockModalOpen(true);
         }
     };
 
     const handleActionPlanLockedNav = (e) => {
-        if (isActionPlanLocked) {
+        if (isActionPlanNavLocked) {
             e.preventDefault();
-            const needsProfile = currentStep < 3;
-            setLockModalConfig({
-                title: 'Action Plan Locked',
-                message: needsProfile 
-                    ? 'Please complete the previous steps first.'
-                    : 'Please upload your Self-Assessment first.',
-                subtext: needsProfile
-                    ? 'You need to finish your Agency Profile and Employee Profile before you can access the Action Plan.'
-                    : 'You need to upload your Self-Assessment file before you can generate an Action Plan.'
-            });
+            if (hasActionPlan) {
+                setLockModalConfig({
+                    title: 'Action Plan Submitted',
+                    message: 'Your Action Plan has been successfully submitted.',
+                    subtext: 'Please wait for the CSC RO X for any updates.'
+                });
+            } else {
+                const needsProfile = currentStep < 3;
+                setLockModalConfig({
+                    title: 'Action Plan Locked',
+                    message: needsProfile 
+                        ? 'Please complete the previous steps first.'
+                        : 'Please upload your Self-Assessment first.',
+                    subtext: needsProfile
+                        ? 'You need to finish your Agency Profile and Employee Profile before you can access the Action Plan.'
+                        : 'You need to upload your Self-Assessment file before you can generate an Action Plan.'
+                });
+            }
             setLockModalOpen(true);
         }
     };
@@ -93,6 +111,8 @@ export default function Ulayout() {
                     <p className='dashboard-title'>{getPageTitle(location.pathname)}</p>
                 </div>
                 <div className="rightside">
+                    <img src={notifIcon} alt="Notifications" width="25" height="25" className='white-filter'/>
+                    <div className="divider"></div>
                     <div 
                         className="who-am-i-box" 
                         onClick={() => nav('/profile-u')} 
@@ -122,13 +142,13 @@ export default function Ulayout() {
                         <p className="sidebar-label">FILE MANAGEMENT</p>
                         <nav>
                             <NavLink 
-                                className={`nav-item-user nav-item-upload ${isLocked ? 'nav-locked' : ''}`}
+                                className={`nav-item-user nav-item-upload ${isUploadNavLocked ? 'nav-locked' : ''}`}
                                 to="/upload-u" 
                                 onClick={handleLockedNav}
                             >
                                 <img src={addFolderIcon} alt="Add Files" width="20" height="20" className="deep-blue-filter"/>
                                 Upload New File
-                                {isLocked && (
+                                {isUploadNavLocked && (
                                     <span className="lock-tag">
                                         <img src={lockIcon} alt="Locked" width="20" height="20" className='grey-filter'/>
                                     </span>
@@ -139,13 +159,13 @@ export default function Ulayout() {
                                 View Your Files
                             </NavLink>
                             <NavLink 
-                                className={`nav-item-user nav-action-plan ${isActionPlanLocked ? 'nav-locked' : ''}`}
+                                className={`nav-item-user nav-action-plan ${isActionPlanNavLocked ? 'nav-locked' : ''}`}
                                 to="/action-plan-u"
                                 onClick={handleActionPlanLockedNav}
                             >
                                 <img src={fileIcon} alt="Action Plan" width="20" height="20" className="deep-blue-filter"/>
                                 Action Plan
-                                {isActionPlanLocked && (
+                                {isActionPlanNavLocked && (
                                     <span className="lock-tag">
                                         <img src={lockIcon} alt="Locked" width="20" height="20" className='grey-filter'/>
                                     </span>

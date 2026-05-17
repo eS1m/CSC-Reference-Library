@@ -10,6 +10,7 @@ import rejectedIcon from '../assets/rejected.svg';
 import profileIcon from '../assets/profile.svg';
 import deleteIcon from '../assets/rejected.svg';
 
+import NotificationBell from '../components/NotificationBell';
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
 
@@ -56,6 +57,8 @@ export default function Playout() {
                     <p className='dashboard-title'>{getPageTitle(location.pathname)}</p>
                 </div>
                 <div className="rightside">
+                    <NotificationBell user={auth.currentUser} />
+                    <div className="divider"></div>
                     <div 
                         className="who-am-i-box"
                     >

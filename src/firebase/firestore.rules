@@ -80,7 +80,17 @@ service cloud.firestore {
       allow delete: if request.auth != null && isAdmin();
     }
 
-    // 6. Activity Logs - audit trail
+    // 6. Notifications (stored under each user's subcollection)
+    match /users/{userId}/notifications/{notifId} {
+      // Any authenticated user can CREATE (agency users trigger notifications for admins/CSC)
+      allow create: if request.auth != null;
+
+      // Users can only READ, UPDATE, and DELETE their own notifications
+      allow read, update, delete: if request.auth != null
+        && request.auth.uid == userId;
+    }
+
+    // 7. Activity Logs - audit trail
     match /activityLogs/{logId} {
       // Any authenticated user can create a log, but only for themselves
       allow create: if request.auth != null

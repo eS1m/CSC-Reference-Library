@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { auth, db } from '../firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -14,7 +13,8 @@ export const useAgencyData = () => {
     const [error, setError] = useState(null);
 
     const validateEmployees = useCallback((e) => {
-        if (!e?.employeeData || Object.keys(e.employeeData).length === 0) return false;
+        if (!e || typeof e !== 'object') return false;
+        if (!e.employeeData || Object.keys(e.employeeData).length === 0) return false;
         
         const hrmFields = ['permanent', 'tempContractCasual', 'coterminusOthers'];
         const hasHrmSummary = e.hrmSummary && hrmFields.every(f => 
@@ -80,11 +80,20 @@ export const useAgencyData = () => {
                         const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                         setSubmissions(data);
                         setLoading(false);
+                        setError(prev => {
+                            if (prev && prev.includes('submissions')) return null;
+                            return prev;
+                        });
                     },
                     (err) => {
                         console.error("Submissions listener error:", err);
                         setSubmissions([]);
                         setLoading(false);
+                        let msg = 'Failed to load submissions.';
+                        if (err.message?.includes('index')) {
+                            msg += ' A required Firestore index may be missing. Please contact an administrator.';
+                        }
+                        setError(msg);
                     }
                 );
 
@@ -119,7 +128,7 @@ export const useAgencyData = () => {
 
         return {
             currentStep: step,
-            isLocked: step !== 3,
+            isLocked: step < 3,
             isAgencyDone,
             isEmployeeDone,
             hasSelfAssessment: !!selfAssessment,
@@ -135,16 +144,13 @@ export const useAgencyData = () => {
         profile,
         employees,
         submissions,
-        
         loading,
         error,
-        
         currentStep: derived.currentStep,
         isLocked: derived.isLocked,
         isAgencyDone: derived.isAgencyDone,
         isEmployeeDone: derived.isEmployeeDone,
         agencyName: derived.agencyName,
-        
         hasSelfAssessment: derived.hasSelfAssessment,
         hasActionPlan: derived.hasActionPlan,
         selfAssessmentStatus: derived.selfAssessmentStatus,

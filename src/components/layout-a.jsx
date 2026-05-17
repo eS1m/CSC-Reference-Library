@@ -9,6 +9,7 @@ import profileIcon from '../assets/profile.svg';
 import folderIcon from '../assets/folder.svg';
 import deleteIcon from '../assets/rejected.svg';
 
+import NotificationBell from '../components/NotificationBell';
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
 
@@ -54,6 +55,8 @@ export default function Alayout() {
                     <p className='dashboard-title'>{getPageTitle(location.pathname)}</p>
                 </div>
                 <div className="rightside">
+                    <NotificationBell user={auth.currentUser} />
+                    <div className="divider"></div>
                     <div 
                         className="who-am-i-box" 
                         onClick={() => nav('/profile-a')} 

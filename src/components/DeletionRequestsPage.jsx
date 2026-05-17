@@ -17,6 +17,7 @@ export default function DeletionRequestsPage({ viewerRole }) {
   const [modalAction, setModalAction] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [modalStatus, setModalStatus] = useState('');
+  const [notOwnerInfo, setNotOwnerInfo] = useState(null);
 
   useEffect(() => {
     const q = query(
@@ -45,6 +46,7 @@ export default function DeletionRequestsPage({ viewerRole }) {
     setSelectedRequest(req);
     setModalAction(action);
     setModalStatus('');
+    setNotOwnerInfo(null);
     setShowModal(true);
   };
 
@@ -53,6 +55,7 @@ export default function DeletionRequestsPage({ viewerRole }) {
     setSelectedRequest(null);
     setModalAction(null);
     setModalStatus('');
+    setNotOwnerInfo(null);
   };
 
   const handleApprove = async () => {
@@ -69,6 +72,12 @@ export default function DeletionRequestsPage({ viewerRole }) {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
+        if (res.status === 403 && errData.code === 'NOT_OWNER') {
+          setNotOwnerInfo({
+            location: errData.location || 'Unknown location',
+            webViewLink: errData.webViewLink
+          });
+        }
         throw new Error(errData.error || 'Failed to delete file from Drive.');
       }
 
@@ -256,10 +265,16 @@ export default function DeletionRequestsPage({ viewerRole }) {
               <p className="action-reason">
                 <strong>Reason:</strong> {selectedRequest.reason}
               </p>
-              {modalAction === 'approve' && (
+              {modalAction === 'approve' && !notOwnerInfo && (
                 <p className="action-warning">
                   ⚠️ This will permanently delete the file from Google Drive and remove the submission record.
                 </p>
+              )}
+              {notOwnerInfo && (
+                <div className="drive-notowner-path" style={{ marginTop: '12px' }}>
+                  <strong>Located in:</strong>
+                  <span>{notOwnerInfo.location}</span>
+                </div>
               )}
               {modalStatus && (
                 <p className={`action-status-msg ${modalStatus.includes('Error') ? 'error' : 'success'}`}>
@@ -272,13 +287,22 @@ export default function DeletionRequestsPage({ viewerRole }) {
               <button className="cancel-btn" onClick={closeModal} disabled={isProcessing}>
                 Cancel
               </button>
-              <button
-                className={modalAction === 'approve' ? 'approve-btn' : 'reject-btn'}
-                onClick={modalAction === 'approve' ? handleApprove : handleReject}
-                disabled={isProcessing}
-              >
-                {isProcessing ? 'Processing...' : (modalAction === 'approve' ? 'Confirm Delete' : 'Confirm Reject')}
-              </button>
+              {notOwnerInfo && notOwnerInfo.webViewLink ? (
+                <button
+                  className="approve-btn"
+                  onClick={() => window.open(notOwnerInfo.webViewLink, '_blank')}
+                >
+                  Show in Drive
+                </button>
+              ) : (
+                <button
+                  className={modalAction === 'approve' ? 'approve-btn' : 'reject-btn'}
+                  onClick={modalAction === 'approve' ? handleApprove : handleReject}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? 'Processing...' : (modalAction === 'approve' ? 'Confirm Delete' : 'Confirm Reject')}
+                </button>
+              )}
             </div>
           </div>
         </div>

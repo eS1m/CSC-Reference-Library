@@ -50,6 +50,7 @@
     padding: 24px;
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.096);
     min-height: 300px;
+    width: 100%;
 }
 
 .no-requests {
@@ -83,7 +84,7 @@
 .deletion-requests-table td {
     padding: 12px 16px;
     border-bottom: 1px solid #e5e7eb;
-    vertical-align: top;
+    vertical-align: middle;
 }
 
 .deletion-requests-table tbody tr:hover {
@@ -150,6 +151,10 @@
     background: #f5c6cb;
 }
 
+.deletion-requests-table .status-badge {
+    margin-top: 0;
+}
+
 .reviewed-label {
     font-size: 0.8rem;
     color: var(--stat-description);
@@ -160,6 +165,77 @@
 .deletion-action-modal {
     max-width: 480px;
     width: 100%;
+}
+
+.deletion-action-modal .modal-body {
+    padding: 24px;
+}
+
+.deletion-action-modal .modal-actions {
+    padding: 0 24px 24px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.deletion-action-modal .cancel-btn {
+    padding: 12px 20px;
+    background: #f0f0f0;
+    color: #555;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.deletion-action-modal .cancel-btn:hover {
+    background: #e0e0e0;
+}
+
+.deletion-action-modal .cancel-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.deletion-action-modal .approve-btn,
+.deletion-action-modal .reject-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.deletion-action-modal .approve-btn:disabled,
+.deletion-action-modal .reject-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.deletion-action-modal .approve-btn {
+    background: linear-gradient(to right, #28a745, #218838);
+    color: white;
+}
+
+.deletion-action-modal .approve-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(33, 136, 56, 0.4);
+}
+
+.deletion-action-modal .reject-btn {
+    background: linear-gradient(to right, var(--light-red), var(--deep-red));
+    color: white;
+}
+
+.deletion-action-modal .reject-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(164, 19, 60, 0.4);
 }
 
 .action-file-name,

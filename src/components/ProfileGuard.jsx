@@ -7,7 +7,7 @@ const ProfileGuard = ({ children }) => {
 
     if (loading) return <div className="loading-screen">Verifying Access...</div>;
 
-    if (location.pathname === '/upload-u' && currentStep !== 3) {
+    if (location.pathname === '/upload-u' && currentStep < 3) {
         return <Navigate to="/dashboard-u" replace />;
     }
 

@@ -240,6 +240,34 @@
     width: 100%;
 }
 
+.deletion-request-modal .modal-body {
+    padding: 24px;
+}
+
+.deletion-request-modal .modal-actions {
+    padding: 0 24px 24px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.deletion-request-modal .cancel-btn {
+    padding: 12px 20px;
+    background: #f0f0f0;
+    color: #555;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.deletion-request-modal .cancel-btn:hover {
+    background: #e0e0e0;
+}
+
 .deletion-file-name {
     font-size: 0.95rem;
     color: var(--deep-blue);
@@ -292,12 +320,12 @@
 }
 
 .submit-request-btn {
-    padding: 8px 18px;
+    padding: 12px 20px;
     background: linear-gradient(135deg, var(--light-blue), var(--deep-blue));
     color: white;
     border: none;
-    border-radius: 8px;
-    font-size: 0.9rem;
+    border-radius: 10px;
+    font-size: 0.95rem;
     font-weight: 600;
     font-family: 'Outfit', sans-serif;
     cursor: pointer;
@@ -305,7 +333,7 @@
 }
 
 .submit-request-btn:hover:not(:disabled) {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(26, 54, 93, 0.25);
 }
 

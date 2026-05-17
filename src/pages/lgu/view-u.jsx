@@ -34,6 +34,14 @@ export default function Uview() {
     return () => unsub();
   }, []);
 
+  const getDriveUrl = (file) => {
+    if (!file) return '#';
+    if (file.fileId) {
+      return `https://drive.google.com/file/d/${file.fileId}/view`;
+    }
+    return file.fileUrl || '#';
+  };
+
   const getDeletionStatus = (submissionId) => {
     const req = deletionRequests.find(r => r.submissionId === submissionId);
     return req ? req.status : null;
@@ -136,7 +144,7 @@ export default function Uview() {
               <div
                 key={file.id}
                 className="file-block"
-                onClick={() => window.open(file.fileUrl, '_blank')}
+                onClick={() => window.open(getDriveUrl(file), '_blank')}
               >
                 <img src={fileIcon} alt="File" width="80" height="80" className="deep-blue-filter"/>
                 <p>{file.fileName}</p>

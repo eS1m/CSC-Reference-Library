@@ -50,13 +50,19 @@ export default function DriveBrowserA() {
   const confirmDelete = async () => {
     if (!deleteModal.item) return;
     setDeleteLoading(true);
-    setDeleteModal(prev => ({ ...prev, error: '' }));
+    setDeleteModal(prev => ({ ...prev, error: '', errorCode: '', location: '', webViewLink: '' }));
     try {
       await deleteItem(deleteModal.item);
       closeDeleteModal();
     } catch (err) {
       console.error('Delete failed:', err);
-      setDeleteModal(prev => ({ ...prev, error: err.message }));
+      setDeleteModal(prev => ({
+        ...prev,
+        error: err.message,
+        errorCode: err.code || '',
+        location: err.location || '',
+        webViewLink: err.webViewLink || ''
+      }));
     } finally {
       setDeleteLoading(false);
     }
@@ -161,14 +167,14 @@ export default function DriveBrowserA() {
                         <div className="drive-file-actions">
                           <button 
                             className="drive-action-btn view"
-                            onClick={() => handleView(file.webViewLink)}
+                            onClick={() => handleView(file)}
                             title="View"
                           >
                             <img src={viewIcon} alt="View" width="16" height="16" />
                           </button>
                           <button 
                             className="drive-action-btn download"
-                            onClick={() => handleDownload(file.webContentLink)}
+                            onClick={() => handleDownload(file)}
                             title="Download"
                             disabled={!file.webContentLink}
                           >
@@ -202,7 +208,7 @@ export default function DriveBrowserA() {
         <div className="modal-overlay" onClick={closeDeleteModal}>
           <div className="modal-content lock-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Confirm Delete</h2>
+              <h2>{deleteModal.errorCode === 'NOT_OWNER' ? 'Cannot Delete' : 'Confirm Delete'}</h2>
               <button className="modal-close" onClick={closeDeleteModal}>
                 <img src={closeIcon} alt="Close" width="20" height="20" />
               </button>
@@ -211,9 +217,19 @@ export default function DriveBrowserA() {
               <div className="lock-icon-large">
                 <img src={warningIcon} alt="Warning" width="45" height="45" className="grey-filter" />
               </div>
-              <p className="lock-message">Are you sure you want to delete this item?</p>
+              <p className="lock-message">
+                {deleteModal.errorCode === 'NOT_OWNER'
+                  ? 'This file cannot be deleted'
+                  : 'Are you sure you want to delete this item?'}
+              </p>
               <p className="lock-subtext">{deleteModal.item?.name}</p>
-              {deleteModal.error && (
+              {deleteModal.location && (
+                <div className="drive-notowner-path">
+                  <strong>Located in:</strong>
+                  <span>{deleteModal.location}</span>
+                </div>
+              )}
+              {deleteModal.error && deleteModal.errorCode !== 'NOT_OWNER' && (
                 <p className="lock-subtext" style={{ color: '#c0392b', marginTop: '12px', fontWeight: 500 }}>
                   {deleteModal.error}
                 </p>
@@ -223,13 +239,19 @@ export default function DriveBrowserA() {
               <button className="understood-btn secondary" onClick={closeDeleteModal}>
                 Cancel
               </button>
-              <button 
-                className="understood-btn delete" 
-                onClick={confirmDelete}
-                disabled={deleteLoading}
-              >
-                {deleteLoading ? 'Deleting...' : 'Delete'}
-              </button>
+              {deleteModal.errorCode === 'NOT_OWNER' && deleteModal.webViewLink ? (
+                <button className="understood-btn" onClick={() => window.open(deleteModal.webViewLink, '_blank')}>
+                  Show in Drive
+                </button>
+              ) : (
+                <button
+                  className="understood-btn delete"
+                  onClick={confirmDelete}
+                  disabled={deleteLoading}
+                >
+                  {deleteLoading ? 'Deleting...' : 'Delete'}
+                </button>
+              )}
             </div>
           </div>
         </div>
