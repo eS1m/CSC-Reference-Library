@@ -26,7 +26,7 @@ function formatDate(isoString) {
 export default function DriveBrowserCSC() {
   const {
     breadcrumbs, loading, error, searchQuery,
-    filteredFolders, filteredFiles,
+    filteredFolders, filteredFiles, recentlyChangedFolders,
     setSearchQuery, fetchContents,
     navigateToFolder, navigateToBreadcrumb,
     handleView, handleDownload
@@ -81,13 +81,32 @@ export default function DriveBrowserCSC() {
           </div>
         )}
 
+        {!loading && recentlyChangedFolders.length > 0 && (
+          <>
+            <h2 className="drive-section-title">Recently Changed</h2>
+            <div className="drive-folder-grid drive-recent-grid">
+              {recentlyChangedFolders.map(folder => (
+                <div
+                  key={folder.id}
+                  className="drive-folder-card drive-recent-card"
+                  onClick={() => navigateToFolder(folder)}
+                >
+                  <img src={folderIcon} alt="Folder" width="48" height="48" className="deep-blue-filter" />
+                  <span className="drive-folder-name">{folder.name}</span>
+                  <span className="drive-recent-date">{formatDate(folder.modifiedTime)}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
         {!loading && filteredFolders.length > 0 && (
           <>
             <h2 className="drive-section-title">Folders</h2>
             <div className="drive-folder-grid">
               {filteredFolders.map(folder => (
-                <div 
-                  key={folder.id} 
+                <div
+                  key={folder.id}
                   className="drive-folder-card"
                   onClick={() => navigateToFolder(folder)}
                 >

@@ -5,7 +5,7 @@ import hamIcon from '../assets/hamburger.svg';
 import dashboardIcon from '../assets/dashboard.svg';
 import reviewIcon from '../assets/review.svg';
 import editIcon from '../assets/edit.svg';
-import profileIcon from '../assets/profile.svg';
+
 import folderIcon from '../assets/folder.svg';
 import deleteIcon from '../assets/rejected.svg';
 
@@ -57,11 +57,7 @@ export default function Alayout() {
                 <div className="rightside">
                     <NotificationBell user={auth.currentUser} />
                     <div className="divider"></div>
-                    <div 
-                        className="who-am-i-box" 
-                        onClick={() => nav('/profile-a')} 
-                        style={{ cursor: 'pointer' }}
-                    >
+                    <div className="who-am-i-box">
                         <p id="who-am-i">{auth.currentUser?.email}</p>
                         <p id="who-am-i-name">System Administrator</p>
                     </div>
@@ -145,15 +141,7 @@ export default function Alayout() {
                         </nav>
                     </div> */}
 
-                    <div className="sidebar-section">
-                        <p className="sidebar-label">PROFILE</p>
-                        <nav>
-                            <NavLink className="nav-item-admin nav-admin-profile" to="/profile-a">
-                                <img src={profileIcon} alt="My Profile" width="20" height="20" className="deep-blue-filter"/>
-                                Admin Profile
-                            </NavLink>
-                        </nav>
-                    </div>
+
                 </aside>
                 <main className="layout-content-area">
                     <Outlet />

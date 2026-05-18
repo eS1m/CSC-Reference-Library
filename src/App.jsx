@@ -18,10 +18,11 @@ import Playout from './components/layout-p'
 import Pdashboard from './pages/prime/dashboard-p';
 import DriveBrowserCSC from './pages/prime/drive-browser-csc';
 import DeletionRequestsP from './pages/prime/deletion-requests-p';
+import RecommendationsP from './pages/prime/recommendations-p';
 
 import Alayout from './components/layout-a'
 import Adashboard from './pages/admin/dashboard-a';
-import Aprofile from './pages/admin/profile-a';
+
 import ActivityLogsA from './pages/admin/activity-logs-a';
 import DriveBrowserA from './pages/admin/drive-browser-a';
 import DeletionRequestsA from './pages/admin/deletion-requests-a';
@@ -99,6 +100,11 @@ function App() {
                 <DeletionRequestsP/>
               </ProtectedRoute> 
             } />
+            <Route path="/recommendations-p" element={
+              <ProtectedRoute requiredRole="p">
+                <RecommendationsP/>
+              </ProtectedRoute> 
+            } />
           </Route>
 
           {/* A Routes - Strictly for System Administrators */}
@@ -111,11 +117,6 @@ function App() {
             <Route path="/activity-logs-a" element={
               <ProtectedRoute requiredRole="admin">
                 <ActivityLogsA/>
-              </ProtectedRoute> 
-            } />
-            <Route path="/profile-a" element={
-              <ProtectedRoute requiredRole="admin">
-                <Aprofile/>
               </ProtectedRoute> 
             } />
             <Route path="/drive-browser-a" element={

@@ -90,6 +90,14 @@ service cloud.firestore {
         && request.auth.uid == userId;
     }
 
+    // 8. Recommendations (CSC RO X shared list)
+    match /recommendations/{recId} {
+      allow create: if request.auth != null && isAdminOrPrime();
+      allow read: if request.auth != null && isAdminOrPrime();
+      allow update: if request.auth != null && isAdminOrPrime();
+      allow delete: if request.auth != null && isAdminOrPrime();
+    }
+
     // 7. Activity Logs - audit trail
     match /activityLogs/{logId} {
       // Any authenticated user can create a log, but only for themselves

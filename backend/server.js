@@ -137,6 +137,9 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     else if (fileType === 'Assist-Plan') {
       finalFileName = `PRIME-HRM Assist Plan-(${agencyName})${fileExtension}`;
     }
+    else if (fileType === 'Progress-Log') {
+      finalFileName = `Progress Log-(${agencyName})${fileExtension}`;
+    }
     else if (fileType === 'Action-Plan') {
       const allowedMimeTypes = [
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

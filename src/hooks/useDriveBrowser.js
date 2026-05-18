@@ -108,12 +108,24 @@ export function useDriveBrowser() {
     return { success: true, deletedCount: fileIdsToClean.length };
   };
 
-  const filteredFolders = folders.filter(f => 
+  const filteredFolders = folders.filter(f =>
     f.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  const filteredFiles = files.filter(f => 
+  const filteredFiles = files.filter(f =>
     f.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const recentlyChangedFolders = (() => {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    return folders
+      .filter(f => {
+        if (!f.modifiedTime) return false;
+        const modified = new Date(f.modifiedTime);
+        return modified >= sevenDaysAgo;
+      })
+      .sort((a, b) => new Date(b.modifiedTime) - new Date(a.modifiedTime));
+  })();
 
   return {
     breadcrumbs,
@@ -124,6 +136,7 @@ export function useDriveBrowser() {
     searchQuery,
     filteredFolders,
     filteredFiles,
+    recentlyChangedFolders,
     setSearchQuery,
     fetchContents,
     navigateToFolder,

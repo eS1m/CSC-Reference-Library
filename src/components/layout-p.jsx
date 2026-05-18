@@ -7,8 +7,9 @@ import reviewIcon from '../assets/review.svg';
 import folderIcon from '../assets/folder.svg';
 import approvedIcon from '../assets/approved.svg';
 import rejectedIcon from '../assets/rejected.svg';
-import profileIcon from '../assets/profile.svg';
+
 import deleteIcon from '../assets/rejected.svg';
+import recommendationsIcon from '../assets/review.svg';
 
 import NotificationBell from '../components/NotificationBell';
 import { auth } from '../firebase/config';
@@ -40,9 +41,10 @@ export default function Playout() {
             case '/dashboard-p': return 'CSC RO X Dashboard';
             case '/drive-browser-csc': return 'Drive Browser';
             case '/deletion-requests-p': return 'Deletion Requests';
+            case '/recommendations-p': return 'Recommendations';
             case '/approved-p': return 'Approved Files';
             case '/rejected-p': return 'Rejected Files';
-            case '/profile-p': return 'CSC RO X Profile';
+
             default: return 'CSC RO X Portal';
         }
     };
@@ -109,18 +111,14 @@ export default function Playout() {
                                 <img src={deleteIcon} alt="Deletion Requests" width="20" height="20" className="deep-blue-filter"/>
                                 Deletion Requests
                             </NavLink>
+                            <NavLink className="nav-item-prime nav-recommendations" to="/recommendations-p">
+                                <img src={recommendationsIcon} alt="Recommendations" width="20" height="20" className="deep-blue-filter"/>
+                                Recommendations
+                            </NavLink>
                         </nav>
                     </div>
 
-                    <div className="sidebar-section">
-                        <p className="sidebar-label">PROFILE</p>
-                        <nav>
-                            {/* <NavLink className="nav-item-prime nav-prime-profile" to="/profile-p">
-                                <img src={profileIcon} alt="My Profile" width="20" height="20" className="deep-blue-filter"/>
-                                PRIME Profile
-                            </NavLink> */}
-                        </nav>
-                    </div>
+
                 </aside>
                 <main className="layout-content-area">
                     <Outlet />
