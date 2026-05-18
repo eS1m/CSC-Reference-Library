@@ -1,12 +1,10 @@
 import '../../css/admin/admin-dashboard.css';
-import React, { useState, useEffect } from 'react';
-import { db } from '../../firebase/config';
-import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import React from 'react';
 import { formatFirestoreDate } from '../../utils/formatFirestoreDate';
+import { useActivityLogs } from '../../hooks/useActivityLogs';
 
 export default function ActivityLogsA() {
-  const [activityLogs, setActivityLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { activityLogs, loading } = useActivityLogs();
 
   const formatAction = (action) => {
     switch (action) {
@@ -37,22 +35,6 @@ export default function ActivityLogsA() {
       default: return '';
     }
   };
-
-  useEffect(() => {
-    const logsQuery = query(collection(db, "activityLogs"), orderBy("timestamp", "desc"));
-    const unsubLogs = onSnapshot(logsQuery, (snap) => {
-      const logs = [];
-      snap.forEach(docSnap => {
-        logs.push({ id: docSnap.id, ...docSnap.data() });
-      });
-      setActivityLogs(logs);
-      setLoading(false);
-    }, (err) => {
-      console.error("Error fetching activity logs:", err);
-      setLoading(false);
-    });
-    return () => unsubLogs();
-  }, []);
 
   if (loading) {
     return <div className="loading-screen">Loading Activity Logs...</div>;

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom'; // Using Link for navigation
 import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase/config.js'; 
+import { auth } from '../firebase/config.js';
+import { createUser } from '../firebase/collections/users'; 
 import { logActivity } from '../firebase/activityLog';
 import '../css/auth.css';
 import '../css/lock-modal.css';
@@ -26,7 +26,7 @@ export default function Register() {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            await setDoc(doc(db, "users", user.uid), {
+            await createUser(user.uid, {
                 email: user.email,
                 role: role,
                 approvalStatus: 'pending',

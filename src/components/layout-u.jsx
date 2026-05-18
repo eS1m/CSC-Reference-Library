@@ -12,7 +12,7 @@ import fileIcon from '../assets/file.svg'
 import notifIcon from '../assets/notification.svg';
 
 import LockModal from '../components/LockModal';
-import { useAgencyData } from '../hooks/useAgencyData';
+import { useAgencyWorkflow } from '../hooks/useAgencyWorkflow';
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
 
@@ -38,7 +38,7 @@ export default function Ulayout() {
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
     /* Upload Restriction Functionality */
-    const { isLocked, currentStep, hasActionPlan, agencyName, loading } = useAgencyData();
+    const { isLocked, currentStep, hasActionPlan, agencyName, loading } = useAgencyWorkflow();
 
     const isUploadNavLocked = isLocked || hasActionPlan;
     const isActionPlanNavLocked = currentStep < 4 || hasActionPlan;

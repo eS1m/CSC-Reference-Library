@@ -9,6 +9,7 @@ import downloadIcon from '../../assets/download.svg';
 import viewIcon from '../../assets/view.svg';
 import closeIcon from '../../assets/close.svg';
 import warningIcon from '../../assets/warning.svg';
+import Spinner from '../../components/Spinner';
 
 function formatBytes(bytes) {
   if (!bytes) return '—';
@@ -112,7 +113,7 @@ export default function DriveBrowserA() {
 
         {loading && (
           <div className="drive-loading-inline">
-            <div className="drive-spinner"></div>
+            <Spinner size="lg" color="primary" />
             <span>Loading contents...</span>
           </div>
         )}

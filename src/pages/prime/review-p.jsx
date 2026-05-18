@@ -1,9 +1,10 @@
 import '../../css/prime/review-p.css';
 import React, { useState, useEffect } from 'react';
-import { auth, db } from '../../firebase/config';
-import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { auth } from '../../firebase/config';
 import { logActivity } from '../../firebase/activityLog';
 import { formatFirestoreDate } from '../../utils/formatFirestoreDate';
+import Spinner from '../../components/Spinner';
+import { subscribeSubmissions, updateSubmission } from '../../firebase/collections/agencySubmissions';
 
 import fileIcon from '../../assets/file.svg';
 import approveIcon from '../../assets/approved.svg';
@@ -21,25 +22,19 @@ export default function Preview() {
   /* Fetch ALL pending submissions */
   useEffect(() => {
     setLoading(true);
-    
-    const q = query(
-      collection(db, "agencySubmissions"),
-      where("fileType", "==", "Self-Assessment"),
-      where("status", "==", "Pending")
-    );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const pendingFiles = [];
-      snapshot.forEach((docSnap) => {
-        pendingFiles.push({ id: docSnap.id, ...docSnap.data() });
-      });
-      pendingFiles.sort((a, b) => (b.uploadedAt?.seconds || 0) - (a.uploadedAt?.seconds || 0));
-      setSubmissions(pendingFiles);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching submissions:", error);
-      setLoading(false);
-    });
+    const unsubscribe = subscribeSubmissions(
+      { fileType: 'Self-Assessment', status: 'Pending' },
+      (data) => {
+        const sorted = [...data].sort((a, b) => (b.uploadedAt?.seconds || 0) - (a.uploadedAt?.seconds || 0));
+        setSubmissions(sorted);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching submissions:", error);
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
   }, []);
@@ -47,8 +42,7 @@ export default function Preview() {
   const handleStatusChange = async (fileId, newStatus) => {
     setActionLoading(true);
     try {
-      const fileRef = doc(db, "agencySubmissions", fileId);
-      await updateDoc(fileRef, {
+      await updateSubmission(fileId, {
         status: newStatus,
         reviewedAt: new Date(),
         reviewedBy: auth.currentUser?.uid || 'unknown',
@@ -232,7 +226,7 @@ export default function Preview() {
                   disabled={actionLoading}
                 >
                   {actionLoading ? (
-                    <div className="spinner"></div>
+                    <Spinner size="xs" color="white" />
                   ) : (
                     <img src={approveIcon} alt="Approve" width="16" height="16"/>
                   )}
@@ -244,7 +238,7 @@ export default function Preview() {
                   disabled={actionLoading}
                 >
                   {actionLoading ? (
-                    <div className="spinner"></div>
+                    <Spinner size="xs" color="white" />
                   ) : (
                     <img src={rejectIcon} alt="Reject" width="16" height="16"/>
                   )}

@@ -9,12 +9,14 @@ import '../../css/lgu/action-plan-u.css';
 import closeIcon from '../../assets/close.svg';
 import tooltipIcon from '../../assets/tooltip.svg';
 import LockModal from '../../components/LockModal.jsx';
+import Spinner from '../../components/Spinner';
 
-import { auth, db } from '../../firebase/config';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { auth } from '../../firebase/config';
+import { serverTimestamp } from 'firebase/firestore';
+import { createSubmission } from '../../firebase/collections/agencySubmissions';
 import { logActivity } from '../../firebase/activityLog';
 import { createAdminNotifications } from '../../firebase/notifications';
-import { useAgencyData } from '../../hooks/useAgencyData';
+import { useAgencyWorkflow } from '../../hooks/useAgencyWorkflow';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -31,7 +33,7 @@ const TOOLTIP_TEXT = {
 
 export default function ActionPlanU() {
   const navigate = useNavigate();
-  const { agencyName, submissions, hasActionPlan } = useAgencyData();
+  const { agencyName, submissions, hasActionPlan } = useAgencyWorkflow();
 
   const [inputs, setInputs] = useState({
     currentMaturityLevel: '',
@@ -474,7 +476,7 @@ export default function ActionPlanU() {
       const year = new Date().getFullYear();
       const fileName = `Action Plan - ${agencyName} - ${year}.docx`;
 
-      await addDoc(collection(db, 'agencySubmissions'), {
+      await createSubmission({
         userId: auth.currentUser.uid,
         agencyName: agencyName,
         fileName: fileName,
@@ -1174,7 +1176,7 @@ export default function ActionPlanU() {
                 onClick={handleGeneratePreview}
                 disabled={isGenerating || isUploading}
               >
-                {isGenerating ? <div className="spinner-small"></div> : 'Generate Preview'}
+                {isGenerating ? <Spinner size="xs" color="primary" /> : 'Generate Preview'}
               </button>
               {uploadStatus && !showModal && (
                 <span className={`inline-status ${uploadStatusType}`}>{uploadStatus}</span>
@@ -1222,7 +1224,7 @@ export default function ActionPlanU() {
                   onClick={handleUploadToDrive}
                   disabled={isUploading || !generatedDocx}
                 >
-                  {isUploading ? <div className="spinner-small white"></div> : 'Upload to Google Drive'}
+                  {isUploading ? <Spinner size="xs" color="white" /> : 'Upload to Google Drive'}
                 </button>
               </div>
             </div>

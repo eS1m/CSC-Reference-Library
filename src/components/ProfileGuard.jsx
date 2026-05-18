@@ -1,9 +1,9 @@
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAgencyData } from '../hooks/useAgencyData';
+import { useAgencyWorkflow } from '../hooks/useAgencyWorkflow';
 
 const ProfileGuard = ({ children }) => {
     const location = useLocation();
-    const { currentStep, hasSelfAssessment, isAgencyDone, isEmployeeDone, loading } = useAgencyData();
+    const { currentStep, hasSelfAssessment, isAgencyDone, isEmployeeDone, loading } = useAgencyWorkflow();
 
     if (loading) return <div className="loading-screen">Verifying Access...</div>;
 

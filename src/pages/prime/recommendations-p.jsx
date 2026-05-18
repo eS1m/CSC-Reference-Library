@@ -1,52 +1,29 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef} from 'react';
 import '../../css/prime/recommendations-p.css';
-import { db } from '../../firebase/config';
 import { auth } from '../../firebase/config';
-import {
-  collection,
-  onSnapshot,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  serverTimestamp,
-  query,
-  orderBy,
-  getDocs
-} from 'firebase/firestore';
+import { serverTimestamp } from 'firebase/firestore';
+import Spinner from '../../components/Spinner';
+import { useRecommendations } from '../../hooks/useRecommendations';
+import { createRecommendation, updateRecommendation, deleteRecommendation } from '../../firebase/collections/recommendations';
+import { getSubmissions } from '../../firebase/collections/agencySubmissions';
+import { getProfiles } from '../../firebase/collections/agencyProfiles';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function RecommendationsP() {
-  const [recommendations, setRecommendations] = useState([]);
+  const { recommendations, loading } = useRecommendations();
   const [completedAgencies, setCompletedAgencies] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [uploadingStates, setUploadingStates] = useState({});
   const [uploadErrors, setUploadErrors] = useState({});
   const fileInputRefs = useRef({});
-
-  /* Fetch recommendations in real-time */
-  useEffect(() => {
-    const q = query(collection(db, 'recommendations'), orderBy('createdAt', 'asc'));
-    const unsub = onSnapshot(q, (snap) => {
-      const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      setRecommendations(data);
-      setLoading(false);
-    }, (err) => {
-      console.error('Recommendations listener error:', err);
-      setLoading(false);
-    });
-    return () => unsub();
-  }, []);
 
   /* Fetch agencies that have completed all 5 steps */
   useEffect(() => {
     async function fetchCompletedAgencies() {
       try {
-        const submissionsSnap = await getDocs(collection(db, 'agencySubmissions'));
+        const allSubmissions = await getSubmissions();
         const agencyCounts = {};
-        submissionsSnap.docs.forEach(d => {
-          const data = d.data();
+        allSubmissions.forEach(data => {
           if (!agencyCounts[data.userId]) {
             agencyCounts[data.userId] = { selfAssessment: false, actionPlan: false };
           }
@@ -63,16 +40,13 @@ export default function RecommendationsP() {
           return;
         }
 
-        const profilesSnap = await getDocs(collection(db, 'agencyProfiles'));
-        const agencies = profilesSnap.docs
-          .filter(d => completedIds.includes(d.id))
-          .map(d => {
-            const data = d.data();
-            return {
-              id: d.id,
-              name: data.agencyDetails?.agencyName || 'Unknown Agency'
-            };
-          })
+        const allProfiles = await getProfiles();
+        const agencies = allProfiles
+          .filter(p => completedIds.includes(p.id))
+          .map(p => ({
+            id: p.id,
+            name: p.agencyDetails?.agencyName || 'Unknown Agency'
+          }))
           .sort((a, b) => a.name.localeCompare(b.name));
 
         setCompletedAgencies(agencies);
@@ -94,7 +68,7 @@ export default function RecommendationsP() {
 
   const handleAddAgency = async () => {
     try {
-      await addDoc(collection(db, 'recommendations'), {
+      await createRecommendation({
         agencyId: '',
         agencyName: '',
         fieldDirector: '',
@@ -112,7 +86,7 @@ export default function RecommendationsP() {
   const handleDelete = async (recId) => {
     if (!window.confirm('Delete this recommendation?')) return;
     try {
-      await deleteDoc(doc(db, 'recommendations', recId));
+      await deleteRecommendation(recId);
     } catch (err) {
       console.error('Error deleting recommendation:', err);
       alert('Failed to delete: ' + err.message);
@@ -122,7 +96,7 @@ export default function RecommendationsP() {
   const handleAgencyChange = async (recId, agencyId) => {
     const agency = completedAgencies.find(a => a.id === agencyId);
     try {
-      await updateDoc(doc(db, 'recommendations', recId), {
+      await updateRecommendation(recId, {
         agencyId: agencyId,
         agencyName: agency?.name || ''
       });
@@ -133,7 +107,7 @@ export default function RecommendationsP() {
 
   const handleFieldDirectorChange = async (recId, value) => {
     try {
-      await updateDoc(doc(db, 'recommendations', recId), {
+      await updateRecommendation(recId, {
         fieldDirector: value
       });
     } catch (err) {
@@ -143,7 +117,7 @@ export default function RecommendationsP() {
 
   const handleCheckboxChange = async (recId, checked) => {
     try {
-      await updateDoc(doc(db, 'recommendations', recId), {
+      await updateRecommendation(recId, {
         progressLogFullyImplemented: checked
       });
     } catch (err) {
@@ -193,7 +167,7 @@ export default function RecommendationsP() {
       };
 
       const field = fileType === 'Assist-Plan' ? 'assistPlan' : 'progressLog';
-      await updateDoc(doc(db, 'recommendations', recId), {
+      await updateRecommendation(recId, {
         [field]: fileData
       });
     } catch (err) {
@@ -225,7 +199,7 @@ export default function RecommendationsP() {
       <div className="recommendations-page">
         {loading && (
           <div className="rec-loading">
-            <div className="rec-spinner"></div>
+            <Spinner size="lg" color="primary" />
             <span>Loading recommendations...</span>
           </div>
         )}
@@ -305,7 +279,7 @@ export default function RecommendationsP() {
                         disabled={uploadingStates[`${rec.id}-Assist-Plan`]}
                       >
                         {uploadingStates[`${rec.id}-Assist-Plan`] ? (
-                          <span className="rec-upload-spinner" />
+                          <Spinner size="sm" color="primary" />
                         ) : 'Upload Assist Plan'}
                       </button>
                     )}
@@ -334,7 +308,7 @@ export default function RecommendationsP() {
                         disabled={uploadingStates[`${rec.id}-Progress-Log`]}
                       >
                         {uploadingStates[`${rec.id}-Progress-Log`] ? (
-                          <span className="rec-upload-spinner" />
+                          <Spinner size="sm" color="primary" />
                         ) : 'Upload Progress Log'}
                       </button>
                     )}

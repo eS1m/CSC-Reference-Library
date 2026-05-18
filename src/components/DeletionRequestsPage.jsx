@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import '../css/shared/deletion-requests.css';
-import { db, auth } from '../firebase/config';
-import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { auth } from '../firebase/config';
+import { serverTimestamp } from 'firebase/firestore';
+import { useDeletionRequests } from '../hooks/useDeletionRequests';
+import { updateDeletionRequest } from '../firebase/collections/deletionRequests';
+import { deleteSubmission } from '../firebase/collections/agencySubmissions';
 import { logActivity } from '../firebase/activityLog';
 import { formatFirestoreDate } from '../utils/formatFirestoreDate';
 import closeIcon from '../assets/close.svg';
@@ -9,8 +12,7 @@ import closeIcon from '../assets/close.svg';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function DeletionRequestsPage({ viewerRole }) {
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { requests, loading } = useDeletionRequests({ status: ['pending', 'approved', 'rejected'] });
   const [filter, setFilter] = useState('pending');
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -18,24 +20,6 @@ export default function DeletionRequestsPage({ viewerRole }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [modalStatus, setModalStatus] = useState('');
   const [notOwnerInfo, setNotOwnerInfo] = useState(null);
-
-  useEffect(() => {
-    const q = query(
-      collection(db, 'deletionRequests'),
-      where('status', 'in', ['pending', 'approved', 'rejected'])
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      const data = [];
-      snap.forEach(docSnap => data.push({ id: docSnap.id, ...docSnap.data() }));
-      data.sort((a, b) => (b.requestedAt?.seconds || 0) - (a.requestedAt?.seconds || 0));
-      setRequests(data);
-      setLoading(false);
-    }, (err) => {
-      console.error('Deletion requests listener error:', err);
-      setLoading(false);
-    });
-    return () => unsub();
-  }, []);
 
   const filteredRequests = requests.filter(r => {
     if (filter === 'all') return true;
@@ -82,10 +66,10 @@ export default function DeletionRequestsPage({ viewerRole }) {
       }
 
       /* Delete the agencySubmissions record */
-      await deleteDoc(doc(db, 'agencySubmissions', selectedRequest.submissionId));
+      await deleteSubmission(selectedRequest.submissionId);
 
       /* Update deletion request */
-      await updateDoc(doc(db, 'deletionRequests', selectedRequest.id), {
+      await updateDeletionRequest(selectedRequest.id, {
         status: 'approved',
         reviewedBy: auth.currentUser.uid,
         reviewerRole: viewerRole,
@@ -117,7 +101,7 @@ export default function DeletionRequestsPage({ viewerRole }) {
     setIsProcessing(true);
 
     try {
-      await updateDoc(doc(db, 'deletionRequests', selectedRequest.id), {
+      await updateDeletionRequest(selectedRequest.id, {
         status: 'rejected',
         reviewedBy: auth.currentUser.uid,
         reviewerRole: viewerRole,

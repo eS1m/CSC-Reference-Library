@@ -5,6 +5,7 @@ import folderIcon from '../../assets/folder.svg';
 import fileIcon from '../../assets/file.svg';
 import downloadIcon from '../../assets/download.svg';
 import viewIcon from '../../assets/view.svg';
+import Spinner from '../../components/Spinner';
 
 function formatBytes(bytes) {
   if (!bytes) return '—';
@@ -76,7 +77,7 @@ export default function DriveBrowserCSC() {
 
         {loading && (
           <div className="drive-loading-inline">
-            <div className="drive-spinner"></div>
+            <Spinner size="lg" color="primary" />
             <span>Loading contents...</span>
           </div>
         )}

@@ -160,21 +160,6 @@
     border: 1px solid #f5c6cb;
 }
 
-/* Loading Animation */
-.spinner {
-    width: 20px;
-    height: 20px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    border-top-color: #fff;
-    animation: spin 1s ease-in-out infinite;
-    display: inline-block;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
 /* ===== SUCCESS STATE ===== */
 .upload-success-container {
     display: flex;

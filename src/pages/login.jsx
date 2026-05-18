@@ -3,13 +3,14 @@ import '../css/auth.css';
 import logo from '../assets/logo.svg';
 import googleIcon from '../assets/google-icon.svg';
 import { signInWithPopup, signInWithEmailAndPassword, GoogleAuthProvider, signOut } from 'firebase/auth';
-import { auth, googleProvider, db } from '../firebase/config.js';
+import { auth, googleProvider } from '../firebase/config.js';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { getUserById, createUser } from '../firebase/collections/users';
 import { logActivity } from '../firebase/activityLog';
 import '../css/lock-modal.css';
 import closeIcon from '../assets/close.svg';
 import warningIcon from '../assets/warning.svg';
+import Spinner from '../components/Spinner';
 
 
 export default function Login() {
@@ -23,18 +24,17 @@ export default function Login() {
     const [isLoading, setIsLoading] = useState(false);
 
     const handleUserRoleAndRedirect = async (user) => {
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
+        const existingUser = await getUserById(user.uid);
 
         let role = "u";
         let approvalStatus;
         let isFirstTimeGoogle = false;
 
-        if (!userSnap.exists()) {
+        if (!existingUser) {
             isFirstTimeGoogle = true;
             approvalStatus = 'pending';
 
-            await setDoc(userRef, {
+            await createUser(user.uid, {
                 email: user.email,
                 role: role,
                 approvalStatus: 'pending',
@@ -49,8 +49,8 @@ export default function Login() {
                 message: `New user ${user.email} registered via Google`
             });
         } else {
-            role = userSnap.data().role;
-            approvalStatus = userSnap.data().approvalStatus || 'approved';
+            role = existingUser.role;
+            approvalStatus = existingUser.approvalStatus || 'approved';
         }
 
         if (approvalStatus !== 'approved') {
@@ -164,7 +164,7 @@ export default function Login() {
                         </div>
                         <button type="submit" className="auth-button" id="email-login" disabled={isLoading}>
                             {isLoading ? (
-                                <div className="auth-button-spinner"></div>
+                                <Spinner size="sm" color="dark" />
                             ) : (
                                 "Login"
                             )}

@@ -7,11 +7,13 @@ import uploadIcon from '../../assets/upload.svg';
 import warningIcon from '../../assets/warning.svg';
 import closeIcon from '../../assets/close.svg';
 import LockModal from '../../components/LockModal.jsx';
-import { auth, db } from '../../firebase/config';
-import { serverTimestamp, collection, addDoc } from 'firebase/firestore';
-import { useAgencyData } from '../../hooks/useAgencyData';
+import { auth } from '../../firebase/config';
+import { serverTimestamp } from 'firebase/firestore';
+import { createSubmission } from '../../firebase/collections/agencySubmissions';
+import { useAgencyWorkflow } from '../../hooks/useAgencyWorkflow';
 import { logActivity } from '../../firebase/activityLog';
 import { createAdminNotifications } from '../../firebase/notifications';
+import Spinner from '../../components/Spinner';
 
 export default function Uupload() {
   const nav = useNavigate();
@@ -33,7 +35,7 @@ export default function Uupload() {
 
   const fileInputRef = useRef(null);
 
-  const { agencyName, hasSelfAssessment, hasActionPlan, loading } = useAgencyData();
+  const { agencyName, hasSelfAssessment, hasActionPlan, loading } = useAgencyWorkflow();
 
   const isSelfAssessmentMode = !hasSelfAssessment;
 
@@ -218,7 +220,7 @@ export default function Uupload() {
         }
       }
 
-      await addDoc(collection(db, 'agencySubmissions'), submissionData);
+      await createSubmission(submissionData);
 
       await logActivity({
         userId: auth.currentUser.uid,
@@ -344,7 +346,7 @@ export default function Uupload() {
             disabled={!file || isUploading}
             onClick={(e) => handleUpload(e)}
           >
-            {isUploading ? <div className="spinner"></div> : 'Upload File'}
+            {isUploading ? <Spinner size="md" color="white" /> : 'Upload File'}
           </button>
         </div>
         <div className="upload-mode-indicator">

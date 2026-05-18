@@ -1,10 +1,8 @@
 import '../../css/prime/prime-dashboard.css';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../../firebase/config';
-import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
-import { validateAgency } from '../../utils/validateAgency';
 import { formatFirestoreDate } from '../../utils/formatFirestoreDate';
+import { usePrimeData } from '../../hooks/usePrimeData';
 
 import reviewIcon from '../../assets/review.svg';
 import agencyIcon from '../../assets/agency.svg';
@@ -13,14 +11,7 @@ import fileIcon from '../../assets/file.svg';
 export default function Pdashboard() {
   const nav = useNavigate();
   
-  /* Stats State */
-  const [stats, setStats] = useState({
-    totalAgencies: 0,
-    completedProfiles: 0
-  });
-  const [recentSubmissions, setRecentSubmissions] = useState([]);
-  const [pendingDeletions, setPendingDeletions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { stats, recentUploads, pendingDeletions, loading } = usePrimeData();
 
   /* Date and Time */
   const [time, setTime] = useState(new Date());
@@ -46,67 +37,6 @@ export default function Pdashboard() {
       day: 'numeric'
     });
   };
-
-  /* Fetch Stats */
-  useEffect(() => {
-    setLoading(true);
-
-    // 1. Count total users with role "u"
-    const usersQuery = query(collection(db, "users"), where("role", "==", "u"));
-    
-    // 2. Count completed agency profiles
-    const profilesQuery = query(collection(db, "agencyProfiles"));
-    
-    // 3. All submissions
-    const submissionsQuery = query(
-      collection(db, "agencySubmissions"),
-      where("fileType", "==", "Self-Assessment")
-    );
-
-    const unsubUsers = onSnapshot(usersQuery, (snap) => {
-      setStats(prev => ({ ...prev, totalAgencies: snap.size }));
-    });
-
-    const unsubProfiles = onSnapshot(profilesQuery, (snap) => {
-      let completed = 0;
-      snap.forEach(doc => {
-        completed += validateAgency(doc.data()) ? 1 : 0;
-      });
-      setStats(prev => ({ ...prev, completedProfiles: completed }));
-    });
-
-    const unsubSubmissions = onSnapshot(submissionsQuery, (snap) => {
-      const recent = [];
-      
-      snap.forEach(doc => {
-        recent.push({ id: doc.id, ...doc.data() });
-      });
-      
-      // Sort by uploadedAt desc and take top 5
-      recent.sort((a, b) => (b.uploadedAt?.seconds || 0) - (a.uploadedAt?.seconds || 0));
-      
-      setRecentSubmissions(recent.slice(0, 5));
-      setLoading(false);
-    });
-
-    const deletionsQuery = query(
-      collection(db, 'deletionRequests'),
-      where('status', '==', 'pending')
-    );
-    const unsubDeletions = onSnapshot(deletionsQuery, (snap) => {
-      const data = [];
-      snap.forEach(doc => data.push({ id: doc.id, ...doc.data() }));
-      data.sort((a, b) => (b.requestedAt?.seconds || 0) - (a.requestedAt?.seconds || 0));
-      setPendingDeletions(data);
-    });
-
-    return () => {
-      unsubUsers();
-      unsubProfiles();
-      unsubSubmissions();
-      unsubDeletions();
-    };
-  }, []);
 
   if (loading) {
     return <div className="loading-screen">Loading CSC RO X Dashboard...</div>;
@@ -163,12 +93,12 @@ export default function Pdashboard() {
               </tr>
             </thead>
             <tbody>
-              {recentSubmissions.length === 0 ? (
+              {recentUploads.length === 0 ? (
                 <tr>
                   <td colSpan="3" className="no-data">No uploads yet</td>
                 </tr>
               ) : (
-                recentSubmissions.map((sub) => (
+                recentUploads.map((sub) => (
                   <tr key={sub.id} onClick={() => window.open(sub.fileUrl, '_blank')}>
                     <td>{sub.agencyName}</td>
                     <td>{sub.fileName}</td>
