@@ -3,13 +3,14 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import '../css/prime/prime-layout.css';
 import hamIcon from '../assets/hamburger.svg';
 import dashboardIcon from '../assets/dashboard.svg';
-import reviewIcon from '../assets/review.svg';
 import folderIcon from '../assets/folder.svg';
 import approvedIcon from '../assets/approved.svg';
 import rejectedIcon from '../assets/rejected.svg';
 
 import deleteIcon from '../assets/rejected.svg';
 import recommendationsIcon from '../assets/review.svg';
+import recommendationIcon from '../assets/recommendation.svg';
+import notificationIcon from '../assets/notification.svg';
 
 import NotificationBell from '../components/NotificationBell';
 import { auth } from '../firebase/config';
@@ -43,6 +44,7 @@ export default function Playout() {
             case '/deletion-requests-p': return 'Deletion Requests';
             case '/recommendations-p': return 'Field Office Monitoring';
             case '/recom-p': return 'Recommendations';
+            case '/send-notification-p': return 'Send Agency Notification';
             case '/approved-p': return 'Approved Files';
             case '/rejected-p': return 'Rejected Files';
 
@@ -117,8 +119,18 @@ export default function Playout() {
                                 Field Office Monitoring
                             </NavLink>
                             <NavLink className="nav-item-prime nav-recom" to="/recom-p">
-                                <img src={reviewIcon} alt="Recommendations" width="20" height="20" className="deep-blue-filter"/>
+                                <img src={recommendationIcon} alt="Recommendations" width="20" height="20" className="deep-blue-filter"/>
                                 Recommendations
+                            </NavLink>
+                        </nav>
+                    </div>
+
+                    <div className="sidebar-section">
+                        <p className="sidebar-label">COMMUNICATIONS</p>
+                        <nav>
+                            <NavLink className="nav-item-prime nav-send-notification" to="/send-notification-p">
+                                <img src={notificationIcon} alt="Send Notification" width="20" height="20" className="deep-blue-filter"/>
+                                Send Notification
                             </NavLink>
                         </nav>
                     </div>

@@ -107,8 +107,8 @@ service cloud.firestore {
       // Only admins can read the audit trail
       allow read: if request.auth != null && isAdmin();
 
-      // Logs are immutable
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if request.auth != null && isAdmin();
     }
   }
 }

@@ -9,8 +9,7 @@ import profileIcon from '../assets/profile.svg';
 import employeeIcon from '../assets/employees.svg'
 import lockIcon from '../assets/lock.svg'
 import fileIcon from '../assets/file.svg'
-import notifIcon from '../assets/notification.svg';
-
+import NotificationBell from '../components/NotificationBell';
 import LockModal from '../components/LockModal';
 import { useAgencyWorkflow } from '../hooks/useAgencyWorkflow';
 import { auth } from '../firebase/config';
@@ -110,7 +109,7 @@ export default function Ulayout() {
                     <p className='dashboard-title'>{getPageTitle(location.pathname)}</p>
                 </div>
                 <div className="rightside">
-                    <img src={notifIcon} alt="Notifications" width="25" height="25" className='white-filter'/>
+                    <NotificationBell user={auth.currentUser} />
                     <div className="divider"></div>
                     <div 
                         className="who-am-i-box" 

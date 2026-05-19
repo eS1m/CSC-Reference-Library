@@ -8,8 +8,36 @@ import { useRecommendations } from '../../hooks/useRecommendations';
 import { createRecommendation, updateRecommendation, deleteRecommendation } from '../../firebase/collections/recommendations';
 import { getSubmissions } from '../../firebase/collections/agencySubmissions';
 import { getProfiles } from '../../firebase/collections/agencyProfiles';
+import { notifyAgencyOARecommended } from '../../firebase/notifications';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+function canGenerateOARecommendation(rec) {
+  return Boolean(
+    rec?.agencyId
+    && rec.fieldDirector?.trim()
+    && rec.assistPlan
+    && rec.progressLog
+    && rec.progressLogFullyImplemented
+  );
+}
+
+function getOAButtonTitle(rec) {
+  if (canGenerateOARecommendation(rec)) {
+    return 'Click to generate OA Recommendation';
+  }
+
+  const missing = [];
+  if (!rec?.agencyId) missing.push('Name of Agency');
+  if (!rec?.fieldDirector?.trim()) missing.push('Field Director');
+  if (!rec?.assistPlan) missing.push('Assist Plan');
+  if (!rec?.progressLog) missing.push('Progress Log');
+  if (!rec?.progressLogFullyImplemented) {
+    missing.push('"Progress Log fully implemented" checkbox');
+  }
+
+  return `Complete all requirements first: ${missing.join(', ')}`;
+}
 
 export default function RecommendationsP() {
   const { recommendations, loading } = useRecommendations();
@@ -137,11 +165,15 @@ export default function RecommendationsP() {
   };
 
   const handleOARecommend = async (recId) => {
+    const rec = recommendations.find(r => r.id === recId);
+    if (!rec || !canGenerateOARecommendation(rec)) return;
+
     try {
       await updateRecommendation(recId, {
         oaRecommended: true,
         oaRecommendedAt: serverTimestamp()
       });
+      await notifyAgencyOARecommended(rec.agencyId, rec.agencyName);
     } catch (err) {
       console.error('Error locking recommendation:', err);
       alert('Failed to generate OA Recommendation: ' + err.message);
@@ -382,8 +414,8 @@ export default function RecommendationsP() {
                   <button
                     className="rec-oa-btn"
                     onClick={() => handleOARecommend(rec.id)}
-                    disabled={!rec.progressLogFullyImplemented}
-                    title={rec.progressLogFullyImplemented ? 'Click to generate OA Recommendation' : 'Check "Progress Log fully implemented" to enable'}
+                    disabled={!canGenerateOARecommendation(rec)}
+                    title={getOAButtonTitle(rec)}
                   >
                     OA Recommendation
                   </button>

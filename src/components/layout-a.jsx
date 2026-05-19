@@ -8,6 +8,7 @@ import editIcon from '../assets/edit.svg';
 
 import folderIcon from '../assets/folder.svg';
 import deleteIcon from '../assets/rejected.svg';
+import notificationIcon from '../assets/notification.svg';
 
 import NotificationBell from '../components/NotificationBell';
 import { auth } from '../firebase/config';
@@ -41,6 +42,7 @@ export default function Alayout() {
             // case '/test-page-a': return 'Test Page';
             case '/drive-browser-a': return 'Google Drive Browser';
             case '/deletion-requests-a': return 'Deletion Requests';
+            case '/send-notification-a': return 'Send Agency Notification';
             default: return 'Admin Portal';
         }
     };
@@ -127,6 +129,16 @@ export default function Alayout() {
                             <NavLink className="nav-item-admin nav-deletion-requests" to="/deletion-requests-a">
                                 <img src={deleteIcon} alt="Deletion Requests" width="20" height="20" className="deep-blue-filter"/>
                                 Deletion Requests
+                            </NavLink>
+                        </nav>
+                    </div>
+
+                    <div className="sidebar-section">
+                        <p className="sidebar-label">COMMUNICATIONS</p>
+                        <nav>
+                            <NavLink className="nav-item-admin nav-send-notification" to="/send-notification-a">
+                                <img src={notificationIcon} alt="Send Notification" width="20" height="20" className="deep-blue-filter"/>
+                                Send Notification
                             </NavLink>
                         </nav>
                     </div>

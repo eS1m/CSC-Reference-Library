@@ -31,55 +31,42 @@
     font-family: 'Outfit', sans-serif;
 }
 
-.recom-section-title {
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--deep-blue);
-    margin: 0 0 16px 0;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(0, 48, 73, 0.1);
+/* Wider cards to fit labeled file slots */
+.recom-cards .recom-card {
+    width: 100%;
+    max-width: 720px;
 }
 
-.recom-agency-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+.recom-card-header {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.recom-agency-item {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 14px 18px;
-    background: #f8fbfd;
-    border: 1px solid rgba(0, 48, 73, 0.08);
-    border-radius: 10px;
-    border-left: 4px solid var(--light-blue);
-    transition: 0.2s ease;
-}
-
-.recom-agency-item:hover {
-    background: #f0f7fb;
-    transform: translateX(2px);
-}
-
-.recom-agency-header {
-    display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: 12px;
+    gap: 16px;
     flex-wrap: wrap;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(0, 48, 73, 0.08);
+}
+
+.recom-card-title {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
 }
 
 .recom-agency-name {
     font-family: 'Outfit', sans-serif;
-    font-size: 1rem;
+    font-size: 1.15rem;
     font-weight: 600;
     color: var(--deep-blue);
+    margin: 0;
+}
+
+.recom-agency-director {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem;
+    color: var(--stat-description);
+    margin: 0;
 }
 
 .recom-undo-btn {
@@ -101,8 +88,44 @@
     color: var(--deep-red);
 }
 
-.recom-agency-director {
+/* One file per row with label above button */
+.recom-files-row {
+    flex-direction: column;
+    gap: 14px;
+}
+
+.recom-file-cell {
+    min-width: 100%;
+    flex: none;
+}
+
+.recom-file-label {
+    display: block;
     font-family: 'Outfit', sans-serif;
-    font-size: 0.85rem;
-    color: var(--stat-description);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--deep-blue);
+    margin-bottom: 8px;
+}
+
+.recom-upload-slot {
+    width: 100%;
+}
+
+/* Pending uploads: darker grey hover only (no blue/red accents) */
+.recom-page .rec-file-btn.upload:hover:not(:disabled),
+.recom-page .rec-file-btn.upload.progress-log:hover:not(:disabled) {
+    background: #e0e0e0;
+    color: #666;
+    border-color: #bbb;
+}
+
+@media (max-width: 768px) {
+    .recom-page {
+        padding: 16px;
+    }
+
+    .recom-cards .recom-card {
+        max-width: 100%;
+    }
 }

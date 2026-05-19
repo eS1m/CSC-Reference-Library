@@ -1,0 +1,117 @@
+.can-page {
+    margin-top: 20px;
+    background: white;
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.096);
+    min-height: 300px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.can-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 48px;
+    color: var(--stat-description);
+    font-family: 'Outfit', sans-serif;
+}
+
+.can-empty {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--stat-description);
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.can-form {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.can-form-intro {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    color: var(--stat-description);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.can-message-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.can-message-row .rec-label {
+    min-width: auto;
+}
+
+.can-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 48, 73, 0.15);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    color: var(--deep-blue);
+    background: white;
+    outline: none;
+    transition: 0.2s;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+.can-textarea:focus {
+    border-color: var(--light-blue);
+    box-shadow: 0 0 6px rgba(102, 155, 188, 0.2);
+}
+
+.can-textarea:disabled {
+    background: #f5f5f5;
+    cursor: not-allowed;
+}
+
+.can-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 4px;
+}
+
+.can-submit-btn {
+    min-width: 180px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.can-sender-note {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    color: var(--stat-description);
+    margin: 0;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0, 48, 73, 0.06);
+}
+
+@media (max-width: 768px) {
+    .can-page {
+        padding: 16px;
+    }
+
+    .can-form .rec-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .can-submit-btn {
+        width: 100%;
+    }
+}

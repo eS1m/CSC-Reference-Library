@@ -337,26 +337,6 @@
   table-layout: fixed;
 }
 
-.activity-logs-table th:nth-child(1),
-.activity-logs-table td:nth-child(1) {
-  width: 18%;
-}
-
-.activity-logs-table th:nth-child(2),
-.activity-logs-table td:nth-child(2) {
-  width: 22%;
-}
-
-.activity-logs-table th:nth-child(3),
-.activity-logs-table td:nth-child(3) {
-  width: 24%;
-}
-
-.activity-logs-table th:nth-child(4),
-.activity-logs-table td:nth-child(4) {
-  width: 36%;
-}
-
 .activity-logs-table td {
   white-space: normal;
   overflow-wrap: break-word;
