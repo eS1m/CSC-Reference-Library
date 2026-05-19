@@ -7,8 +7,6 @@ export default defineConfig({
     react() // Standard, stable React plugin
   ],
   preview: {
-    allowedHosts: [
-      'ccs-reference-library-staging-vtmh4.ondigitalocean.app'
-    ]
+    allowedHosts: true
   }
 })
