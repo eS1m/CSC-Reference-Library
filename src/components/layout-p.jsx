@@ -41,7 +41,8 @@ export default function Playout() {
             case '/dashboard-p': return 'CSC RO X Dashboard';
             case '/drive-browser-csc': return 'Drive Browser';
             case '/deletion-requests-p': return 'Deletion Requests';
-            case '/recommendations-p': return 'Recommendations';
+            case '/recommendations-p': return 'Field Office Monitoring';
+            case '/recom-p': return 'Recommendations';
             case '/approved-p': return 'Approved Files';
             case '/rejected-p': return 'Rejected Files';
 
@@ -112,7 +113,11 @@ export default function Playout() {
                                 Deletion Requests
                             </NavLink>
                             <NavLink className="nav-item-prime nav-recommendations" to="/recommendations-p">
-                                <img src={recommendationsIcon} alt="Recommendations" width="20" height="20" className="deep-blue-filter"/>
+                                <img src={recommendationsIcon} alt="Field Office Monitoring" width="20" height="20" className="deep-blue-filter"/>
+                                Field Office Monitoring
+                            </NavLink>
+                            <NavLink className="nav-item-prime nav-recom" to="/recom-p">
+                                <img src={reviewIcon} alt="Recommendations" width="20" height="20" className="deep-blue-filter"/>
                                 Recommendations
                             </NavLink>
                         </nav>

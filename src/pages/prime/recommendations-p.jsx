@@ -193,14 +193,14 @@ export default function RecommendationsP() {
   return (
     <main className="main-content">
       <div className="main-content-header">
-        <h1 id="main-content-title">Recommendations</h1>
+        <h1 id="main-content-title">Field Office Monitoring</h1>
       </div>
 
       <div className="recommendations-page">
         {loading && (
           <div className="rec-loading">
             <Spinner size="lg" color="primary" />
-            <span>Loading recommendations...</span>
+            <span>Loading field office monitoring data...</span>
           </div>
         )}
 

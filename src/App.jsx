@@ -19,6 +19,7 @@ import Pdashboard from './pages/prime/dashboard-p';
 import DriveBrowserCSC from './pages/prime/drive-browser-csc';
 import DeletionRequestsP from './pages/prime/deletion-requests-p';
 import RecommendationsP from './pages/prime/recommendations-p';
+import RecomP from './pages/prime/recom-p';
 
 import Alayout from './components/layout-a'
 import Adashboard from './pages/admin/dashboard-a';
@@ -103,6 +104,11 @@ function App() {
             <Route path="/recommendations-p" element={
               <ProtectedRoute requiredRole="p">
                 <RecommendationsP/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/recom-p" element={
+              <ProtectedRoute requiredRole="p">
+                <RecomP/>
               </ProtectedRoute> 
             } />
           </Route>
