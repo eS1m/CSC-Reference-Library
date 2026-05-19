@@ -60,32 +60,58 @@
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 }
 
-/* Delete button (top-right of card) */
+/* Delete button (next to OA Recommendation) */
 .rec-delete-btn {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 10px;
     border: none;
     background: rgba(164, 19, 60, 0.08);
     color: var(--light-red);
-    font-size: 1.2rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem;
     font-weight: 600;
     line-height: 1;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     transition: 0.2s;
-    padding-bottom: 2px;
+    flex-shrink: 0;
 }
 
 .rec-delete-btn:hover {
     background: var(--light-red);
     color: white;
-    transform: scale(1.1);
+    transform: scale(1.02);
+}
+
+/* Locked Card State */
+.rec-card.locked {
+    background: #f8f9fa;
+    border-color: rgba(0, 48, 73, 0.08);
+    opacity: 0.85;
+}
+
+.rec-card.locked .rec-select:disabled,
+.rec-card.locked .rec-input:disabled {
+    background: #ececec;
+    color: #777;
+    cursor: not-allowed;
+}
+
+.rec-locked-badge {
+    align-self: center;
+    padding: 10px 24px;
+    border-radius: 10px;
+    background: linear-gradient(to right, var(--deep-blue), var(--light-blue));
+    color: white;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0, 48, 73, 0.2);
+    pointer-events: none;
+    margin-top: 4px;
 }
 
 /* Row Layout */
@@ -215,6 +241,35 @@
     box-shadow: 0 2px 8px rgba(164, 19, 60, 0.15);
 }
 
+/* Change file button */
+.rec-change-file-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px dashed rgba(0, 48, 73, 0.2);
+    background: transparent;
+    color: var(--light-blue);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.2s ease;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.rec-change-file-btn:hover:not(:disabled) {
+    background: rgba(102, 155, 188, 0.08);
+    border-color: var(--light-blue);
+    color: var(--deep-blue);
+}
+
+.rec-change-file-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 /* Upload Error Banner */
 .rec-error-banner {
     width: 100%;
@@ -292,6 +347,19 @@
     box-shadow: 0 1px 4px rgba(0, 48, 73, 0.2);
 }
 
+.rec-oa-btn:disabled {
+    background: #e0e0e0;
+    color: #999;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.rec-oa-btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
 /* Add Agency Button */
 .rec-add-btn {
     align-self: center;
@@ -313,6 +381,75 @@
     color: white;
     box-shadow: 0 4px 12px rgba(0, 48, 73, 0.2);
     transform: translateY(-2px);
+}
+
+/* Delete Confirmation Modal */
+.rec-delete-modal {
+    max-width: 420px;
+}
+
+.rec-delete-modal-body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+}
+
+.rec-delete-modal-body p {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    color: var(--deep-blue);
+    margin: 0;
+}
+
+.rec-delete-warning {
+    font-size: 0.9rem;
+    color: var(--light-red);
+    font-weight: 500;
+}
+
+.rec-delete-modal-actions {
+    padding: 0 24px 24px;
+    display: flex;
+    gap: 12px;
+}
+
+.rec-cancel-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: 1.5px solid rgba(0, 48, 73, 0.15);
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    background: white;
+    color: var(--deep-blue);
+}
+
+.rec-cancel-btn:hover {
+    background: #f5f5f5;
+}
+
+.rec-confirm-delete-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    background: linear-gradient(to right, #c1121f, #e63946);
+    color: white;
+}
+
+.rec-confirm-delete-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(193, 18, 31, 0.3);
 }
 
 /* Responsive */

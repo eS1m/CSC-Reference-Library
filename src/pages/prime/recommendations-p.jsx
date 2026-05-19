@@ -3,6 +3,7 @@ import '../../css/prime/recommendations-p.css';
 import { auth } from '../../firebase/config';
 import { serverTimestamp } from 'firebase/firestore';
 import Spinner from '../../components/Spinner';
+import Modal from '../../components/Modal';
 import { useRecommendations } from '../../hooks/useRecommendations';
 import { createRecommendation, updateRecommendation, deleteRecommendation } from '../../firebase/collections/recommendations';
 import { getSubmissions } from '../../firebase/collections/agencySubmissions';
@@ -15,6 +16,7 @@ export default function RecommendationsP() {
   const [completedAgencies, setCompletedAgencies] = useState([]);
   const [uploadingStates, setUploadingStates] = useState({});
   const [uploadErrors, setUploadErrors] = useState({});
+  const [deleteModal, setDeleteModal] = useState({ open: false, recId: null });
   const fileInputRefs = useRef({});
 
   /* Fetch agencies that have completed all 5 steps */
@@ -32,7 +34,7 @@ export default function RecommendationsP() {
         });
 
         const completedIds = Object.entries(agencyCounts)
-          .filter(([_, counts]) => counts.selfAssessment && counts.actionPlan)
+          .filter(([, counts]) => counts.selfAssessment && counts.actionPlan)
           .map(([uid]) => uid);
 
         if (completedIds.length === 0) {
@@ -83,14 +85,23 @@ export default function RecommendationsP() {
     }
   };
 
-  const handleDelete = async (recId) => {
-    if (!window.confirm('Delete this recommendation?')) return;
+  const handleDelete = (recId) => {
+    setDeleteModal({ open: true, recId });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.recId) return;
     try {
-      await deleteRecommendation(recId);
+      await deleteRecommendation(deleteModal.recId);
+      setDeleteModal({ open: false, recId: null });
     } catch (err) {
       console.error('Error deleting recommendation:', err);
       alert('Failed to delete: ' + err.message);
     }
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModal({ open: false, recId: null });
   };
 
   const handleAgencyChange = async (recId, agencyId) => {
@@ -122,6 +133,18 @@ export default function RecommendationsP() {
       });
     } catch (err) {
       console.error('Error updating checkbox:', err);
+    }
+  };
+
+  const handleOARecommend = async (recId) => {
+    try {
+      await updateRecommendation(recId, {
+        oaRecommended: true,
+        oaRecommendedAt: serverTimestamp()
+      });
+    } catch (err) {
+      console.error('Error locking recommendation:', err);
+      alert('Failed to generate OA Recommendation: ' + err.message);
     }
   };
 
@@ -210,15 +233,7 @@ export default function RecommendationsP() {
 
         <div className="rec-cards">
           {recommendations.map(rec => (
-            <div key={rec.id} className="rec-card">
-              <button
-                className="rec-delete-btn"
-                onClick={() => handleDelete(rec.id)}
-                title="Delete recommendation"
-              >
-                ×
-              </button>
-
+            <div key={rec.id} className={`rec-card ${rec.oaRecommended ? 'locked' : ''}`}>
               {/* Row 1: Agency dropdown */}
               <div className="rec-row">
                 <label className="rec-label">Name of Agency:</label>
@@ -226,6 +241,7 @@ export default function RecommendationsP() {
                   className="rec-select"
                   value={rec.agencyId || ''}
                   onChange={(e) => handleAgencyChange(rec.id, e.target.value)}
+                  disabled={rec.oaRecommended}
                 >
                   <option value="">Select an agency...</option>
                   {rec.agencyId && (
@@ -249,6 +265,7 @@ export default function RecommendationsP() {
                     placeholder="Enter field director name..."
                     value={rec.fieldDirector || ''}
                     onChange={(e) => handleFieldDirectorChange(rec.id, e.target.value)}
+                    disabled={rec.oaRecommended}
                   />
                 </div>
               )}
@@ -265,18 +282,29 @@ export default function RecommendationsP() {
                       onChange={(e) => handleFileInputChange(rec.id, 'Assist-Plan', e)}
                     />
                     {rec.assistPlan ? (
-                      <button
-                        className="rec-file-btn uploaded"
-                        onClick={() => handleViewFile(rec.assistPlan.fileUrl)}
-                        title="Open in Google Drive"
-                      >
-                        {rec.assistPlan.fileName}
-                      </button>
+                      <>
+                        <button
+                          className="rec-file-btn uploaded"
+                          onClick={() => handleViewFile(rec.assistPlan.fileUrl)}
+                          title="Open in Google Drive"
+                        >
+                          {rec.assistPlan.fileName}
+                        </button>
+                        <button
+                          className="rec-change-file-btn"
+                          onClick={() => triggerFileInput(rec.id, 'Assist-Plan')}
+                          disabled={rec.oaRecommended || uploadingStates[`${rec.id}-Assist-Plan`]}
+                        >
+                          {uploadingStates[`${rec.id}-Assist-Plan`] ? (
+                            <Spinner size="sm" color="primary" />
+                          ) : 'Change file'}
+                        </button>
+                      </>
                     ) : (
                       <button
                         className="rec-file-btn upload"
                         onClick={() => triggerFileInput(rec.id, 'Assist-Plan')}
-                        disabled={uploadingStates[`${rec.id}-Assist-Plan`]}
+                        disabled={rec.oaRecommended || uploadingStates[`${rec.id}-Assist-Plan`]}
                       >
                         {uploadingStates[`${rec.id}-Assist-Plan`] ? (
                           <Spinner size="sm" color="primary" />
@@ -294,18 +322,29 @@ export default function RecommendationsP() {
                       onChange={(e) => handleFileInputChange(rec.id, 'Progress-Log', e)}
                     />
                     {rec.progressLog ? (
-                      <button
-                        className="rec-file-btn uploaded progress-log"
-                        onClick={() => handleViewFile(rec.progressLog.fileUrl)}
-                        title="Open in Google Drive"
-                      >
-                        {rec.progressLog.fileName}
-                      </button>
+                      <>
+                        <button
+                          className="rec-file-btn uploaded progress-log"
+                          onClick={() => handleViewFile(rec.progressLog.fileUrl)}
+                          title="Open in Google Drive"
+                        >
+                          {rec.progressLog.fileName}
+                        </button>
+                        <button
+                          className="rec-change-file-btn"
+                          onClick={() => triggerFileInput(rec.id, 'Progress-Log')}
+                          disabled={rec.oaRecommended || uploadingStates[`${rec.id}-Progress-Log`]}
+                        >
+                          {uploadingStates[`${rec.id}-Progress-Log`] ? (
+                            <Spinner size="sm" color="primary" />
+                          ) : 'Change file'}
+                        </button>
+                      </>
                     ) : (
                       <button
                         className="rec-file-btn upload progress-log"
                         onClick={() => triggerFileInput(rec.id, 'Progress-Log')}
-                        disabled={uploadingStates[`${rec.id}-Progress-Log`]}
+                        disabled={rec.oaRecommended || uploadingStates[`${rec.id}-Progress-Log`]}
                       >
                         {uploadingStates[`${rec.id}-Progress-Log`] ? (
                           <Spinner size="sm" color="primary" />
@@ -329,7 +368,7 @@ export default function RecommendationsP() {
               )}
 
               {/* Row 4: Checkbox + OA Recommendation */}
-              {rec.agencyId && (
+              {rec.agencyId && !rec.oaRecommended && (
                 <div className="rec-action-row">
                   <label className="rec-checkbox-label">
                     <input
@@ -342,11 +381,24 @@ export default function RecommendationsP() {
                   </label>
                   <button
                     className="rec-oa-btn"
-                    onClick={() => console.log('OA Recommendation clicked for', rec.agencyName)}
+                    onClick={() => handleOARecommend(rec.id)}
+                    disabled={!rec.progressLogFullyImplemented}
+                    title={rec.progressLogFullyImplemented ? 'Click to generate OA Recommendation' : 'Check "Progress Log fully implemented" to enable'}
                   >
                     OA Recommendation
                   </button>
+                  <button
+                    className="rec-delete-btn"
+                    onClick={() => handleDelete(rec.id)}
+                    title="Delete recommendation"
+                  >
+                    Delete
+                  </button>
                 </div>
+              )}
+
+              {rec.oaRecommended && (
+                <div className="rec-locked-badge">OA Recommended</div>
               )}
             </div>
           ))}
@@ -355,6 +407,28 @@ export default function RecommendationsP() {
         <button className="rec-add-btn" onClick={handleAddAgency}>
           + Add Agency
         </button>
+
+        <Modal
+          isOpen={deleteModal.open}
+          onClose={closeDeleteModal}
+          title="Delete Recommendation"
+          variant="danger"
+          actions={
+            <>
+              <button className="modal-btn modal-btn-secondary" onClick={closeDeleteModal}>
+                Cancel
+              </button>
+              <button className="modal-btn modal-btn-danger" onClick={confirmDelete}>
+                Delete
+              </button>
+            </>
+          }
+        >
+          <p>Are you sure you want to delete this recommendation?</p>
+          <p className="modal-subtext" style={{ color: '#c0392b', fontWeight: 500 }}>
+            This action cannot be undone.
+          </p>
+        </Modal>
       </div>
     </main>
   );

@@ -20,3 +20,89 @@
     font-size: 1rem;
     margin: 0;
 }
+
+.recom-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 48px;
+    color: var(--stat-description);
+    font-family: 'Outfit', sans-serif;
+}
+
+.recom-section-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--deep-blue);
+    margin: 0 0 16px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(0, 48, 73, 0.1);
+}
+
+.recom-agency-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.recom-agency-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 18px;
+    background: #f8fbfd;
+    border: 1px solid rgba(0, 48, 73, 0.08);
+    border-radius: 10px;
+    border-left: 4px solid var(--light-blue);
+    transition: 0.2s ease;
+}
+
+.recom-agency-item:hover {
+    background: #f0f7fb;
+    transform: translateX(2px);
+}
+
+.recom-agency-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.recom-agency-name {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--deep-blue);
+}
+
+.recom-undo-btn {
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px dashed var(--light-red);
+    background: rgba(164, 19, 60, 0.04);
+    color: var(--light-red);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.2s;
+    flex-shrink: 0;
+}
+
+.recom-undo-btn:hover {
+    background: rgba(164, 19, 60, 0.1);
+    color: var(--deep-red);
+}
+
+.recom-agency-director {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    color: var(--stat-description);
+}

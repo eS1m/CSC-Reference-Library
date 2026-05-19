@@ -12,7 +12,7 @@ import agencyIcon from '../../assets/agency.svg';
 import fileIcon from '../../assets/file.svg';
 import reviewIcon from '../../assets/review.svg';
 import profileIcon from '../../assets/profile.svg';
-import warningIcon from '../../assets/warning.svg';
+import Modal from '../../components/Modal';
 
 export default function Adashboard() {
   const nav = useNavigate();
@@ -417,44 +417,35 @@ export default function Adashboard() {
         </div>
       )}
 
-      {/* Reset Confirmation Modal */}
-      {resetModal.open && (
-        <div className="modal-overlay" onClick={closeResetModal}>
-          <div className="modal-content warning-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Reset Agency Progress</h2>
-            </div>
-            <div className="modal-body warning-body">
-              <div className="warning-icon-large">
-                <img src={warningIcon} alt="Warning" width="60" height="60" />
-              </div>
-              <p className="warning-text">
-                Are you sure you want to reset progress for:
-              </p>
-              <p style={{ fontWeight: 700, color: 'var(--deep-blue)', margin: '8px 0' }}>
-                {resetModal.user?.email}
-              </p>
-              <p className="warning-subtext">
-                This will permanently delete all submission records (Self-Assessment and Action Plan)
-                from Firestore for this agency. The files in Google Drive will NOT be deleted.
-                This action cannot be undone.
-              </p>
-            </div>
-            <div className="modal-actions warning-actions">
-              <button className="cancel-btn" onClick={closeResetModal}>
-                Cancel
-              </button>
-              <button
-                className="proceed-btn"
-                onClick={confirmReset}
-                disabled={resetLoading}
-              >
-                {resetLoading ? 'Resetting...' : 'Confirm Reset'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={resetModal.open}
+        onClose={closeResetModal}
+        title="Reset Agency Progress"
+        variant="warning"
+        actions={
+          <>
+            <button className="modal-btn modal-btn-secondary" onClick={closeResetModal}>
+              Cancel
+            </button>
+            <button
+              className="modal-btn modal-btn-danger"
+              onClick={confirmReset}
+              disabled={resetLoading}
+            >
+              {resetLoading ? 'Resetting...' : 'Confirm Reset'}
+            </button>
+          </>
+        }
+      >
+        <p style={{ fontWeight: 700, color: 'var(--deep-blue)', margin: '8px 0' }}>
+          {resetModal.user?.email}
+        </p>
+        <p className="modal-subtext">
+          This will permanently delete all submission records (Self-Assessment and Action Plan)
+          from Firestore for this agency. The files in Google Drive will NOT be deleted.
+          This action cannot be undone.
+        </p>
+      </Modal>
 
       {/* Clock */}
       <div className="stat-time stat-container">

@@ -4,9 +4,8 @@ import * as XLSX from 'xlsx';
 import '../../css/lgu/user-layout.css';
 import '../../css/lgu/uupload.css';
 import uploadIcon from '../../assets/upload.svg';
-import warningIcon from '../../assets/warning.svg';
-import closeIcon from '../../assets/close.svg';
 import LockModal from '../../components/LockModal.jsx';
+import Modal from '../../components/Modal';
 import { auth } from '../../firebase/config';
 import { serverTimestamp } from 'firebase/firestore';
 import { createSubmission } from '../../firebase/collections/agencySubmissions';
@@ -361,42 +360,33 @@ export default function Uupload() {
         </div>
       </div>
 
-      {/* WARNING MODAL */}
-      {showWarningModal && (
-        <div className="modal-overlay" onClick={cancelWarning}>
-          <div className="modal-content warning-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Warning</h2>
-              <button className="modal-close" onClick={cancelWarning}>
-                <img src={closeIcon} alt="Close" width="20" height="20" />
-              </button>
-            </div>
-            <div className="modal-body warning-body">
-              <div className="warning-icon-large">
-                <img src={warningIcon} alt="Warning" width="60" height="60" />
-              </div>
-              <p className="warning-text">
-                This file doesn&apos;t look like a {isSelfAssessmentMode ? 'Self-Assessment' : 'Action Plan'}.
-              </p>
-              <p className="warning-subtext">
-                The official naming convention is{' '}
-                <strong>
-                  &apos;{isSelfAssessmentMode ? 'PRIME-HRM Assessment' : 'Action Plan'}-(Agency Name)&apos;
-                </strong>.
-                Are you sure you want to proceed?
-              </p>
-            </div>
-            <div className="modal-actions warning-actions">
-              <button className="cancel-btn" onClick={cancelWarning}>
-                Cancel
-              </button>
-              <button className="proceed-btn" onClick={confirmUploadAnyway}>
-                Proceed Anyway
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={showWarningModal}
+        onClose={cancelWarning}
+        title="Warning"
+        variant="warning"
+        actions={
+          <>
+            <button className="modal-btn modal-btn-secondary" onClick={cancelWarning}>
+              Cancel
+            </button>
+            <button className="modal-btn modal-btn-primary" onClick={confirmUploadAnyway}>
+              Proceed Anyway
+            </button>
+          </>
+        }
+      >
+        <p style={{ fontWeight: 600 }}>
+          This file doesn&apos;t look like a {isSelfAssessmentMode ? 'Self-Assessment' : 'Action Plan'}.
+        </p>
+        <p className="modal-subtext">
+          The official naming convention is{' '}
+          <strong>
+            &apos;{isSelfAssessmentMode ? 'PRIME-HRM Assessment' : 'Action Plan'}-(Agency Name)&apos;
+          </strong>.
+          Are you sure you want to proceed?
+        </p>
+      </Modal>
     </main>
   );
 }
