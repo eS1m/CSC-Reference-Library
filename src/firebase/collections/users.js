@@ -1,5 +1,5 @@
 import { db } from '../config';
-import { collection, doc, getDoc, onSnapshot, orderBy, query, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, setDoc, updateDoc } from 'firebase/firestore';
 
 export function subscribeUsers(onData, onError) {
   const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
@@ -7,6 +7,11 @@ export function subscribeUsers(onData, onError) {
     const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     onData(data);
   }, onError);
+}
+
+export async function getUsers() {
+  const snap = await getDocs(query(collection(db, 'users')));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 export async function getUserById(uid) {

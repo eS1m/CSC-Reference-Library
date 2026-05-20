@@ -151,6 +151,39 @@ app.post('/upload', upload.single('file'), async (req, res) => {
       }
       finalFileName = `Action Plan-(${agencyName})${fileExtension}`;
     }
+    else if (fileType === 'Evaluation-Capability-Card') {
+      const allowedMimeTypes = [
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'application/vnd.ms-excel'
+      ];
+      if (!allowedMimeTypes.includes(req.file.mimetype)) {
+          return res.status(400).send('Invalid file type. Agency Evaluation Capability Card must be an Excel file.');
+      }
+      finalFileName = `Agency Evaluation Capability Card-(${agencyName})${fileExtension}`;
+    }
+    else if (fileType === 'Field-Director-Guidepost') {
+      const allowedMimeTypes = [
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'application/vnd.ms-excel'
+      ];
+      if (!allowedMimeTypes.includes(req.file.mimetype)) {
+          return res.status(400).send('Invalid file type. Guidepost of the Field Director must be an Excel file.');
+      }
+      finalFileName = `Guidepost Field Director-(${agencyName})${fileExtension}`;
+    }
+    else if (fileType === 'Regional-Director-Guidepost') {
+      const allowedMimeTypes = [
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/msword'
+      ];
+      if (!allowedMimeTypes.includes(req.file.mimetype)) {
+          return res.status(400).send('Invalid file type. Guidepost of the Regional Director must be a Word file.');
+      }
+      finalFileName = `Guidepost Regional Director-(${agencyName})${fileExtension}`;
+    }
+    else if (fileType === 'Narrative-Report') {
+      finalFileName = `Narrative Report-(${agencyName})${fileExtension}`;
+    }
 
     const agencyFolderId = await getOrCreateFolder(agencyName);
     const yearFolderId = await getOrCreateFolder(currentYear, agencyFolderId);

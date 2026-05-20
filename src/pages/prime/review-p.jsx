@@ -11,7 +11,7 @@ import approveIcon from '../../assets/approved.svg';
 import rejectIcon from '../../assets/rejected.svg';
 import viewIcon from '../../assets/view.svg';
 import downloadIcon from '../../assets/download.svg';
-import closeIcon from '../../assets/close.svg'; // Or reuse min-square.svg
+import Modal from '../../components/Modal';
 
 export default function Preview() {
   const [submissions, setSubmissions] = useState([]);
@@ -151,105 +151,92 @@ export default function Preview() {
         </div>
       )}
 
-      {/* MODAL OVERLAY */}
-      {selectedFile && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            
-            {/* Modal Header */}
-            <div className="modal-header">
-              <h2>Review Submission</h2>
-              <button className="modal-close" onClick={closeModal} disabled={actionLoading}>
-                <img src={closeIcon} alt="Close" width="20" height="20"/>
+      <Modal
+        isOpen={!!selectedFile}
+        onClose={closeModal}
+        title="Review Submission"
+        hideIcon
+        actions={
+          <>
+            <div className="action-row file-actions">
+              <button
+                className="view-btn"
+                onClick={() => handleView(selectedFile.fileUrl)}
+                disabled={actionLoading}
+              >
+                <img src={viewIcon} alt="View" width="16" height="16"/>
+                View in Drive
+              </button>
+              <button
+                className="download-btn"
+                onClick={() => handleDownload(selectedFile.fileId, selectedFile.fileName)}
+                disabled={actionLoading}
+              >
+                <img src={downloadIcon} alt="Download" width="16" height="16"/>
+                Download
               </button>
             </div>
-
-            {/* Modal Body */}
-            <div className="modal-body">
-              <div className="modal-file-icon">
-                <img src={fileIcon} alt="File" width="100" height="100" className="deep-blue-filter"/>
-              </div>
-
-              <div className="modal-details">
-                <div className="detail-row">
-                  <span className="detail-label">Agency:</span>
-                  <span className="detail-value">{selectedFile.agencyName}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">File Name:</span>
-                  <span className="detail-value">{selectedFile.fileName}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">File Type:</span>
-                  <span className="detail-value">{selectedFile.fileType}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Submitted:</span>
-                  <span className="detail-value">
-                    {formatFirestoreDate(selectedFile.uploadedAt, { includeTime: true })}
-                  </span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Status:</span>
-                  <span className={`status-badge ${(selectedFile.status || 'Pending').toLowerCase()}`}>
-                    {selectedFile.status || 'Pending'}
-                  </span>
-                </div>
-              </div>
+            <div className="action-row decision-actions">
+              <button
+                className="approve-btn"
+                onClick={() => handleStatusChange(selectedFile.id, 'Approved')}
+                disabled={actionLoading}
+              >
+                {actionLoading ? (
+                  <Spinner size="xs" color="white" />
+                ) : (
+                  <img src={approveIcon} alt="Approve" width="16" height="16"/>
+                )}
+                {actionLoading ? 'Processing...' : 'Approve Submission'}
+              </button>
+              <button
+                className="reject-btn"
+                onClick={() => handleStatusChange(selectedFile.id, 'Rejected')}
+                disabled={actionLoading}
+              >
+                {actionLoading ? (
+                  <Spinner size="xs" color="white" />
+                ) : (
+                  <img src={rejectIcon} alt="Reject" width="16" height="16"/>
+                )}
+                {actionLoading ? 'Processing...' : 'Reject Submission'}
+              </button>
             </div>
-
-            {/* Modal Actions */}
-            <div className="modal-actions">
-              <div className="action-row file-actions">
-                <button 
-                  className="view-btn"
-                  onClick={() => handleView(selectedFile.fileUrl)}
-                  disabled={actionLoading}
-                >
-                  <img src={viewIcon} alt="View" width="16" height="16"/>
-                  View in Drive
-                </button>
-                <button 
-                  className="download-btn"
-                  onClick={() => handleDownload(selectedFile.fileId, selectedFile.fileName)}
-                  disabled={actionLoading}
-                >
-                  <img src={downloadIcon} alt="Download" width="16" height="16"/>
-                  Download
-                </button>
-              </div>
-
-              <div className="action-row decision-actions">
-                <button 
-                  className="approve-btn"
-                  onClick={() => handleStatusChange(selectedFile.id, 'Approved')}
-                  disabled={actionLoading}
-                >
-                  {actionLoading ? (
-                    <Spinner size="xs" color="white" />
-                  ) : (
-                    <img src={approveIcon} alt="Approve" width="16" height="16"/>
-                  )}
-                  {actionLoading ? 'Processing...' : 'Approve Submission'}
-                </button>
-                <button 
-                  className="reject-btn"
-                  onClick={() => handleStatusChange(selectedFile.id, 'Rejected')}
-                  disabled={actionLoading}
-                >
-                  {actionLoading ? (
-                    <Spinner size="xs" color="white" />
-                  ) : (
-                    <img src={rejectIcon} alt="Reject" width="16" height="16"/>
-                  )}
-                  {actionLoading ? 'Processing...' : 'Reject Submission'}
-                </button>
-              </div>
+          </>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%' }}>
+          <div className="modal-file-icon">
+            <img src={fileIcon} alt="File" width="100" height="100" className="deep-blue-filter"/>
+          </div>
+          <div className="modal-details">
+            <div className="detail-row">
+              <span className="detail-label">Agency:</span>
+              <span className="detail-value">{selectedFile?.agencyName}</span>
             </div>
-
+            <div className="detail-row">
+              <span className="detail-label">File Name:</span>
+              <span className="detail-value">{selectedFile?.fileName}</span>
+            </div>
+            <div className="detail-row">
+              <span className="detail-label">File Type:</span>
+              <span className="detail-value">{selectedFile?.fileType}</span>
+            </div>
+            <div className="detail-row">
+              <span className="detail-label">Submitted:</span>
+              <span className="detail-value">
+                {formatFirestoreDate(selectedFile?.uploadedAt, { includeTime: true })}
+              </span>
+            </div>
+            <div className="detail-row">
+              <span className="detail-label">Status:</span>
+              <span className={`status-badge ${(selectedFile?.status || 'Pending').toLowerCase()}`}>
+                {selectedFile?.status || 'Pending'}
+              </span>
+            </div>
           </div>
         </div>
-      )}
+      </Modal>
     </main>
   );
 }

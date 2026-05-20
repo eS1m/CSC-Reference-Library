@@ -2,13 +2,11 @@ import { useState } from 'react';
 import { useDriveBrowser } from '../../hooks/useDriveBrowser';
 import '../../css/admin/admin-dashboard.css';
 import '../../css/admin/drive-browser-a.css';
-import '../../css/lock-modal.css';
 import folderIcon from '../../assets/folder.svg';
 import fileIcon from '../../assets/file.svg';
 import downloadIcon from '../../assets/download.svg';
 import viewIcon from '../../assets/view.svg';
-import closeIcon from '../../assets/close.svg';
-import warningIcon from '../../assets/warning.svg';
+import Modal from '../../components/Modal';
 import Spinner from '../../components/Spinner';
 
 function formatBytes(bytes) {
@@ -230,58 +228,50 @@ export default function DriveBrowserA() {
         )}
       </div>
 
-      {deleteModal.open && (
-        <div className="modal-overlay" onClick={closeDeleteModal}>
-          <div className="modal-content lock-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{deleteModal.errorCode === 'NOT_OWNER' ? 'Cannot Delete' : 'Confirm Delete'}</h2>
-              <button className="modal-close" onClick={closeDeleteModal}>
-                <img src={closeIcon} alt="Close" width="20" height="20" />
+      <Modal
+        isOpen={deleteModal.open}
+        onClose={closeDeleteModal}
+        title={deleteModal.errorCode === 'NOT_OWNER' ? 'Cannot Delete' : 'Confirm Delete'}
+        variant={deleteModal.errorCode === 'NOT_OWNER' ? 'warning' : 'danger'}
+        actions={
+          <>
+            <button className="modal-btn modal-btn-secondary" onClick={closeDeleteModal}>
+              Cancel
+            </button>
+            {deleteModal.errorCode === 'NOT_OWNER' && deleteModal.webViewLink ? (
+              <button className="modal-btn modal-btn-primary" onClick={() => window.open(deleteModal.webViewLink, '_blank')}>
+                Show in Drive
               </button>
-            </div>
-            <div className="lock-body">
-              <div className="lock-icon-large">
-                <img src={warningIcon} alt="Warning" width="45" height="45" className="grey-filter" />
-              </div>
-              <p className="lock-message">
-                {deleteModal.errorCode === 'NOT_OWNER'
-                  ? 'This file cannot be deleted'
-                  : 'Are you sure you want to delete this item?'}
-              </p>
-              <p className="lock-subtext">{deleteModal.item?.name}</p>
-              {deleteModal.location && (
-                <div className="drive-notowner-path">
-                  <strong>Located in:</strong>
-                  <span>{deleteModal.location}</span>
-                </div>
-              )}
-              {deleteModal.error && deleteModal.errorCode !== 'NOT_OWNER' && (
-                <p className="lock-subtext" style={{ color: '#c0392b', marginTop: '12px', fontWeight: 500 }}>
-                  {deleteModal.error}
-                </p>
-              )}
-            </div>
-            <div className="modal-actions lock-actions" style={{ gap: '12px' }}>
-              <button className="understood-btn secondary" onClick={closeDeleteModal}>
-                Cancel
+            ) : (
+              <button
+                className="modal-btn modal-btn-danger"
+                onClick={confirmDelete}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? 'Deleting...' : 'Delete'}
               </button>
-              {deleteModal.errorCode === 'NOT_OWNER' && deleteModal.webViewLink ? (
-                <button className="understood-btn" onClick={() => window.open(deleteModal.webViewLink, '_blank')}>
-                  Show in Drive
-                </button>
-              ) : (
-                <button
-                  className="understood-btn delete"
-                  onClick={confirmDelete}
-                  disabled={deleteLoading}
-                >
-                  {deleteLoading ? 'Deleting...' : 'Delete'}
-                </button>
-              )}
-            </div>
+            )}
+          </>
+        }
+      >
+        <p style={{ fontWeight: 600 }}>
+          {deleteModal.errorCode === 'NOT_OWNER'
+            ? 'This file cannot be deleted'
+            : 'Are you sure you want to delete this item?'}
+        </p>
+        <p className="modal-subtext">{deleteModal.item?.name}</p>
+        {deleteModal.location && (
+          <div className="drive-notowner-path" style={{ marginTop: '12px' }}>
+            <strong>Located in:</strong>{' '}
+            <span>{deleteModal.location}</span>
           </div>
-        </div>
-      )}
+        )}
+        {deleteModal.error && deleteModal.errorCode !== 'NOT_OWNER' && (
+          <p className="modal-subtext" style={{ color: '#c0392b', marginTop: '12px', fontWeight: 500 }}>
+            {deleteModal.error}
+          </p>
+        )}
+      </Modal>
     </main>
   );
 }

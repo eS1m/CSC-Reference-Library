@@ -8,8 +8,12 @@ import editIcon from '../assets/edit.svg';
 
 import folderIcon from '../assets/folder.svg';
 import deleteIcon from '../assets/rejected.svg';
+import notificationIcon from '../assets/notification.svg';
+import logoutIcon from '../assets/logout.svg';
+import contactIcon from '../assets/contact.svg';
 
 import NotificationBell from '../components/NotificationBell';
+import Modal from '../components/Modal';
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
 
@@ -29,6 +33,8 @@ export default function Alayout() {
     /* Side Bar Functionality */
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
+    const [showSignOutModal, setShowSignOutModal] = useState(false);
+
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
@@ -41,6 +47,8 @@ export default function Alayout() {
             // case '/test-page-a': return 'Test Page';
             case '/drive-browser-a': return 'Google Drive Browser';
             case '/deletion-requests-a': return 'Deletion Requests';
+            case '/send-notification-a': return 'Send Agency Notification';
+            case '/contact-a': return 'Contact Us';
             default: return 'Admin Portal';
         }
     };
@@ -61,10 +69,6 @@ export default function Alayout() {
                         <p id="who-am-i">{auth.currentUser?.email}</p>
                         <p id="who-am-i-name">System Administrator</p>
                     </div>
-                    <div className="divider"></div>
-                    <button id="btn-sign-out" onClick={logout}>
-                        Sign Out
-                    </button>
                 </div>
             </header>
               
@@ -131,6 +135,16 @@ export default function Alayout() {
                         </nav>
                     </div>
 
+                    <div className="sidebar-section">
+                        <p className="sidebar-label">COMMUNICATIONS</p>
+                        <nav>
+                            <NavLink className="nav-item-admin nav-send-notification" to="/send-notification-a">
+                                <img src={notificationIcon} alt="Send Notification" width="20" height="20" className="deep-blue-filter"/>
+                                Send Notification
+                            </NavLink>
+                        </nav>
+                    </div>
+
                     {/* <div className="sidebar-section">
                         <p className="sidebar-label">DEVELOPMENT</p>
                         <nav>
@@ -142,11 +156,43 @@ export default function Alayout() {
                     </div> */}
 
 
+                    <div className="sidebar-section sign-out-section">
+                        <nav>
+                            <NavLink className="nav-item-admin nav-contact-us" to="/contact-a">
+                                <img src={contactIcon} alt="Contact Us" width="20" height="20" className="deep-blue-filter"/>
+                                Contact Us
+                            </NavLink>
+                        </nav>
+                        <div className="sidebar-footer-divider"></div>
+                        <button className="nav-item-admin nav-sign-out" onClick={() => setShowSignOutModal(true)}>
+                            <img src={logoutIcon} alt="Sign Out" width="20" height="20" className="deep-blue-filter"/>
+                            Sign Out
+                        </button>
+                    </div>
                 </aside>
                 <main className="layout-content-area">
                     <Outlet />
                 </main>
             </div>
+
+            <Modal
+                isOpen={showSignOutModal}
+                onClose={() => setShowSignOutModal(false)}
+                title="Sign Out"
+                variant="warning"
+                actions={
+                    <>
+                        <button className="modal-btn modal-btn-secondary" onClick={() => setShowSignOutModal(false)}>
+                            Cancel
+                        </button>
+                        <button className="modal-btn modal-btn-danger" onClick={logout}>
+                            Sign Out
+                        </button>
+                    </>
+                }
+            >
+                Are you sure you want to sign out?
+            </Modal>
         </div>
     );
 }

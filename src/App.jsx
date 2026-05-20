@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
 import Login from './pages/login'
 import Register from './pages/register'
+import ContactUs from './pages/ContactUs'
 
 import Ulayout from './components/layout-u'
 import Udashboard from './pages/lgu/dashboard-u';
@@ -20,6 +21,7 @@ import DriveBrowserCSC from './pages/prime/drive-browser-csc';
 import DeletionRequestsP from './pages/prime/deletion-requests-p';
 import RecommendationsP from './pages/prime/recommendations-p';
 import RecomP from './pages/prime/recom-p';
+import SendNotificationP from './pages/prime/send-notification-p';
 
 import Alayout from './components/layout-a'
 import Adashboard from './pages/admin/dashboard-a';
@@ -27,6 +29,7 @@ import Adashboard from './pages/admin/dashboard-a';
 import ActivityLogsA from './pages/admin/activity-logs-a';
 import DriveBrowserA from './pages/admin/drive-browser-a';
 import DeletionRequestsA from './pages/admin/deletion-requests-a';
+import SendNotificationA from './pages/admin/send-notification-a';
 // import TestPageA from './excel_test_data/test_pages/test-page-a';
 
 import ProtectedRoute from './components/ProtectedRoute'
@@ -77,6 +80,11 @@ function App() {
                 </ProfileGuard>
               </ProtectedRoute> 
             } />
+            <Route path="/contact-u" element={
+              <ProtectedRoute requiredRole="u">
+                <ContactUs/>
+              </ProtectedRoute> 
+            } />
             {/* <Route path="/test-page-u" element={
               <ProtectedRoute requiredRole="u">
                 <TestPageU/>
@@ -111,6 +119,16 @@ function App() {
                 <RecomP/>
               </ProtectedRoute> 
             } />
+            <Route path="/send-notification-p" element={
+              <ProtectedRoute requiredRole="p">
+                <SendNotificationP/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/contact-p" element={
+              <ProtectedRoute requiredRole="p">
+                <ContactUs/>
+              </ProtectedRoute> 
+            } />
           </Route>
 
           {/* A Routes - Strictly for System Administrators */}
@@ -133,6 +151,16 @@ function App() {
             <Route path="/deletion-requests-a" element={
               <ProtectedRoute requiredRole="admin">
                 <DeletionRequestsA/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/send-notification-a" element={
+              <ProtectedRoute requiredRole="admin">
+                <SendNotificationA/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/contact-a" element={
+              <ProtectedRoute requiredRole="admin">
+                <ContactUs/>
               </ProtectedRoute> 
             } />
             {/* <Route path="/test-page-a" element={

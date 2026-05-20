@@ -3,8 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { auth, db } from '../firebase/config'; 
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import '../css/lock-modal.css';
-import warningIcon from '../assets/warning.svg';
+import Modal from '../components/Modal';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const [user, setUser] = useState(null);
@@ -107,33 +106,29 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   if (showNoRoleModal) {
     return (
-      <div className="modal-overlay">
-        <div className="modal-content lock-modal">
-          <div className="modal-header">
-            <h2>Access Error</h2>
-          </div>
-          <div className="lock-body">
-            <div className="lock-icon-large">
-              <img src={warningIcon} alt="Warning" width="45" height="45" className="grey-filter" />
-            </div>
-            <p className="lock-message">No Role Assigned</p>
-            <p className="lock-subtext">
-              This account currently has no role attached, please contact an administrator.
-            </p>
-          </div>
-          <div className="modal-actions lock-actions">
-            <button
-              className="understood-btn"
-              onClick={async () => {
-                await signOut(auth);
-                setShowNoRoleModal(false);
-              }}
-            >
-              OK
-            </button>
-          </div>
-        </div>
-      </div>
+      <Modal
+        isOpen={showNoRoleModal}
+        onClose={async () => {
+          await signOut(auth);
+          setShowNoRoleModal(false);
+        }}
+        title="Access Error"
+        variant="warning"
+        actions={
+          <button
+            className="modal-btn modal-btn-primary modal-btn-full"
+            onClick={async () => {
+              await signOut(auth);
+              setShowNoRoleModal(false);
+            }}
+          >
+            OK
+          </button>
+        }
+      >
+        <p style={{ fontWeight: 600 }}>No Role Assigned</p>
+        <p className="modal-subtext">This account currently has no role attached, please contact an administrator.</p>
+      </Modal>
     );
   }
 

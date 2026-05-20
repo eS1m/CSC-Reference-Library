@@ -7,10 +7,8 @@ import { auth, googleProvider } from '../firebase/config.js';
 import { useNavigate } from 'react-router-dom';
 import { getUserById, createUser } from '../firebase/collections/users';
 import { logActivity } from '../firebase/activityLog';
-import '../css/lock-modal.css';
-import closeIcon from '../assets/close.svg';
-import warningIcon from '../assets/warning.svg';
 import Spinner from '../components/Spinner';
+import Modal from '../components/Modal';
 
 
 export default function Login() {
@@ -185,59 +183,36 @@ export default function Login() {
             </div>
 
             {/* Account Pending Approval Modal */}
-            {showPendingModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content lock-modal">
-                        <div className="modal-header">
-                            <h2>Account Under Review</h2>
-                            <button className="modal-close" onClick={() => setShowPendingModal(false)}>
-                                <img src={closeIcon} alt="Close" width="20" height="20"/>
-                            </button>
-                        </div>
-                        <div className="lock-body">
-                            <div className="lock-icon-large">
-                                <img src={warningIcon} alt="Pending" width="45" height="45" className="grey-filter"/>
-                            </div>
-                            <p className="lock-message">Your account is pending approval</p>
-                            <p className="lock-subtext">Your account has not yet been approved by an administrator. Please wait for approval or contact your system administrator.</p>
-                        </div>
-                        <div className="modal-actions lock-actions">
-                            <button className="understood-btn" onClick={() => setShowPendingModal(false)}>
-                                OK
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <Modal
+              isOpen={showPendingModal}
+              onClose={() => setShowPendingModal(false)}
+              title="Account Under Review"
+              variant="warning"
+              actions={
+                <button className="modal-btn modal-btn-primary modal-btn-full" onClick={() => setShowPendingModal(false)}>
+                  OK
+                </button>
+              }
+            >
+              <p style={{ fontWeight: 600 }}>Your account is pending approval</p>
+              <p className="modal-subtext">Your account has not yet been approved by an administrator. Please wait for approval or contact your system administrator.</p>
+            </Modal>
 
             {/* First-Time Google Sign-In Modal */}
-            {showFirstTimeModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content lock-modal">
-                        <div className="modal-header">
-                            <h2>Welcome</h2>
-                            <button className="modal-close" onClick={() => setShowFirstTimeModal(false)}>
-                                <img src={closeIcon} alt="Close" width="20" height="20"/>
-                            </button>
-                        </div>
-                        <div className="lock-body">
-                            <div className="lock-icon-large">
-                                <img src={warningIcon} alt="Welcome" width="45" height="45" className="grey-filter"/>
-                            </div>
-                            <p className="lock-message">Account created successfully!</p>
-                            <p className="lock-subtext">
-                                This is the first time you are logging in with this google account,
-                                it will be approved first before you can enter.
-                            </p>
-                        </div>
-                        <div className="modal-actions lock-actions">
-                            <button className="understood-btn" onClick={() => setShowFirstTimeModal(false)}>
-                                OK
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <Modal
+              isOpen={showFirstTimeModal}
+              onClose={() => setShowFirstTimeModal(false)}
+              title="Welcome"
+              variant="info"
+              actions={
+                <button className="modal-btn modal-btn-primary modal-btn-full" onClick={() => setShowFirstTimeModal(false)}>
+                  OK
+                </button>
+              }
+            >
+              <p style={{ fontWeight: 600 }}>Account created successfully!</p>
+              <p className="modal-subtext">This is the first time you are logging in with this google account, it will be approved first before you can enter.</p>
+            </Modal>
         </div>
     );
 }
