@@ -7,6 +7,7 @@ import { serverTimestamp } from 'firebase/firestore';
 import { useRecommendations } from '../../hooks/useRecommendations';
 import { updateRecommendation } from '../../firebase/collections/recommendations';
 import { getSubmissions } from '../../firebase/collections/agencySubmissions';
+import { unlockEvidence } from '../../firebase/collections/evidenceUnlocks';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -107,11 +108,16 @@ export default function RecomP() {
   }, []);
 
   const handleUndoRecommend = async (recId) => {
+    const rec = recommendations.find(r => r.id === recId);
     try {
       await updateRecommendation(recId, {
         oaRecommended: false,
         oaRecommendedAt: null
       });
+      // Re-unlock Evidence Requirements for this agency
+      if (rec?.agencyId) {
+        await unlockEvidence(rec.agencyId);
+      }
     } catch (err) {
       console.error('Error undoing recommendation:', err);
       alert('Failed to undo recommendation: ' + err.message);

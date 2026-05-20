@@ -8,7 +8,8 @@ import { useRecommendations } from '../../hooks/useRecommendations';
 import { createRecommendation, updateRecommendation, deleteRecommendation } from '../../firebase/collections/recommendations';
 import { getSubmissions } from '../../firebase/collections/agencySubmissions';
 import { getProfiles } from '../../firebase/collections/agencyProfiles';
-import { notifyAgencyOARecommended } from '../../firebase/notifications';
+import { notifyAgencyEvidenceRequired, notifyAgencyOARecommended } from '../../firebase/notifications';
+import { unlockEvidence, lockEvidence } from '../../firebase/collections/evidenceUnlocks';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -46,6 +47,11 @@ export default function RecommendationsP() {
   const [uploadErrors, setUploadErrors] = useState({});
   const [deleteModal, setDeleteModal] = useState({ open: false, recId: null });
   const fileInputRefs = useRef({});
+  const recsRef = useRef(recommendations);
+  const [verifyTick, setVerifyTick] = useState(0);
+
+  /* Keep ref in sync so verify effect can read latest without re-triggering */
+  recsRef.current = recommendations;
 
   /* Fetch agencies that have completed all 5 steps */
   useEffect(() => {
@@ -88,6 +94,58 @@ export default function RecommendationsP() {
     fetchCompletedAgencies();
   }, []);
 
+  /* Verify Assist Plan / Progress Log still exist in Drive on load & window focus */
+  useEffect(() => {
+    async function verifyDriveFiles() {
+      if (loading || recsRef.current.length === 0) return;
+
+      for (const rec of recsRef.current) {
+        const updates = {};
+
+        if (rec.assistPlan?.fileId) {
+          try {
+            const params = new URLSearchParams({ fileId: rec.assistPlan.fileId });
+            if (rec.agencyName) params.append('agencyName', rec.agencyName);
+            const res = await fetch(`${API_BASE_URL}/drive/file-exists?${params}`);
+            const data = await res.json();
+            if (!data.exists) updates.assistPlan = null;
+          } catch (err) {
+            console.error('Error checking assist plan existence:', err);
+          }
+        }
+
+        if (rec.progressLog?.fileId) {
+          try {
+            const params = new URLSearchParams({ fileId: rec.progressLog.fileId });
+            if (rec.agencyName) params.append('agencyName', rec.agencyName);
+            const res = await fetch(`${API_BASE_URL}/drive/file-exists?${params}`);
+            const data = await res.json();
+            if (!data.exists) updates.progressLog = null;
+          } catch (err) {
+            console.error('Error checking progress log existence:', err);
+          }
+        }
+
+        if (Object.keys(updates).length > 0) {
+          try {
+            await updateRecommendation(rec.id, updates);
+          } catch (err) {
+            console.error('Error clearing stale file reference:', err);
+          }
+        }
+      }
+    }
+
+    verifyDriveFiles();
+  }, [loading, verifyTick]);
+
+  /* Re-verify when user returns to the tab */
+  useEffect(() => {
+    const handleFocus = () => setVerifyTick(t => t + 1);
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
   const usedAgencyIds = recommendations
     .map(r => r.agencyId)
     .filter(Boolean);
@@ -119,8 +177,13 @@ export default function RecommendationsP() {
 
   const confirmDelete = async () => {
     if (!deleteModal.recId) return;
+    const rec = recommendations.find(r => r.id === deleteModal.recId);
     try {
       await deleteRecommendation(deleteModal.recId);
+      // Lock the agency's Evidence Requirements since they are no longer selected
+      if (rec?.agencyId) {
+        await lockEvidence(rec.agencyId);
+      }
       setDeleteModal({ open: false, recId: null });
     } catch (err) {
       console.error('Error deleting recommendation:', err);
@@ -133,12 +196,26 @@ export default function RecommendationsP() {
   };
 
   const handleAgencyChange = async (recId, agencyId) => {
+    const rec = recommendations.find(r => r.id === recId);
+    if (rec?.agencyId === agencyId) return; // no change
+
     const agency = completedAgencies.find(a => a.id === agencyId);
     try {
       await updateRecommendation(recId, {
         agencyId: agencyId,
         agencyName: agency?.name || ''
       });
+
+      // Lock previous agency if there was one
+      if (rec?.agencyId) {
+        await lockEvidence(rec.agencyId);
+      }
+
+      // Unlock new agency and notify
+      if (agencyId) {
+        await unlockEvidence(agencyId);
+        await notifyAgencyEvidenceRequired(agencyId, agency?.name || '');
+      }
     } catch (err) {
       console.error('Error updating agency:', err);
     }
@@ -173,6 +250,8 @@ export default function RecommendationsP() {
         oaRecommended: true,
         oaRecommendedAt: serverTimestamp()
       });
+      // Lock Evidence Requirements for this agency
+      await lockEvidence(rec.agencyId);
       await notifyAgencyOARecommended(rec.agencyId, rec.agencyName);
     } catch (err) {
       console.error('Error locking recommendation:', err);

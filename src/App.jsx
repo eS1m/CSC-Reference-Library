@@ -12,6 +12,7 @@ import Uprofile from './pages/lgu/profile-u';
 import Uemployee from './pages/lgu/employee-u';
 import Uview from './pages/lgu/view-u'
 import ActionPlanU from './pages/lgu/action-plan-u';
+import ERU from './pages/lgu/er-u';
 // import TestPageU from './excel_test_data/test_pages/test-page-u';
 // please work bro
 
@@ -78,6 +79,11 @@ function App() {
                 <ProfileGuard>
                   <ActionPlanU/>
                 </ProfileGuard>
+              </ProtectedRoute> 
+            } />
+            <Route path="/er-u" element={
+              <ProtectedRoute requiredRole="u">
+                <ERU/>
               </ProtectedRoute> 
             } />
             <Route path="/contact-u" element={

@@ -84,20 +84,27 @@ async function buildDrivePath(fileId) {
   return parts.join(' > ');
 }
 
-async function getOrCreateFolder(folderName, parentId = null) {
+async function findFolder(folderName, parentId = null) {
   const searchParent = parentId || process.env.GOOGLE_FOLDER_ID;
   const query = `name = '${escapeDriveQuery(folderName)}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false and '${searchParent}' in parents`;
-  const res = await drive.files.list({ 
-    q: query, 
+  const res = await drive.files.list({
+    q: query,
     fields: 'files(id)',
     includeItemsFromAllDrives: true,
     supportsAllDrives: true
   });
-  
+
   if (res.data.files.length > 0) {
     return res.data.files[0].id;
   }
+  return null;
+}
 
+async function getOrCreateFolder(folderName, parentId = null) {
+  const existing = await findFolder(folderName, parentId);
+  if (existing) return existing;
+
+  const searchParent = parentId || process.env.GOOGLE_FOLDER_ID;
   const folderMetadata = {
     name: folderName,
     mimeType: 'application/vnd.google-apps.folder',
@@ -219,6 +226,116 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   } catch (error) {
     console.error('Secure Upload Error:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/upload-evidence', upload.array('files'), async (req, res) => {
+  try {
+    const { agencyName, assessmentYear } = req.body;
+    const files = req.files;
+
+    if (!agencyName || !assessmentYear) {
+      return res.status(400).json({ error: 'Agency Name and Assessment Year are required.' });
+    }
+
+    if (!files || files.length === 0) {
+      return res.status(400).json({ error: 'No files provided.' });
+    }
+
+    const allowedMimeTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/jpg',
+      'image/png'
+    ];
+
+    for (const file of files) {
+      if (!allowedMimeTypes.includes(file.mimetype)) {
+        return res.status(400).json({ error: `Invalid file type: ${file.originalname}. Only PDF and image files are allowed.` });
+      }
+    }
+
+    const agencyFolderId = await getOrCreateFolder(agencyName);
+    const yearFolderId = await getOrCreateFolder(assessmentYear, agencyFolderId);
+    const evidenceFolderId = await getOrCreateFolder('Evidence Requirements', yearFolderId);
+
+    const uploadedFiles = [];
+
+    for (const file of files) {
+      const bufferStream = new stream.PassThrough();
+      bufferStream.end(file.buffer);
+
+      const response = await drive.files.create({
+        requestBody: {
+          name: file.originalname,
+          parents: [evidenceFolderId],
+        },
+        media: {
+          mimeType: file.mimetype,
+          body: bufferStream,
+        },
+        fields: 'id, name, webViewLink, mimeType',
+      });
+
+      const fileId = response.data.id;
+
+      await drive.permissions.create({
+        fileId: fileId,
+        requestBody: { role: 'reader', type: 'anyone' },
+      });
+
+      uploadedFiles.push({
+        fileId: fileId,
+        fileName: response.data.name,
+        webViewLink: response.data.webViewLink,
+        mimeType: response.data.mimeType,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      uploadedFiles,
+      count: uploadedFiles.length,
+    });
+
+  } catch (error) {
+    console.error('Upload Evidence Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/drive/list-evidence', async (req, res) => {
+  try {
+    const { agencyName, assessmentYear } = req.query;
+
+    if (!agencyName || !assessmentYear) {
+      return res.status(400).json({ error: 'agencyName and assessmentYear are required.' });
+    }
+
+    const agencyFolderId = await getOrCreateFolder(agencyName);
+    const yearFolderId = await getOrCreateFolder(assessmentYear, agencyFolderId);
+    const evidenceFolderId = await getOrCreateFolder('Evidence Requirements', yearFolderId);
+
+    const response = await drive.files.list({
+      q: `'${evidenceFolderId}' in parents and trashed = false`,
+      fields: 'files(id, name, mimeType, webViewLink, modifiedTime, size, webContentLink)',
+      pageSize: 1000,
+      orderBy: 'name',
+      includeItemsFromAllDrives: true,
+      supportsAllDrives: true
+    });
+
+    const files = (response.data.files || []).filter(
+      item => item.mimeType !== 'application/vnd.google-apps.folder'
+    );
+
+    res.status(200).json({
+      folderId: evidenceFolderId,
+      files,
+    });
+  } catch (error) {
+    console.error('List Evidence Error:', error);
+    res.status(500).json({ error: 'Failed to list evidence files' });
   }
 });
 
@@ -428,6 +545,57 @@ app.post('/drive/delete', async (req, res) => {
   } catch (error) {
     console.error('Drive delete error:', error);
     res.status(500).json({ error: 'Failed to delete item' });
+  }
+});
+
+app.get('/drive/file-exists', async (req, res) => {
+  try {
+    const { fileId, agencyName } = req.query;
+    if (!fileId) {
+      return res.status(400).json({ error: 'fileId is required' });
+    }
+
+    try {
+      const file = await drive.files.get({
+        fileId,
+        fields: 'id, trashed, parents'
+      });
+
+      if (file.data.trashed) {
+        return res.status(200).json({ exists: false });
+      }
+
+      // If no agencyName provided, just check existence + trashed
+      if (!agencyName) {
+        return res.status(200).json({ exists: true });
+      }
+
+      // Verify the file is inside the expected agency folder path
+      const currentYear = new Date().getFullYear().toString();
+      const agencyFolderId = await findFolder(agencyName);
+      if (!agencyFolderId) {
+        return res.status(200).json({ exists: false });
+      }
+
+      const yearFolderId = await findFolder(currentYear, agencyFolderId);
+      if (!yearFolderId) {
+        return res.status(200).json({ exists: false });
+      }
+
+      const parents = file.data.parents || [];
+      const isInCorrectFolder = parents.includes(yearFolderId);
+
+      res.status(200).json({ exists: isInCorrectFolder });
+    } catch (err) {
+      if (err.code === 404 || err.message?.includes('notFound')) {
+        res.status(200).json({ exists: false });
+      } else {
+        throw err;
+      }
+    }
+  } catch (error) {
+    console.error('File exists check error:', error);
+    res.status(500).json({ error: 'Failed to check file existence' });
   }
 });
 

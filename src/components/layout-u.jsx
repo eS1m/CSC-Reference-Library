@@ -11,10 +11,12 @@ import lockIcon from '../assets/lock.svg'
 import fileIcon from '../assets/file.svg'
 import logoutIcon from '../assets/logout.svg';
 import contactIcon from '../assets/contact.svg';
+import erIcon from '../assets/er.svg';
 import NotificationBell from '../components/NotificationBell';
 import LockModal from '../components/LockModal';
 import Modal from '../components/Modal';
 import { useAgencyWorkflow } from '../hooks/useAgencyWorkflow';
+import { useAgencyEvidenceUnlock } from '../hooks/useAgencyEvidenceUnlock';
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
 
@@ -42,6 +44,7 @@ export default function Ulayout() {
 
     /* Upload Restriction Functionality */
     const { isLocked, currentStep, hasActionPlan, agencyName, loading } = useAgencyWorkflow();
+    const { isUnlocked: isERUnlocked } = useAgencyEvidenceUnlock();
 
     const isUploadNavLocked = isLocked || hasActionPlan;
     const isActionPlanNavLocked = currentStep < 4 || hasActionPlan;
@@ -87,6 +90,8 @@ export default function Ulayout() {
         }
     };
 
+
+
     /* Dynamic Header Title */
     const getPageTitle = (path) => {
         switch (path) {
@@ -96,6 +101,7 @@ export default function Ulayout() {
             case '/profile-u': return 'Agency Profile';
             case '/employee-u': return 'Employee Information';
             case '/action-plan-u': return 'Action Plan';
+            case '/er-u': return 'Evidence Requirements';
             case '/contact-u': return 'Contact Us';
             // case '/test-page-u': return 'Agency Test Page';
             default: return 'Agency Screen';
@@ -142,6 +148,10 @@ export default function Ulayout() {
                     <div className="sidebar-section">
                         <p className="sidebar-label">FILE MANAGEMENT</p>
                         <nav>
+                            <NavLink className="nav-item-user nav-view-files" to="/view-u">
+                                <img src={folderIcon} alt="View Files" width="20" height="20" className="deep-blue-filter"/>
+                                View Your Files
+                            </NavLink>
                             <NavLink 
                                 className={`nav-item-user nav-item-upload ${isUploadNavLocked ? 'nav-locked' : ''}`}
                                 to="/upload-u" 
@@ -155,10 +165,6 @@ export default function Ulayout() {
                                     </span>
                                 )}
                             </NavLink>
-                            <NavLink className="nav-item-user nav-view-files" to="/view-u">
-                                <img src={folderIcon} alt="View Files" width="20" height="20" className="deep-blue-filter"/>
-                                View Your Files
-                            </NavLink>
                             <NavLink 
                                 className={`nav-item-user nav-action-plan ${isActionPlanNavLocked ? 'nav-locked' : ''}`}
                                 to="/action-plan-u"
@@ -167,6 +173,29 @@ export default function Ulayout() {
                                 <img src={fileIcon} alt="Action Plan" width="20" height="20" className="deep-blue-filter"/>
                                 Action Plan
                                 {isActionPlanNavLocked && (
+                                    <span className="lock-tag">
+                                        <img src={lockIcon} alt="Locked" width="20" height="20" className='grey-filter'/>
+                                    </span>
+                                )}
+                            </NavLink>
+                            <NavLink 
+                                className={`nav-item-user nav-er ${!isERUnlocked ? 'nav-locked' : ''}`}
+                                to="/er-u"
+                                onClick={(e) => {
+                                    if (!isERUnlocked) {
+                                        e.preventDefault();
+                                        setLockModalConfig({
+                                            title: 'Evidence Requirements Locked',
+                                            message: 'Your agency has not been selected for Field Office Monitoring yet.',
+                                            subtext: 'Please wait for the CSC RO X to select your agency. You will be notified via the notification bell when Evidence Requirements becomes available.'
+                                        });
+                                        setLockModalOpen(true);
+                                    }
+                                }}
+                            >
+                                <img src={erIcon} alt="Evidence Requirements" width="20" height="20" className="deep-blue-filter"/>
+                                Evidence Requirements
+                                {!isERUnlocked && (
                                     <span className="lock-tag">
                                         <img src={lockIcon} alt="Locked" width="20" height="20" className='grey-filter'/>
                                     </span>

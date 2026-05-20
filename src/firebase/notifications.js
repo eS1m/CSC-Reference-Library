@@ -94,6 +94,11 @@ function getNotificationText(type, agencyName, fileName) {
         title: 'Action Plan Uploaded',
         message: `${agencyName} uploaded an Action Plan file${fileName ? `: ${fileName}` : '.'}`
       };
+    case 'EVIDENCE_UPLOAD':
+      return {
+        title: 'Evidence Requirements Uploaded',
+        message: `${agencyName} uploaded ${fileName || 'evidence files'}.`
+      };
     default:
       return { title: 'New Notification', message: 'You have a new notification.' };
   }
@@ -134,6 +139,16 @@ export async function createUserNotification(recipientId, { type, title, message
  * @param {string} agencyId - Firebase Auth UID of the agency user
  * @param {string} [agencyName] - Display name of the agency
  */
+export async function notifyAgencyEvidenceRequired(agencyId, agencyName) {
+  await createUserNotification(agencyId, {
+    type: 'EVIDENCE_REQUIRED',
+    title: 'Evidence Requirements Available',
+    message: 'You have been selected for Field Office Monitoring. Please submit your Evidence Requirements.',
+    agencyId,
+    agencyName: agencyName || null
+  });
+}
+
 export async function notifyAgencyOARecommended(agencyId, agencyName) {
   await createUserNotification(agencyId, {
     type: 'OA_RECOMMENDED',

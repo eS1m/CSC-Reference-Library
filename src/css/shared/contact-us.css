@@ -220,3 +220,10 @@
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
+
+
+/* Contact email link reset */
+.contact-email {
+    text-decoration: none;
+    color: #fff;
+}
