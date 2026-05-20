@@ -11,8 +11,11 @@ import deleteIcon from '../assets/rejected.svg';
 import recommendationsIcon from '../assets/review.svg';
 import recommendationIcon from '../assets/recommendation.svg';
 import notificationIcon from '../assets/notification.svg';
+import logoutIcon from '../assets/logout.svg';
+import contactIcon from '../assets/contact.svg';
 
 import NotificationBell from '../components/NotificationBell';
+import Modal from '../components/Modal';
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
 
@@ -32,6 +35,8 @@ export default function Playout() {
     /* Side Bar Functionality */
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
+    const [showSignOutModal, setShowSignOutModal] = useState(false);
+
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
@@ -47,6 +52,7 @@ export default function Playout() {
             case '/send-notification-p': return 'Send Agency Notification';
             case '/approved-p': return 'Approved Files';
             case '/rejected-p': return 'Rejected Files';
+            case '/contact-p': return 'Contact Us';
 
             default: return 'CSC RO X Portal';
         }
@@ -70,10 +76,6 @@ export default function Playout() {
                         <p id="who-am-i">{auth.currentUser?.email}</p>
                         <p id="who-am-i-name">CSC RO X</p>
                     </div>
-                    <div className="divider"></div>
-                    <button id="btn-sign-out" onClick={logout}>
-                        Sign Out
-                    </button>
                 </div>
             </header>
               
@@ -136,11 +138,43 @@ export default function Playout() {
                     </div>
 
 
+                    <div className="sidebar-section sign-out-section">
+                        <nav>
+                            <NavLink className="nav-item-prime nav-contact-us" to="/contact-p">
+                                <img src={contactIcon} alt="Contact Us" width="20" height="20" className="deep-blue-filter"/>
+                                Contact Us
+                            </NavLink>
+                        </nav>
+                        <div className="sidebar-footer-divider"></div>
+                        <button className="nav-item-prime nav-sign-out" onClick={() => setShowSignOutModal(true)}>
+                            <img src={logoutIcon} alt="Sign Out" width="20" height="20" className="deep-blue-filter"/>
+                            Sign Out
+                        </button>
+                    </div>
                 </aside>
                 <main className="layout-content-area">
                     <Outlet />
                 </main>
             </div>
+
+            <Modal
+                isOpen={showSignOutModal}
+                onClose={() => setShowSignOutModal(false)}
+                title="Sign Out"
+                variant="warning"
+                actions={
+                    <>
+                        <button className="modal-btn modal-btn-secondary" onClick={() => setShowSignOutModal(false)}>
+                            Cancel
+                        </button>
+                        <button className="modal-btn modal-btn-danger" onClick={logout}>
+                            Sign Out
+                        </button>
+                    </>
+                }
+            >
+                Are you sure you want to sign out?
+            </Modal>
         </div>
     );
 }

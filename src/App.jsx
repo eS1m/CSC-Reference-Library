@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
 import Login from './pages/login'
 import Register from './pages/register'
+import ContactUs from './pages/ContactUs'
 
 import Ulayout from './components/layout-u'
 import Udashboard from './pages/lgu/dashboard-u';
@@ -79,6 +80,11 @@ function App() {
                 </ProfileGuard>
               </ProtectedRoute> 
             } />
+            <Route path="/contact-u" element={
+              <ProtectedRoute requiredRole="u">
+                <ContactUs/>
+              </ProtectedRoute> 
+            } />
             {/* <Route path="/test-page-u" element={
               <ProtectedRoute requiredRole="u">
                 <TestPageU/>
@@ -118,6 +124,11 @@ function App() {
                 <SendNotificationP/>
               </ProtectedRoute> 
             } />
+            <Route path="/contact-p" element={
+              <ProtectedRoute requiredRole="p">
+                <ContactUs/>
+              </ProtectedRoute> 
+            } />
           </Route>
 
           {/* A Routes - Strictly for System Administrators */}
@@ -145,6 +156,11 @@ function App() {
             <Route path="/send-notification-a" element={
               <ProtectedRoute requiredRole="admin">
                 <SendNotificationA/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/contact-a" element={
+              <ProtectedRoute requiredRole="admin">
+                <ContactUs/>
               </ProtectedRoute> 
             } />
             {/* <Route path="/test-page-a" element={
