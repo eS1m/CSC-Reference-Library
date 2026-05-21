@@ -6,7 +6,7 @@ A web application for managing the submission and review of PRIME-HRM (Program t
 
 ## Overview
 
-The PRIME-HRM Reference Library streamlines the document workflow between government agencies and CSC reviewers. Agencies complete their profiles, upload Self-Assessment and Assist-Plan Excel files, and track their progress through a gated 6-step workflow. CSC PRIME-HRM Officers and System Administrators review submissions, approve or reject them, and monitor system activity through dedicated dashboards.
+The PRIME-HRM Reference Library streamlines the document workflow between government agencies and CSC reviewers. Agencies complete their profiles, upload Self-Assessment and Action Plan files, and track their progress through a gated workflow. CSC PRIME-HRM Officers and System Administrators review submissions, monitor system activity, and manage recommendations through dedicated dashboards.
 
 ---
 
@@ -14,24 +14,33 @@ The PRIME-HRM Reference Library streamlines the document workflow between govern
 
 The application supports three distinct user types:
 
-| Role | Description |
-|------|-------------|
-| **Agency User** | Government agencies / LGUs who complete agency profiles, manage employee data, upload assessment files, and track submission progress. |
-| **PRIME-HRM Officer** | CSC reviewers who view agency dashboards, review pending submissions, and approve or reject uploaded files. |
-| **System Administrator** | Admins who manage user registrations, view system-wide statistics, and monitor audit logs of all user actions. |
+| Role | Code | Description |
+|------|------|-------------|
+| **Agency User** | `u` | Government agencies / LGUs who complete agency profiles, manage employee data, upload assessment files, and track submission progress. |
+| **CSC RO X** | `p` | CSC reviewers who monitor agencies, manage Field Office Monitoring recommendations, review the compiled Recommendations package, and browse submitted files. |
+| **System Administrator** | `admin` | Admins who manage user registrations, approve/reject accounts, view system-wide statistics, monitor active users, and review audit logs. |
 
 ---
 
-## Workflow
+## Agency Workflow
 
-Agencies progress through a gated 6-step workflow:
+Agencies progress through a gated multi-step workflow:
 
 1. **Complete Agency Profile** — Agency details, head information, and HRM officer data
 2. **Submit Employee Data** — Personnel complement and HRM summary tables
 3. **Upload Self-Assessment** — Excel file upload (unlocked only after Steps 1 & 2 are complete)
-4. **PRIME Review** — Officers review the Self-Assessment and approve or reject it
-5. **Upload Assist-Plan** — Excel file upload (unlocked only after Self-Assessment approval)
-6. **Final Review** — Officers review and approve or reject the Assist-Plan
+4. **Upload Action Plan** — Generate from Word template or upload manually (unlocked after Self-Assessment)
+5. **Evidence Requirements** — Upload PDF/image evidence (unlocked when selected for Field Office Monitoring)
+
+---
+
+## CSC RO X Workflow
+
+1. **Dashboard** — View all registered agencies, submission stats, and active user count
+2. **Field Office Monitoring** (`/fom`) — Select completed agencies, upload Assist Plans and Progress Logs, mark progress, generate OA Recommendations
+3. **Recommendations** (`/recom-p`) — Compile the 5-document package per agency (Self-Assessment, Capability Card, Field Director Guidepost, Regional Director Guidepost, Narrative Report)
+4. **Drive Browser** — Browse all agency folders and files in Google Drive
+5. **Deletion Requests** — Review and approve/reject agency file deletion requests
 
 ---
 
@@ -44,6 +53,7 @@ Agencies progress through a gated 6-step workflow:
 | Authentication | Firebase Auth (Email/Password + Google Sign-In) |
 | Database | Firebase Firestore |
 | File Storage | Google Drive (via Google Drive API v3) |
+| Document Generation | docxtemplater, pizzip, mammoth, exceljs |
 | Build Tool | Vite with `@vitejs/plugin-react` |
 | Linting | ESLint 9 |
 
@@ -80,9 +90,6 @@ Agencies progress through a gated 6-step workflow:
 
 ### Environment Variables
 
-#### Frontend
-No `.env` file is required for local development. The Firebase configuration is hardcoded in `src/firebase/config.js`. The backend API URL defaults to `http://localhost:5000`.
-
 #### Backend
 Create a `backend/.env` file using `backend/.env.example` as a template:
 
@@ -98,6 +105,20 @@ Required variables:
 | `GOOGLE_CLIENT_SECRET` | OAuth2 Client Secret |
 | `GOOGLE_REFRESH_TOKEN` | Refresh token for Drive API access |
 | `GOOGLE_FOLDER_ID` | Root Google Drive folder ID where agency folders are created |
+
+#### Frontend (Optional — Development Only)
+Create a `.env` file at the project root for testing overrides:
+
+```bash
+# Shorten idle timeout for testing (values in milliseconds)
+VITE_IDLE_WARNING_MS=5000
+VITE_IDLE_LOGOUT_MS=5000
+
+# Lower concurrent user limit for testing
+VITE_MAX_AGENCY_USERS=2
+```
+
+> **Note:** Vite reads `.env` only when the dev server starts. Restart `npm run dev` after changing these values.
 
 ### Running Locally
 
@@ -161,45 +182,80 @@ docker compose down
 CSC-Reference-Library/
 ├── backend/                    # Express.js backend
 │   ├── server.js               # Main API server
+│   ├── narrativeReport.js      # Narrative Report generator
 │   ├── .env                    # Google API credentials (gitignored)
 │   ├── .env.example            # Env var template
 │   ├── package.json
-│   └── Dockerfile              # Backend container image
+│   └── Dockerfile
 ├── src/
 │   ├── App.jsx                 # Root router with role-based routes
-│   ├── firebase/               # Firebase config and activity logging
-│   ├── hooks/                  # Central data hooks (useAgencyWorkflow, useAdminData, etc.)
-│   ├── utils/                  # Shared utilities (date formatting, validation)
-│   ├── components/             # Layouts, guards, modals
+│   ├── firebase/               # Firebase config, rules, collections
+│   │   └── collections/        # Firestore CRUD helpers
+│   ├── hooks/                  # Real-time data hooks
+│   ├── utils/                  # Shared utilities
+│   ├── components/             # Layouts, guards, modals, reusable components
+│   │   ├── GenerateModal.jsx   # Document preview modal
+│   │   ├── IdleTimeoutModal.jsx # Session timeout handler
+│   │   ├── SessionTracker.jsx  # Active session heartbeat tracker
+│   │   └── Modal.jsx           # Shared modal system
 │   ├── pages/                  # Role-based page components
 │   │   ├── lgu/                # Agency user pages
-│   │   ├── prime/              # PRIME officer pages
+│   │   ├── prime/              # CSC RO X pages
 │   │   └── admin/              # Admin pages
 │   └── css/                    # Component and page styles
-├── Dockerfile                  # Frontend container image
-├── docker-compose.yml          # Local staging orchestration
-├── nginx.conf                  # Reverse proxy configuration
-├── package.json                # Frontend dependencies
-└── vite.config.js              # Vite configuration
+├── Dockerfile
+├── docker-compose.yml
+├── nginx.conf
+├── .env.example                # Frontend dev overrides
+├── package.json
+└── vite.config.js
 ```
 
 ---
 
 ## Firestore Collections
 
-The app uses five main Firestore collections:
-
-1. **`users`** — Authentication and role data (`u`, `p`, `admin`)
-2. **`agencyProfiles`** — Agency details, head information, and HRM officers
-3. **`agencyEmployees`** — Employee data tables by category, status, and gender
-4. **`agencySubmissions`** — Uploaded file metadata (Self-Assessment, Assist-Plan)
-5. **`activityLogs`** — Audit log of all user actions
+| Collection | Purpose |
+|------------|---------|
+| **`users`** | Authentication, role (`u` / `p` / `admin`), approval status |
+| **`agencyProfiles`** | Agency details, head information, HRM officers |
+| **`agencyEmployees`** | Employee data tables, HRM summary, personnel complement |
+| **`agencySubmissions`** | Uploaded file metadata (Self-Assessment, Action-Plan, Evidence-Requirements) |
+| **`activityLogs`** | Audit log of all user actions (uploads, logins, approvals, etc.) |
+| **`deletionRequests`** | File deletion requests with approve/reject workflow |
+| **`recommendations`** | Field Office Monitoring data (assistPlan, progressLog, OA status) |
+| **`evidenceUnlocks`** | Per-agency unlock state for Evidence Requirements |
+| **`activeSessions`** | Real-time heartbeat-based session tracking |
+| **`notifications`** | Cross-role agency notifications |
 
 ---
 
-## Account Approval
+## Key Features
 
-New registrations default to `approvalStatus: "pending"`. Admins must approve accounts through the System Administrator dashboard before users can log in. This applies to both email/password and Google sign-in registrations.
+### Concurrent User Limit
+Agency users are limited to **25 simultaneous sessions**. Admins and CSC RO X are exempt. The limit is enforced at login time with a capacity modal.
+
+### Idle Timeout
+All users are automatically logged out after **10 minutes of inactivity**. A warning modal appears after 9 minutes with an **"Extend Session"** button.
+
+### Account Approval
+New registrations default to `approvalStatus: "pending"`. Admins must approve accounts through the System Administrator dashboard before users can log in.
+
+### Active Users Monitor
+Admins can view a real-time table of all logged-in users across all roles at `/active-users-a`, including login time, last active timestamp, and Active/Idle status.
+
+### Google Drive Folder Structure
+Uploaded files are organized automatically:
+```
+{Agency Name}/
+  └── {Year}/
+        ├── Self-Assessment, Action-Plan, etc.
+        ├── Field Office Monitoring/   ← Assist-Plan, Progress-Log
+        └── Recommendations/           ← Capability Card, Guideposts, Narrative Report
+```
+
+### Narrative Report Generation
+CSC RO X can generate Narrative Reports from an agency's Self-Assessment Excel file. The backend extracts maturity data and injects it into a Word template.
 
 ---
 
