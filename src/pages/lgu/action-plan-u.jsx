@@ -9,6 +9,7 @@ import '../../css/lgu/action-plan-u.css';
 import tooltipIcon from '../../assets/tooltip.svg';
 import LockModal from '../../components/LockModal.jsx';
 import Modal from '../../components/Modal';
+import GenerateModal from '../../components/GenerateModal';
 import Spinner from '../../components/Spinner';
 
 import { auth } from '../../firebase/config';
@@ -1186,46 +1187,18 @@ export default function ActionPlanU() {
         )}
       </div>
 
-      <Modal
+      <GenerateModal
         isOpen={showModal}
         onClose={closeModal}
         title="Document Preview"
-        size="xl"
-        hideIcon
-      >
-        <div className="preview-modal-layout">
-          <div className="preview-modal-iframe-wrap">
-            <iframe
-              src={previewBlobUrl}
-              title="Document Preview"
-              className="preview-iframe"
-            />
-          </div>
-          <div className="preview-modal-footer">
-            <p className="preview-disclaimer">
-              Note: This preview does not accurately show the actual document. This is to view if your data is correct. Please download the file for the actual result.
-            </p>
-            {uploadStatus && (
-              <span className={`footer-status ${uploadStatusType}`}>{uploadStatus}</span>
-            )}
-            <div className="preview-modal-actions">
-              <button className="modal-btn modal-btn-secondary" onClick={closeModal}>
-                Close
-              </button>
-              <button className="modal-btn modal-btn-primary" onClick={handleDownload} disabled={!generatedDocx}>
-                Download as Word
-              </button>
-              <button
-                className="modal-btn modal-btn-primary"
-                onClick={handleUploadToDrive}
-                disabled={isUploading || !generatedDocx}
-              >
-                {isUploading ? <Spinner size="xs" color="white" /> : 'Upload to Google Drive'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </Modal>
+        blobUrl={previewBlobUrl}
+        onDownload={handleDownload}
+        onUpload={handleUploadToDrive}
+        isUploading={isUploading}
+        uploadError={uploadStatus && uploadStatusType === 'error' ? uploadStatus : ''}
+        downloadDisabled={!generatedDocx}
+        uploadDisabled={!generatedDocx}
+      />
 
       <Modal
         isOpen={showSuccessModal}

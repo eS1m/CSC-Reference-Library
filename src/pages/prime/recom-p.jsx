@@ -1,7 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import '../../css/prime/recommendations-p.css';
 import '../../css/prime/recom-p.css';
+import mammoth from 'mammoth';
+import { saveAs } from 'file-saver';
 import Spinner from '../../components/Spinner';
+import Modal from '../../components/Modal';
+import GenerateModal from '../../components/GenerateModal';
 import { auth } from '../../firebase/config';
 import { serverTimestamp } from 'firebase/firestore';
 import { useRecommendations } from '../../hooks/useRecommendations';
@@ -80,6 +84,7 @@ export default function RecomP() {
   const [uploadingStates, setUploadingStates] = useState({});
   const [uploadErrors, setUploadErrors] = useState({});
   const [generatingStates, setGeneratingStates] = useState({});
+  const [previewModal, setPreviewModal] = useState({ open: false, blobUrl: '', docxBlob: null, agencyName: '', recId: '' });
   const fileInputRefs = useRef({});
 
   const recommendedAgencies = recommendations
@@ -128,6 +133,65 @@ export default function RecomP() {
     fileInputRefs.current[inputKey]?.click();
   };
 
+  const closePreviewModal = () => {
+    if (previewModal.blobUrl) URL.revokeObjectURL(previewModal.blobUrl);
+    setPreviewModal({ open: false, blobUrl: '', docxBlob: null, agencyName: '', recId: '' });
+  };
+
+  const handleUploadGeneratedReport = async () => {
+    if (!previewModal.docxBlob || !previewModal.recId) return;
+
+    const recId = previewModal.recId;
+    const rec = recommendations.find(r => r.id === recId);
+    if (!rec?.agencyName) return;
+
+    const stateKey = `${recId}-narrative-report`;
+    setUploadingStates(prev => ({ ...prev, [stateKey]: true }));
+    setUploadErrors(prev => ({ ...prev, [stateKey]: '' }));
+
+    const formData = new FormData();
+    formData.append('file', previewModal.docxBlob, `Narrative Report-(${rec.agencyName}).docx`);
+    formData.append('agencyName', rec.agencyName);
+    formData.append('fileType', 'Narrative-Report');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || 'Upload failed');
+      }
+
+      const driveData = await response.json();
+      const fileData = {
+        fileId: driveData.fileId,
+        fileName: driveData.fileName,
+        fileUrl: `https://drive.google.com/file/d/${driveData.fileId}/view`,
+        uploadedAt: serverTimestamp(),
+        uploadedBy: auth.currentUser?.uid || ''
+      };
+
+      await updateRecommendation(recId, {
+        narrativeReport: fileData
+      });
+
+      closePreviewModal();
+    } catch (err) {
+      console.error('Upload error:', err);
+      setUploadErrors(prev => ({ ...prev, [stateKey]: err.message || 'Upload failed' }));
+    } finally {
+      setUploadingStates(prev => ({ ...prev, [stateKey]: false }));
+    }
+  };
+
+  const handleDownloadPreview = () => {
+    if (!previewModal.docxBlob) return;
+    saveAs(previewModal.docxBlob, `Narrative Report-(${previewModal.agencyName}).docx`);
+  };
+
   const handleGenerateNarrativeReport = async (recId) => {
     const rec = recommendations.find(r => r.id === recId);
     if (!rec?.agencyName) return;
@@ -160,18 +224,51 @@ export default function RecomP() {
         throw new Error(errText || 'Generation failed');
       }
 
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Narrative Report-(${rec.agencyName}).docx`;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        if (a.parentNode) document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 2000);
+      const docxBlob = await response.blob();
+
+      // Convert docx to HTML preview using mammoth
+      const arrayBuffer = await docxBlob.arrayBuffer();
+      const mammothResult = await mammoth.convertToHtml({ arrayBuffer });
+      const rawHtml = mammothResult.value;
+
+      const styledPreview = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {
+              font-family: 'Calibri', 'Arial', sans-serif;
+              line-height: 1.6;
+              max-width: 210mm;
+              margin: 0 auto;
+              padding: 20mm;
+              background: #fff;
+              color: #333;
+              font-size: 11pt;
+            }
+            table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+            td, th { border: 1px solid #bbb; padding: 6px 8px; text-align: left; }
+            p { margin: 8px 0; }
+            h1, h2, h3 { margin: 16px 0 8px; color: #1a365d; }
+            ul, ol { margin: 8px 0; padding-left: 24px; }
+            img { max-width: 100%; height: auto; display: block; }
+          </style>
+        </head>
+        <body>${rawHtml}</body>
+        </html>
+      `;
+
+      const htmlBlob = new Blob([styledPreview], { type: 'text/html' });
+      const blobUrl = URL.createObjectURL(htmlBlob);
+
+      setPreviewModal({
+        open: true,
+        blobUrl,
+        docxBlob,
+        agencyName: rec.agencyName,
+        recId
+      });
     } catch (err) {
       console.error('Generation error:', err);
       setUploadErrors(prev => ({ ...prev, [`${recId}-narrative-report`]: err.message || 'Generation failed' }));
@@ -450,6 +547,19 @@ export default function RecomP() {
           </div>
         )}
       </div>
+
+      <GenerateModal
+        isOpen={previewModal.open}
+        onClose={closePreviewModal}
+        title={`Narrative Report Preview — ${previewModal.agencyName || ''}`}
+        blobUrl={previewModal.blobUrl}
+        onDownload={handleDownloadPreview}
+        onUpload={handleUploadGeneratedReport}
+        isUploading={uploadingStates[`${previewModal.recId}-narrative-report`]}
+        uploadError={uploadErrors[`${previewModal.recId}-narrative-report`] || ''}
+        downloadDisabled={!previewModal.docxBlob}
+        uploadDisabled={!previewModal.docxBlob}
+      />
     </main>
   );
 }
