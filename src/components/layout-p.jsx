@@ -3,16 +3,22 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import '../css/prime/prime-layout.css';
 import hamIcon from '../assets/hamburger.svg';
 import dashboardIcon from '../assets/dashboard.svg';
-import reviewIcon from '../assets/review.svg';
 import folderIcon from '../assets/folder.svg';
 import approvedIcon from '../assets/approved.svg';
 import rejectedIcon from '../assets/rejected.svg';
-import profileIcon from '../assets/profile.svg';
+
 import deleteIcon from '../assets/rejected.svg';
+import recommendationsIcon from '../assets/review.svg';
+import recommendationIcon from '../assets/recommendation.svg';
+import notificationIcon from '../assets/notification.svg';
+import logoutIcon from '../assets/logout.svg';
+import contactIcon from '../assets/contact.svg';
 
 import NotificationBell from '../components/NotificationBell';
+import Modal from '../components/Modal';
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
+import { removeSession } from '../firebase/collections/activeSessions';
 
 export default function Playout() {
     const nav = useNavigate();
@@ -20,6 +26,9 @@ export default function Playout() {
 
     async function logout() {
         try {
+            if (auth.currentUser) {
+                await removeSession(auth.currentUser.uid);
+            }
             await signOut(auth);
             nav('/');
         } catch (error) {
@@ -29,6 +38,8 @@ export default function Playout() {
 
     /* Side Bar Functionality */
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+    const [showSignOutModal, setShowSignOutModal] = useState(false);
 
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
@@ -40,9 +51,13 @@ export default function Playout() {
             case '/dashboard-p': return 'CSC RO X Dashboard';
             case '/drive-browser-csc': return 'Drive Browser';
             case '/deletion-requests-p': return 'Deletion Requests';
+            case '/fom': return 'Field Office Monitoring';
+            case '/recom-p': return 'Recommendations';
+            case '/send-notification-p': return 'Send Agency Notification';
             case '/approved-p': return 'Approved Files';
             case '/rejected-p': return 'Rejected Files';
-            case '/profile-p': return 'CSC RO X Profile';
+            case '/contact-p': return 'Contact Us';
+
             default: return 'CSC RO X Portal';
         }
     };
@@ -65,10 +80,6 @@ export default function Playout() {
                         <p id="who-am-i">{auth.currentUser?.email}</p>
                         <p id="who-am-i-name">CSC RO X</p>
                     </div>
-                    <div className="divider"></div>
-                    <button id="btn-sign-out" onClick={logout}>
-                        Sign Out
-                    </button>
                 </div>
             </header>
               
@@ -109,23 +120,65 @@ export default function Playout() {
                                 <img src={deleteIcon} alt="Deletion Requests" width="20" height="20" className="deep-blue-filter"/>
                                 Deletion Requests
                             </NavLink>
+                            <NavLink className="nav-item-prime nav-recommendations" to="/fom">
+                                <img src={recommendationsIcon} alt="Field Office Monitoring" width="20" height="20" className="deep-blue-filter"/>
+                                Field Office Monitoring
+                            </NavLink>
+                            <NavLink className="nav-item-prime nav-recom" to="/recom-p">
+                                <img src={recommendationIcon} alt="Recommendations" width="20" height="20" className="deep-blue-filter"/>
+                                Recommendations
+                            </NavLink>
                         </nav>
                     </div>
 
                     <div className="sidebar-section">
-                        <p className="sidebar-label">PROFILE</p>
+                        <p className="sidebar-label">COMMUNICATIONS</p>
                         <nav>
-                            {/* <NavLink className="nav-item-prime nav-prime-profile" to="/profile-p">
-                                <img src={profileIcon} alt="My Profile" width="20" height="20" className="deep-blue-filter"/>
-                                PRIME Profile
-                            </NavLink> */}
+                            <NavLink className="nav-item-prime nav-send-notification" to="/send-notification-p">
+                                <img src={notificationIcon} alt="Send Notification" width="20" height="20" className="deep-blue-filter"/>
+                                Send Notification
+                            </NavLink>
                         </nav>
+                    </div>
+
+
+                    <div className="sidebar-section sign-out-section">
+                        <nav>
+                            <NavLink className="nav-item-prime nav-contact-us" to="/contact-p">
+                                <img src={contactIcon} alt="Contact Us" width="20" height="20" className="deep-blue-filter"/>
+                                Contact Us
+                            </NavLink>
+                        </nav>
+                        <div className="sidebar-footer-divider"></div>
+                        <button className="nav-item-prime nav-sign-out" onClick={() => setShowSignOutModal(true)}>
+                            <img src={logoutIcon} alt="Sign Out" width="20" height="20" className="deep-blue-filter"/>
+                            Sign Out
+                        </button>
                     </div>
                 </aside>
                 <main className="layout-content-area">
                     <Outlet />
                 </main>
             </div>
+
+            <Modal
+                isOpen={showSignOutModal}
+                onClose={() => setShowSignOutModal(false)}
+                title="Sign Out"
+                variant="warning"
+                actions={
+                    <>
+                        <button className="modal-btn modal-btn-secondary" onClick={() => setShowSignOutModal(false)}>
+                            Cancel
+                        </button>
+                        <button className="modal-btn modal-btn-danger" onClick={logout}>
+                            Sign Out
+                        </button>
+                    </>
+                }
+            >
+                Are you sure you want to sign out?
+            </Modal>
         </div>
     );
 }

@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { auth, db } from '../firebase/config';
+import { auth } from '../firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, onSnapshot, collection, query, where, orderBy } from 'firebase/firestore';
+import { subscribeProfileById } from '../firebase/collections/agencyProfiles';
+import { subscribeEmployeesById } from '../firebase/collections/agencyEmployees';
+import { subscribeSubmissions } from '../firebase/collections/agencySubmissions';
 import { validateAgency } from '../utils/validateAgency';
 
-export const useAgencyData = () => {
+export const useAgencyWorkflow = () => {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
     const [employees, setEmployees] = useState(null);
@@ -43,41 +45,27 @@ export const useAgencyData = () => {
                 setUser(currentUser);
                 setError(null);
 
-                // 1. Profile Listener
-                unsubProfile = onSnapshot(
-                    doc(db, "agencyProfiles", currentUser.uid),
-                    (snapshot) => {
-                        setProfile(snapshot.data() || null);
-                    },
+                unsubProfile = subscribeProfileById(
+                    currentUser.uid,
+                    (data) => setProfile(data),
                     (err) => {
                         console.error("Profile listener error:", err);
                         setError("Failed to load agency profile");
                     }
                 );
 
-                // 2. Employee Listener
-                unsubEmployees = onSnapshot(
-                    doc(db, "agencyEmployees", currentUser.uid),
-                    (snapshot) => {
-                        setEmployees(snapshot.data() || null);
-                    },
+                unsubEmployees = subscribeEmployeesById(
+                    currentUser.uid,
+                    (data) => setEmployees(data),
                     (err) => {
                         console.error("Employee listener error:", err);
                         setError("Failed to load employee data");
                     }
                 );
 
-                // 3. Submissions Listener — ordered by upload date
-                const q = query(
-                    collection(db, "agencySubmissions"),
-                    where("userId", "==", currentUser.uid),
-                    orderBy("uploadedAt", "desc")
-                );
-                
-                unsubSubmissions = onSnapshot(
-                    q,
-                    (snapshot) => {
-                        const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                unsubSubmissions = subscribeSubmissions(
+                    { userId: currentUser.uid, orderByField: 'uploadedAt', orderDirection: 'desc' },
+                    (data) => {
                         setSubmissions(data);
                         setLoading(false);
                         setError(prev => {
@@ -133,7 +121,6 @@ export const useAgencyData = () => {
             isEmployeeDone,
             hasSelfAssessment: !!selfAssessment,
             hasActionPlan: !!actionPlan,
-
             agencyName: profile?.agencyDetails?.agencyName || "Agency User",
         };
     }, [profile, employees, submissions, validateEmployees]);
@@ -152,6 +139,5 @@ export const useAgencyData = () => {
         agencyName: derived.agencyName,
         hasSelfAssessment: derived.hasSelfAssessment,
         hasActionPlan: derived.hasActionPlan,
-
     };
 };

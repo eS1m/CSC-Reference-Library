@@ -4,11 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import addCircleIcon from '../../assets/add-circle.svg';
-import { useAgencyData } from '../../hooks/useAgencyData';
+import { useAgencyWorkflow } from '../../hooks/useAgencyWorkflow';
 
 export default function Udashboard() {
   const nav = useNavigate();
-  const { currentStep, agencyName, loading } = useAgencyData();
+  const { currentStep, agencyName, loading } = useAgencyWorkflow();
 
   /* Date and Time */
   const [time, setTime] = useState(new Date());

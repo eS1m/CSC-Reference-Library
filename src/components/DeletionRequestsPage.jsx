@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import '../css/shared/deletion-requests.css';
-import { db, auth } from '../firebase/config';
-import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { auth } from '../firebase/config';
+import { serverTimestamp } from 'firebase/firestore';
+import { useDeletionRequests } from '../hooks/useDeletionRequests';
+import { updateDeletionRequest } from '../firebase/collections/deletionRequests';
+import { deleteSubmission } from '../firebase/collections/agencySubmissions';
 import { logActivity } from '../firebase/activityLog';
 import { formatFirestoreDate } from '../utils/formatFirestoreDate';
-import closeIcon from '../assets/close.svg';
+import Modal from '../components/Modal';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function DeletionRequestsPage({ viewerRole }) {
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { requests, loading } = useDeletionRequests({ status: ['pending', 'approved', 'rejected'] });
   const [filter, setFilter] = useState('pending');
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -18,24 +20,6 @@ export default function DeletionRequestsPage({ viewerRole }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [modalStatus, setModalStatus] = useState('');
   const [notOwnerInfo, setNotOwnerInfo] = useState(null);
-
-  useEffect(() => {
-    const q = query(
-      collection(db, 'deletionRequests'),
-      where('status', 'in', ['pending', 'approved', 'rejected'])
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      const data = [];
-      snap.forEach(docSnap => data.push({ id: docSnap.id, ...docSnap.data() }));
-      data.sort((a, b) => (b.requestedAt?.seconds || 0) - (a.requestedAt?.seconds || 0));
-      setRequests(data);
-      setLoading(false);
-    }, (err) => {
-      console.error('Deletion requests listener error:', err);
-      setLoading(false);
-    });
-    return () => unsub();
-  }, []);
 
   const filteredRequests = requests.filter(r => {
     if (filter === 'all') return true;
@@ -82,10 +66,10 @@ export default function DeletionRequestsPage({ viewerRole }) {
       }
 
       /* Delete the agencySubmissions record */
-      await deleteDoc(doc(db, 'agencySubmissions', selectedRequest.submissionId));
+      await deleteSubmission(selectedRequest.submissionId);
 
       /* Update deletion request */
-      await updateDoc(doc(db, 'deletionRequests', selectedRequest.id), {
+      await updateDeletionRequest(selectedRequest.id, {
         status: 'approved',
         reviewedBy: auth.currentUser.uid,
         reviewerRole: viewerRole,
@@ -117,7 +101,7 @@ export default function DeletionRequestsPage({ viewerRole }) {
     setIsProcessing(true);
 
     try {
-      await updateDoc(doc(db, 'deletionRequests', selectedRequest.id), {
+      await updateDeletionRequest(selectedRequest.id, {
         status: 'rejected',
         reviewedBy: auth.currentUser.uid,
         reviewerRole: viewerRole,
@@ -244,69 +228,62 @@ export default function DeletionRequestsPage({ viewerRole }) {
         )}
       </div>
 
-      {/* ACTION MODAL */}
-      {showModal && selectedRequest && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content deletion-action-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{modalAction === 'approve' ? 'Approve Deletion' : 'Reject Deletion'}</h2>
-              <button className="modal-close" onClick={closeModal}>
-                <img src={closeIcon} alt="Close" width="20" height="20"/>
+      <Modal
+        isOpen={showModal && !!selectedRequest}
+        onClose={closeModal}
+        title={modalAction === 'approve' ? 'Approve Deletion' : 'Reject Deletion'}
+        variant={modalAction === 'approve' ? 'danger' : 'warning'}
+        className="deletion-action-modal"
+        actions={
+          <>
+            <button className="modal-btn modal-btn-secondary" onClick={closeModal} disabled={isProcessing}>
+              Cancel
+            </button>
+            {notOwnerInfo && notOwnerInfo.webViewLink ? (
+              <button
+                className="modal-btn modal-btn-primary"
+                onClick={() => window.open(notOwnerInfo.webViewLink, '_blank')}
+              >
+                Show in Drive
               </button>
-            </div>
-
-            <div className="modal-body">
-              <p className="action-file-name">
-                <strong>File:</strong> {selectedRequest.fileName}
-              </p>
-              <p className="action-agency-name">
-                <strong>Agency:</strong> {selectedRequest.agencyName}
-              </p>
-              <p className="action-reason">
-                <strong>Reason:</strong> {selectedRequest.reason}
-              </p>
-              {modalAction === 'approve' && !notOwnerInfo && (
-                <p className="action-warning">
-                  ⚠️ This will permanently delete the file from Google Drive and remove the submission record.
-                </p>
-              )}
-              {notOwnerInfo && (
-                <div className="drive-notowner-path" style={{ marginTop: '12px' }}>
-                  <strong>Located in:</strong>
-                  <span>{notOwnerInfo.location}</span>
-                </div>
-              )}
-              {modalStatus && (
-                <p className={`action-status-msg ${modalStatus.includes('Error') ? 'error' : 'success'}`}>
-                  {modalStatus}
-                </p>
-              )}
-            </div>
-
-            <div className="modal-actions">
-              <button className="cancel-btn" onClick={closeModal} disabled={isProcessing}>
-                Cancel
+            ) : (
+              <button
+                className={modalAction === 'approve' ? 'modal-btn modal-btn-danger' : 'modal-btn modal-btn-warning'}
+                onClick={modalAction === 'approve' ? handleApprove : handleReject}
+                disabled={isProcessing}
+              >
+                {isProcessing ? 'Processing...' : (modalAction === 'approve' ? 'Confirm Delete' : 'Confirm Reject')}
               </button>
-              {notOwnerInfo && notOwnerInfo.webViewLink ? (
-                <button
-                  className="approve-btn"
-                  onClick={() => window.open(notOwnerInfo.webViewLink, '_blank')}
-                >
-                  Show in Drive
-                </button>
-              ) : (
-                <button
-                  className={modalAction === 'approve' ? 'approve-btn' : 'reject-btn'}
-                  onClick={modalAction === 'approve' ? handleApprove : handleReject}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? 'Processing...' : (modalAction === 'approve' ? 'Confirm Delete' : 'Confirm Reject')}
-                </button>
-              )}
-            </div>
+            )}
+          </>
+        }
+      >
+        <p className="action-file-name">
+          <strong>File:</strong> {selectedRequest?.fileName}
+        </p>
+        <p className="action-agency-name">
+          <strong>Agency:</strong> {selectedRequest?.agencyName}
+        </p>
+        <p className="action-reason">
+          <strong>Reason:</strong> {selectedRequest?.reason}
+        </p>
+        {modalAction === 'approve' && !notOwnerInfo && (
+          <p className="action-warning">
+            ⚠️ This will permanently delete the file from Google Drive and remove the submission record.
+          </p>
+        )}
+        {notOwnerInfo && (
+          <div className="drive-notowner-path" style={{ marginTop: '12px' }}>
+            <strong>Located in:</strong>{' '}
+            <span>{notOwnerInfo.location}</span>
           </div>
-        </div>
-      )}
+        )}
+        {modalStatus && (
+          <p className={`action-status-msg ${modalStatus.includes('Error') ? 'error' : 'success'}`}>
+            {modalStatus}
+          </p>
+        )}
+      </Modal>
     </main>
   );
 }

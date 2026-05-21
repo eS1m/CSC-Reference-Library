@@ -1,38 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import '../../css/lgu/user-layout.css';
 import '../../css/lgu/uview.css';
 
 import fileIcon from '../../assets/file.svg';
-import closeIcon from '../../assets/close.svg';
-import { useAgencyData } from '../../hooks/useAgencyData';
-import { auth, db } from '../../firebase/config';
-import { collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import Modal from '../../components/Modal';
+import { useAgencyWorkflow } from '../../hooks/useAgencyWorkflow';
+import { auth } from '../../firebase/config';
+import { serverTimestamp } from 'firebase/firestore';
+import { useDeletionRequests } from '../../hooks/useDeletionRequests';
+import { createDeletionRequest } from '../../firebase/collections/deletionRequests';
 import { logActivity } from '../../firebase/activityLog';
 
 export default function Uview() {
-  const { submissions, loading, error } = useAgencyData();
-  const [deletionRequests, setDeletionRequests] = useState([]);
+  const { submissions, loading, error } = useAgencyWorkflow();
+  const { requests: deletionRequests } = useDeletionRequests({ userId: auth.currentUser?.uid });
   const [showModal, setShowModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalStatus, setModalStatus] = useState('');
   const [modalStatusType, setModalStatusType] = useState('');
-
-  /* Listen to user's deletion requests */
-  useEffect(() => {
-    if (!auth.currentUser) return;
-    const q = query(
-      collection(db, 'deletionRequests'),
-      where('userId', '==', auth.currentUser.uid)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      const reqs = [];
-      snap.forEach(doc => reqs.push({ id: doc.id, ...doc.data() }));
-      setDeletionRequests(reqs);
-    });
-    return () => unsub();
-  }, []);
 
   const getDriveUrl = (file) => {
     if (!file) return '#';
@@ -75,7 +62,7 @@ export default function Uview() {
     setModalStatus('');
 
     try {
-      await addDoc(collection(db, 'deletionRequests'), {
+      await createDeletionRequest({
         submissionId: selectedSubmission.id,
         userId: auth.currentUser.uid,
         agencyName: selectedSubmission.agencyName,
@@ -169,52 +156,44 @@ export default function Uview() {
         </div>
       )}
 
-      {/* REQUEST DELETION MODAL */}
-      {showModal && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content deletion-request-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Request Deletion</h2>
-              <button className="modal-close" onClick={closeModal}>
-                <img src={closeIcon} alt="Close" width="20" height="20"/>
-              </button>
-            </div>
-
-            <div className="modal-body">
-              <p className="deletion-file-name">
-                <strong>File:</strong> {selectedSubmission?.fileName}
-              </p>
-              <label htmlFor="deletion-reason" className="deletion-reason-label">
-                Reason for deletion <span className="required">*</span>
-              </label>
-              <textarea
-                id="deletion-reason"
-                className="deletion-reason-input"
-                rows={4}
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="Explain why this file should be deleted..."
-              />
-              {modalStatus && (
-                <p className={`deletion-status-msg ${modalStatusType}`}>{modalStatus}</p>
-              )}
-            </div>
-
-            <div className="modal-actions">
-              <button className="cancel-btn" onClick={closeModal}>
-                Cancel
-              </button>
-              <button
-                className="submit-request-btn"
-                onClick={handleSubmitRequest}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit Request'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={showModal}
+        onClose={closeModal}
+        title="Request Deletion"
+        className="deletion-request-modal"
+        actions={
+          <>
+            <button className="modal-btn modal-btn-secondary" onClick={closeModal}>
+              Cancel
+            </button>
+            <button
+              className="modal-btn modal-btn-danger"
+              onClick={handleSubmitRequest}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Request'}
+            </button>
+          </>
+        }
+      >
+        <p className="deletion-file-name">
+          <strong>File:</strong> {selectedSubmission?.fileName}
+        </p>
+        <label htmlFor="deletion-reason" className="deletion-reason-label">
+          Reason for deletion <span className="required">*</span>
+        </label>
+        <textarea
+          id="deletion-reason"
+          className="deletion-reason-input"
+          rows={4}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="Explain why this file should be deleted..."
+        />
+        {modalStatus && (
+          <p className={`deletion-status-msg ${modalStatusType}`}>{modalStatus}</p>
+        )}
+      </Modal>
     </main>
   );
 }

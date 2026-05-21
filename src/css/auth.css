@@ -212,19 +212,6 @@ body {
     box-shadow: none !important;
 }
 
-.auth-button-spinner {
-    width: 18px;
-    height: 18px;
-    border: 2px solid rgba(0, 0, 0, 0.2);
-    border-radius: 50%;
-    border-top-color: #000;
-    animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
 /* Login Functionality */
 
 #email-login {

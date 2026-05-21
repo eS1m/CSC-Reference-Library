@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
 import Login from './pages/login'
 import Register from './pages/register'
+import ContactUs from './pages/ContactUs'
 
 import Ulayout from './components/layout-u'
 import Udashboard from './pages/lgu/dashboard-u';
@@ -11,28 +12,39 @@ import Uprofile from './pages/lgu/profile-u';
 import Uemployee from './pages/lgu/employee-u';
 import Uview from './pages/lgu/view-u'
 import ActionPlanU from './pages/lgu/action-plan-u';
+import ERU from './pages/lgu/er-u';
 // import TestPageU from './excel_test_data/test_pages/test-page-u';
+// please work bro
 
 import Playout from './components/layout-p'
 import Pdashboard from './pages/prime/dashboard-p';
 import DriveBrowserCSC from './pages/prime/drive-browser-csc';
 import DeletionRequestsP from './pages/prime/deletion-requests-p';
+import RecommendationsP from './pages/prime/recommendations-p';
+import RecomP from './pages/prime/recom-p';
+import SendNotificationP from './pages/prime/send-notification-p';
 
 import Alayout from './components/layout-a'
 import Adashboard from './pages/admin/dashboard-a';
-import Aprofile from './pages/admin/profile-a';
+
 import ActivityLogsA from './pages/admin/activity-logs-a';
 import DriveBrowserA from './pages/admin/drive-browser-a';
 import DeletionRequestsA from './pages/admin/deletion-requests-a';
+import SendNotificationA from './pages/admin/send-notification-a';
+import ActiveUsersA from './pages/admin/active-users-a';
 // import TestPageA from './excel_test_data/test_pages/test-page-a';
 
 import ProtectedRoute from './components/ProtectedRoute'
 import ProfileGuard from './components/ProfileGuard';
+import SessionTracker from './components/SessionTracker';
+import IdleTimeoutModal from './components/IdleTimeoutModal';
 
 function App() {
   return (
     <>
+      <SessionTracker />
       <Router>
+        <IdleTimeoutModal />
         <Routes>
 
           <Route path="/" element={<Login/>} />
@@ -74,6 +86,16 @@ function App() {
                 </ProfileGuard>
               </ProtectedRoute> 
             } />
+            <Route path="/er-u" element={
+              <ProtectedRoute requiredRole="u">
+                <ERU/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/contact-u" element={
+              <ProtectedRoute requiredRole="u">
+                <ContactUs/>
+              </ProtectedRoute> 
+            } />
             {/* <Route path="/test-page-u" element={
               <ProtectedRoute requiredRole="u">
                 <TestPageU/>
@@ -98,6 +120,26 @@ function App() {
                 <DeletionRequestsP/>
               </ProtectedRoute> 
             } />
+            <Route path="/fom" element={
+              <ProtectedRoute requiredRole="p">
+                <RecommendationsP/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/recom-p" element={
+              <ProtectedRoute requiredRole="p">
+                <RecomP/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/send-notification-p" element={
+              <ProtectedRoute requiredRole="p">
+                <SendNotificationP/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/contact-p" element={
+              <ProtectedRoute requiredRole="p">
+                <ContactUs/>
+              </ProtectedRoute> 
+            } />
           </Route>
 
           {/* A Routes - Strictly for System Administrators */}
@@ -112,11 +154,6 @@ function App() {
                 <ActivityLogsA/>
               </ProtectedRoute> 
             } />
-            <Route path="/profile-a" element={
-              <ProtectedRoute requiredRole="admin">
-                <Aprofile/>
-              </ProtectedRoute> 
-            } />
             <Route path="/drive-browser-a" element={
               <ProtectedRoute requiredRole="admin">
                 <DriveBrowserA/>
@@ -125,6 +162,21 @@ function App() {
             <Route path="/deletion-requests-a" element={
               <ProtectedRoute requiredRole="admin">
                 <DeletionRequestsA/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/send-notification-a" element={
+              <ProtectedRoute requiredRole="admin">
+                <SendNotificationA/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/active-users-a" element={
+              <ProtectedRoute requiredRole="admin">
+                <ActiveUsersA/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/contact-a" element={
+              <ProtectedRoute requiredRole="admin">
+                <ContactUs/>
               </ProtectedRoute> 
             } />
             {/* <Route path="/test-page-a" element={

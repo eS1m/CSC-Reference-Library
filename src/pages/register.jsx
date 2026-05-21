@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom'; // Using Link for navigation
 import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase/config.js'; 
+import { auth } from '../firebase/config.js';
+import { createUser } from '../firebase/collections/users'; 
 import { logActivity } from '../firebase/activityLog';
 import '../css/auth.css';
-import '../css/lock-modal.css';
-import closeIcon from '../assets/close.svg';
-import approvedIcon from '../assets/approved.svg';
+import Modal from '../components/Modal';
 import logo from '../assets/logo.svg';
 
 export default function Register() {
@@ -26,7 +24,7 @@ export default function Register() {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            await setDoc(doc(db, "users", user.uid), {
+            await createUser(user.uid, {
                 email: user.email,
                 role: role,
                 approvalStatus: 'pending',
@@ -131,30 +129,20 @@ export default function Register() {
             </div>
 
             {/* Registration Success Modal */}
-            {showModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content lock-modal">
-                        <div className="modal-header">
-                            <h2>Account Created</h2>
-                            <button className="modal-close" onClick={() => { setShowModal(false); navigate('/'); }}>
-                                <img src={closeIcon} alt="Close" width="20" height="20"/>
-                            </button>
-                        </div>
-                        <div className="lock-body">
-                            <div className="lock-icon-large">
-                                <img src={approvedIcon} alt="Success" width="45" height="45" className="grey-filter"/>
-                            </div>
-                            <p className="lock-message">Account created successfully!</p>
-                            <p className="lock-subtext">Your account is pending admin approval. You will be able to log in once an administrator has reviewed and approved your request.</p>
-                        </div>
-                        <div className="modal-actions lock-actions">
-                            <button className="understood-btn" onClick={() => { setShowModal(false); navigate('/'); }}>
-                                OK
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <Modal
+              isOpen={showModal}
+              onClose={() => { setShowModal(false); navigate('/'); }}
+              title="Account Created"
+              variant="success"
+              actions={
+                <button className="modal-btn modal-btn-primary modal-btn-full" onClick={() => { setShowModal(false); navigate('/'); }}>
+                  OK
+                </button>
+              }
+            >
+              <p style={{ fontWeight: 600 }}>Account created successfully!</p>
+              <p className="modal-subtext">Your account is pending admin approval. You will be able to log in once an administrator has reviewed and approved your request.</p>
+            </Modal>
         </div>
     );
 }
