@@ -31,14 +31,17 @@ import ActivityLogsA from './pages/admin/activity-logs-a';
 import DriveBrowserA from './pages/admin/drive-browser-a';
 import DeletionRequestsA from './pages/admin/deletion-requests-a';
 import SendNotificationA from './pages/admin/send-notification-a';
+import ActiveUsersA from './pages/admin/active-users-a';
 // import TestPageA from './excel_test_data/test_pages/test-page-a';
 
 import ProtectedRoute from './components/ProtectedRoute'
 import ProfileGuard from './components/ProfileGuard';
+import SessionTracker from './components/SessionTracker';
 
 function App() {
   return (
     <>
+      <SessionTracker />
       <Router>
         <Routes>
 
@@ -162,6 +165,11 @@ function App() {
             <Route path="/send-notification-a" element={
               <ProtectedRoute requiredRole="admin">
                 <SendNotificationA/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/active-users-a" element={
+              <ProtectedRoute requiredRole="admin">
+                <ActiveUsersA/>
               </ProtectedRoute> 
             } />
             <Route path="/contact-a" element={

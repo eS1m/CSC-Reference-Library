@@ -11,11 +11,13 @@ import deleteIcon from '../assets/rejected.svg';
 import notificationIcon from '../assets/notification.svg';
 import logoutIcon from '../assets/logout.svg';
 import contactIcon from '../assets/contact.svg';
+import profileIcon from '../assets/profile.svg';
 
 import NotificationBell from '../components/NotificationBell';
 import Modal from '../components/Modal';
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
+import { removeSession } from '../firebase/collections/activeSessions';
 
 export default function Alayout() {
     const nav = useNavigate();
@@ -23,6 +25,9 @@ export default function Alayout() {
 
     async function logout() {
         try {
+            if (auth.currentUser) {
+                await removeSession(auth.currentUser.uid);
+            }
             await signOut(auth);
             nav('/');
         } catch (error) {
@@ -48,6 +53,7 @@ export default function Alayout() {
             case '/drive-browser-a': return 'Google Drive Browser';
             case '/deletion-requests-a': return 'Deletion Requests';
             case '/send-notification-a': return 'Send Agency Notification';
+            case '/active-users-a': return 'Active Users';
             case '/contact-a': return 'Contact Us';
             default: return 'Admin Portal';
         }
@@ -90,6 +96,10 @@ export default function Alayout() {
                             <NavLink className="nav-item-admin nav-activity-logs" to="/activity-logs-a">
                                 <img src={reviewIcon} alt="Activity Logs" width="20" height="20" className="deep-blue-filter"/>
                                 Activity Logs
+                            </NavLink>
+                            <NavLink className="nav-item-admin nav-active-users" to="/active-users-a">
+                                <img src={profileIcon} alt="Active Users" width="20" height="20" className="deep-blue-filter"/>
+                                Active Users
                             </NavLink>
                         </nav>
                     </div>

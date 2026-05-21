@@ -9,6 +9,8 @@ import { getUserById, createUser } from '../firebase/collections/users';
 import { logActivity } from '../firebase/activityLog';
 import Spinner from '../components/Spinner';
 import Modal from '../components/Modal';
+import { db } from '../firebase/config.js';
+import { getDocs, collection } from 'firebase/firestore';
 
 
 export default function Login() {
@@ -19,6 +21,7 @@ export default function Login() {
     const [error, setError] = useState('');
     const [showPendingModal, setShowPendingModal] = useState(false);
     const [showFirstTimeModal, setShowFirstTimeModal] = useState(false);
+    const [showCapacityModal, setShowCapacityModal] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
     const handleUserRoleAndRedirect = async (user) => {
@@ -59,6 +62,29 @@ export default function Login() {
                 setShowPendingModal(true);
             }
             return;
+        }
+
+        // Check concurrent user limit for agency users only
+        if (role === 'u') {
+            try {
+                const sessionsSnap = await getDocs(collection(db, 'activeSessions'));
+                const now = Date.now();
+                const activeCount = sessionsSnap.docs.filter(d => {
+                    const data = d.data();
+                    if (data.role !== 'u') return false;
+                    const hb = data.lastHeartbeat?.toMillis?.() || 0;
+                    return now - hb < 2 * 60 * 1000; // 2 minutes
+                }).length;
+
+                if (activeCount >= 25) {
+                    await signOut(auth);
+                    setShowCapacityModal(true);
+                    return;
+                }
+            } catch (err) {
+                console.error('Error checking active sessions:', err);
+                // Fail open: if we can't check, allow login
+            }
         }
 
         const displayEmail = user.email || user.providerData?.[0]?.email || 'unknown';
@@ -212,6 +238,22 @@ export default function Login() {
             >
               <p style={{ fontWeight: 600 }}>Account created successfully!</p>
               <p className="modal-subtext">This is the first time you are logging in with this google account, it will be approved first before you can enter.</p>
+            </Modal>
+
+            {/* Max Capacity Modal */}
+            <Modal
+              isOpen={showCapacityModal}
+              onClose={() => setShowCapacityModal(false)}
+              title="System at Capacity"
+              variant="warning"
+              actions={
+                <button className="modal-btn modal-btn-primary modal-btn-full" onClick={() => setShowCapacityModal(false)}>
+                  OK
+                </button>
+              }
+            >
+              <p style={{ fontWeight: 600 }}>Maximum number of users reached</p>
+              <p className="modal-subtext">The system currently has the maximum of 25 agency users logged in. Please try logging in at another time.</p>
             </Modal>
         </div>
     );

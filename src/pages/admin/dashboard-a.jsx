@@ -5,6 +5,7 @@ import { auth } from '../../firebase/config';
 import { logActivity } from '../../firebase/activityLog';
 import { formatFirestoreDate } from '../../utils/formatFirestoreDate';
 import { useAdminData } from '../../hooks/useAdminData';
+import { useTotalActiveSessionCount } from '../../hooks/useTotalActiveSessionCount';
 import { updateUser } from '../../firebase/collections/users';
 import { deleteSubmissionsByUserId } from '../../firebase/collections/agencySubmissions';
 
@@ -18,6 +19,7 @@ export default function Adashboard() {
   const nav = useNavigate();
 
   const { allUsers, stats, recentSubmissions, pendingDeletions, activityLogs, loading } = useAdminData();
+  const activeSessionCount = useTotalActiveSessionCount();
 
   /* Reset Modal State */
   const [resetModal, setResetModal] = useState({ open: false, user: null });
@@ -193,6 +195,15 @@ export default function Adashboard() {
           </div>
         </div>
 
+        <div className="stat-card-admin">
+          <div className="stat-icon">
+            <img src={profileIcon} alt="Active Users" width="40" height="40" className="deep-blue-filter"/>
+          </div>
+          <div className="stat-info">
+            <h3>{activeSessionCount}</h3>
+            <p>Active Users</p>
+          </div>
+        </div>
 
       </div>
 

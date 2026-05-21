@@ -19,6 +19,7 @@ import { useAgencyWorkflow } from '../hooks/useAgencyWorkflow';
 import { useAgencyEvidenceUnlock } from '../hooks/useAgencyEvidenceUnlock';
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
+import { removeSession } from '../firebase/collections/activeSessions';
 
 export default function Ulayout() {
     const nav = useNavigate();
@@ -31,6 +32,9 @@ export default function Ulayout() {
 
     async function logout() {
         try {
+            if (auth.currentUser) {
+                await removeSession(auth.currentUser.uid);
+            }
             await signOut(auth);
             nav('/');
         } catch (error) {

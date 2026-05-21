@@ -18,6 +18,7 @@ import NotificationBell from '../components/NotificationBell';
 import Modal from '../components/Modal';
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
+import { removeSession } from '../firebase/collections/activeSessions';
 
 export default function Playout() {
     const nav = useNavigate();
@@ -25,6 +26,9 @@ export default function Playout() {
 
     async function logout() {
         try {
+            if (auth.currentUser) {
+                await removeSession(auth.currentUser.uid);
+            }
             await signOut(auth);
             nav('/');
         } catch (error) {

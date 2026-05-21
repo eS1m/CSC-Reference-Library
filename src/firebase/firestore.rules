@@ -107,6 +107,15 @@ service cloud.firestore {
       allow delete: if request.auth != null && isAdminOrPrime();
     }
 
+    // 10. Active Sessions - concurrent user tracking
+    match /activeSessions/{userId} {
+      // Users can only create/update their own session
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+      // Users can delete their own session; admins and prime can read all
+      allow read: if request.auth != null;
+      allow delete: if request.auth != null && (request.auth.uid == userId || isAdminOrPrime());
+    }
+
     // 7. Activity Logs - audit trail
     match /activityLogs/{logId} {
       // Any authenticated user can create a log, but only for themselves

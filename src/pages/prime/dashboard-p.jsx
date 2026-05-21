@@ -3,15 +3,18 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatFirestoreDate } from '../../utils/formatFirestoreDate';
 import { usePrimeData } from '../../hooks/usePrimeData';
+import { useTotalActiveSessionCount } from '../../hooks/useTotalActiveSessionCount';
 
 import reviewIcon from '../../assets/review.svg';
 import agencyIcon from '../../assets/agency.svg';
 import fileIcon from '../../assets/file.svg';
+import profileIcon from '../../assets/profile.svg';
 
 export default function Pdashboard() {
   const nav = useNavigate();
   
   const { stats, recentUploads, pendingDeletions, loading } = usePrimeData();
+  const activeSessionCount = useTotalActiveSessionCount();
 
   /* Date and Time */
   const [time, setTime] = useState(new Date());
@@ -77,6 +80,15 @@ export default function Pdashboard() {
           </div>
         </div>
 
+        <div className="stat-card-prime">
+          <div className="stat-icon">
+            <img src={profileIcon} alt="Active Users" width="40" height="40" className="deep-blue-filter"/>
+          </div>
+          <div className="stat-info">
+            <h3>{activeSessionCount}</h3>
+            <p>Active Users</p>
+          </div>
+        </div>
 
       </div>
 
