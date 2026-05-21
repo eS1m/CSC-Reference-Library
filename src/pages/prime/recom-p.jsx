@@ -53,8 +53,6 @@ const COMPILED_FILES = [
     field: 'narrativeReport',
     uploadFileType: 'Narrative-Report',
     uploadLabel: 'Upload Narrative Report',
-    pending: true,
-    pendingLabel: 'Template pending — upload not available yet',
   },
 ];
 
@@ -81,6 +79,7 @@ export default function RecomP() {
   const [submissionsLoading, setSubmissionsLoading] = useState(true);
   const [uploadingStates, setUploadingStates] = useState({});
   const [uploadErrors, setUploadErrors] = useState({});
+  const [generatingStates, setGeneratingStates] = useState({});
   const fileInputRefs = useRef({});
 
   const recommendedAgencies = recommendations
@@ -129,8 +128,60 @@ export default function RecomP() {
     fileInputRefs.current[inputKey]?.click();
   };
 
+  const handleGenerateNarrativeReport = async (recId) => {
+    const rec = recommendations.find(r => r.id === recId);
+    if (!rec?.agencyName) return;
+
+    const submission = getLatestSubmission(
+      submissionsByAgency,
+      rec.agencyId,
+      'Self-Assessment'
+    );
+
+    if (!submission) {
+      alert('Self-Assessment not found for this agency. Please ensure the agency has uploaded a Self-Assessment.');
+      return;
+    }
+
+    setGeneratingStates(prev => ({ ...prev, [recId]: true }));
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/generate-narrative-report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agencyName: rec.agencyName,
+          selfAssessmentFileId: submission.fileId
+        })
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || 'Generation failed');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Narrative Report-(${rec.agencyName}).docx`;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (a.parentNode) document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 2000);
+    } catch (err) {
+      console.error('Generation error:', err);
+      setUploadErrors(prev => ({ ...prev, [`${recId}-narrative-report`]: err.message || 'Generation failed' }));
+    } finally {
+      setGeneratingStates(prev => ({ ...prev, [recId]: false }));
+    }
+  };
+
   const handleFileUpload = async (recId, fileConfig, file) => {
-    if (!file || fileConfig.pending) return;
+    if (!file) return;
 
     const rec = recommendations.find(r => r.id === recId);
     if (!rec?.agencyName) return;
@@ -266,6 +317,40 @@ export default function RecomP() {
     }
 
     const storedFile = rec[fileConfig.field];
+
+    if (fileConfig.key === 'narrative-report' && !storedFile) {
+      return (
+        <div className="recom-upload-slot">
+          <input
+            type="file"
+            className="rec-file-input"
+            accept={fileConfig.accept}
+            ref={(el) => { fileInputRefs.current[stateKey] = el; }}
+            onChange={(e) => handleFileInputChange(rec.id, fileConfig, e)}
+          />
+          <button
+            type="button"
+            className="generate-preview-btn"
+            onClick={() => handleGenerateNarrativeReport(rec.id)}
+            disabled={generatingStates[rec.id] || isUploading}
+          >
+            {generatingStates[rec.id] ? (
+              <Spinner size="xs" color="primary" />
+            ) : 'Generate'}
+          </button>
+          <button
+            type="button"
+            className={`rec-file-btn upload${fileConfig.accent ? ` ${fileConfig.accent}` : ''}`}
+            onClick={() => triggerFileInput(rec.id, fileConfig.key)}
+            disabled={isUploading}
+          >
+            {isUploading ? (
+              <Spinner size="sm" color="primary" />
+            ) : fileConfig.uploadLabel}
+          </button>
+        </div>
+      );
+    }
 
     return (
       <div className="recom-upload-slot">

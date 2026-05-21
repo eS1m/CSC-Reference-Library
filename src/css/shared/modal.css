@@ -44,6 +44,11 @@
     max-width: 900px;
     height: 85vh;
 }
+.modal-size-2xl {
+    max-width: 1200px;
+    width: 95vw;
+    height: 92vh;
+}
 
 /* Variants (left accent border) */
 .modal-info    { border-left: 5px solid var(--light-blue); }

@@ -6,6 +6,7 @@ const stream = require('stream');
 const cors = require('cors');
 const xlsx = require('xlsx');
 const path = require('path');
+const { generateNarrativeReport } = require('./narrativeReport');
 
 const app = express();
 app.use(cors());
@@ -596,6 +597,28 @@ app.get('/drive/file-exists', async (req, res) => {
   } catch (error) {
     console.error('File exists check error:', error);
     res.status(500).json({ error: 'Failed to check file existence' });
+  }
+});
+
+app.post('/generate-narrative-report', async (req, res) => {
+  try {
+    const { agencyName, selfAssessmentFileId } = req.body;
+    if (!agencyName || !selfAssessmentFileId) {
+      return res.status(400).json({ error: 'agencyName and selfAssessmentFileId are required' });
+    }
+
+    const { buffer, data } = await generateNarrativeReport({
+      drive,
+      agencyName,
+      selfAssessmentFileId
+    });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="Narrative Report-(${agencyName}).docx"`);
+    res.send(buffer);
+  } catch (error) {
+    console.error('Generate narrative report error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
