@@ -1,39 +1,25 @@
 import '../../css/admin/admin-dashboard.css';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { db, auth } from '../../firebase/config';
-import { collection, query, where, onSnapshot, orderBy, doc, updateDoc, getDocs, deleteDoc } from 'firebase/firestore';
+import { auth } from '../../firebase/config';
 import { logActivity } from '../../firebase/activityLog';
-import { validateAgency } from '../../utils/validateAgency';
 import { formatFirestoreDate } from '../../utils/formatFirestoreDate';
+import { useAdminData } from '../../hooks/useAdminData';
+import { useTotalActiveSessionCount } from '../../hooks/useTotalActiveSessionCount';
+import { updateUser } from '../../firebase/collections/users';
+import { deleteSubmissionsByUserId } from '../../firebase/collections/agencySubmissions';
 
 import agencyIcon from '../../assets/agency.svg';
 import fileIcon from '../../assets/file.svg';
 import reviewIcon from '../../assets/review.svg';
 import profileIcon from '../../assets/profile.svg';
-import warningIcon from '../../assets/warning.svg';
+import Modal from '../../components/Modal';
 
 export default function Adashboard() {
   const nav = useNavigate();
 
-  /* Stats State */
-  const [stats, setStats] = useState({
-    totalAgencies: 0,
-    completedProfiles: 0,
-    totalSubmissions: 0,
-    pendingReviews: 0,
-    approvedCount: 0,
-    rejectedCount: 0,
-    totalUsers: 0,
-    primeOfficers: 0,
-    regularUsers: 0,
-    adminUsers: 0
-  });
-  const [recentSubmissions, setRecentSubmissions] = useState([]);
-  const [allUsers, setAllUsers] = useState([]);
-  const [activityLogs, setActivityLogs] = useState([]);
-  const [pendingDeletions, setPendingDeletions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { allUsers, stats, recentSubmissions, pendingDeletions, activityLogs, loading } = useAdminData();
+  const activeSessionCount = useTotalActiveSessionCount();
 
   /* Reset Modal State */
   const [resetModal, setResetModal] = useState({ open: false, user: null });
@@ -126,12 +112,7 @@ export default function Adashboard() {
     setResetLoading(true);
 
     try {
-      const submissionsRef = collection(db, 'agencySubmissions');
-      const q = query(submissionsRef, where('userId', '==', targetUser.id));
-      const snap = await getDocs(q);
-
-      const deletePromises = snap.docs.map(d => deleteDoc(d.ref));
-      await Promise.all(deletePromises);
+      const deletedCount = await deleteSubmissionsByUserId(targetUser.id);
 
       await logActivity({
         userId: auth.currentUser?.uid,
@@ -140,11 +121,11 @@ export default function Adashboard() {
         action: 'UPDATE_PROFILE',
         targetUserId: targetUser.id,
         targetAgencyName: targetUser.email,
-        details: { deletedSubmissions: snap.docs.length },
-        message: `Admin reset submission progress for ${targetUser.email} (${snap.docs.length} submissions deleted)`
+        details: { deletedSubmissions: deletedCount },
+        message: `Admin reset submission progress for ${targetUser.email} (${deletedCount} submissions deleted)`
       });
 
-      alert(`Reset complete. ${snap.docs.length} submission(s) deleted for ${targetUser.email}.`);
+      alert(`Reset complete. ${deletedCount} submission(s) deleted for ${targetUser.email}.`);
       closeResetModal();
     } catch (err) {
       console.error('Reset error:', err);
@@ -156,7 +137,7 @@ export default function Adashboard() {
 
   const handleApprovalStatus = async (userId, newStatus, userEmail, userRole) => {
     try {
-      await updateDoc(doc(db, "users", userId), { approvalStatus: newStatus });
+      await updateUser(userId, { approvalStatus: newStatus });
       await logActivity({
         userId: auth.currentUser?.uid,
         userEmail: auth.currentUser?.email,
@@ -171,100 +152,6 @@ export default function Adashboard() {
       alert("Failed to update approval status. Please try again.");
     }
   };
-
-  /* Fetch Stats */
-  useEffect(() => {
-    setLoading(true);
-
-    const usersQuery = query(collection(db, "users"), orderBy("createdAt", "desc"));
-    const profilesQuery = query(collection(db, "agencyProfiles"));
-    const submissionsQuery = query(
-      collection(db, "agencySubmissions"),
-      where("fileType", "==", "Self-Assessment")
-    );
-
-    const unsubUsers = onSnapshot(usersQuery, (snap) => {
-      let total = 0, prime = 0, regular = 0, admin = 0;
-      const users = [];
-      
-      snap.forEach(doc => {
-        const data = doc.data();
-        total++;
-        users.push({ id: doc.id, ...data });
-        
-        if (data.role === 'p') prime++;
-        else if (data.role === 'u') regular++;
-        else if (data.role === 'admin') admin++;
-      });
-      
-      setStats(prev => ({ 
-        ...prev, 
-        totalUsers: total,
-        primeOfficers: prime,
-        regularUsers: regular,
-        adminUsers: admin
-      }));
-      setAllUsers(users);
-    });
-
-    const unsubProfiles = onSnapshot(profilesQuery, (snap) => {
-      let completed = 0;
-      snap.forEach(doc => {
-        completed += validateAgency(doc.data()) ? 1 : 0;
-      });
-      setStats(prev => ({ ...prev, completedProfiles: completed }));
-    });
-
-    const unsubSubmissions = onSnapshot(submissionsQuery, (snap) => {
-      const recent = [];
-      
-      snap.forEach(doc => {
-        recent.push({ id: doc.id, ...doc.data() });
-      });
-      
-      recent.sort((a, b) => (b.uploadedAt?.seconds || 0) - (a.uploadedAt?.seconds || 0));
-      
-      setStats(prev => ({ 
-        ...prev, 
-        totalSubmissions: recent.length
-      }));
-      setRecentSubmissions(recent.slice(0, 5));
-      setLoading(false);
-    });
-
-    const deletionsQuery = query(
-      collection(db, 'deletionRequests'),
-      where('status', '==', 'pending')
-    );
-    const unsubDeletions = onSnapshot(deletionsQuery, (snap) => {
-      const data = [];
-      snap.forEach(doc => data.push({ id: doc.id, ...doc.data() }));
-      data.sort((a, b) => (b.requestedAt?.seconds || 0) - (a.requestedAt?.seconds || 0));
-      setPendingDeletions(data);
-    });
-
-    return () => {
-      unsubUsers();
-      unsubProfiles();
-      unsubSubmissions();
-      unsubDeletions();
-    };
-  }, []);
-
-  /* Fetch Activity Logs */
-  useEffect(() => {
-    const logsQuery = query(collection(db, "activityLogs"), orderBy("timestamp", "desc"));
-    const unsubLogs = onSnapshot(logsQuery, (snap) => {
-      const logs = [];
-      snap.forEach(docSnap => {
-        logs.push({ id: docSnap.id, ...docSnap.data() });
-      });
-      setActivityLogs(logs);
-    }, (err) => {
-      console.error("Error fetching activity logs:", err);
-    });
-    return () => unsubLogs();
-  }, []);
 
   if (loading) {
     return <div className="loading-screen">Loading Admin Dashboard...</div>;
@@ -308,6 +195,15 @@ export default function Adashboard() {
           </div>
         </div>
 
+        <div className="stat-card-admin">
+          <div className="stat-icon">
+            <img src={profileIcon} alt="Active Users" width="40" height="40" className="deep-blue-filter"/>
+          </div>
+          <div className="stat-info">
+            <h3>{activeSessionCount}</h3>
+            <p>Active Users</p>
+          </div>
+        </div>
 
       </div>
 
@@ -532,44 +428,35 @@ export default function Adashboard() {
         </div>
       )}
 
-      {/* Reset Confirmation Modal */}
-      {resetModal.open && (
-        <div className="modal-overlay" onClick={closeResetModal}>
-          <div className="modal-content warning-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Reset Agency Progress</h2>
-            </div>
-            <div className="modal-body warning-body">
-              <div className="warning-icon-large">
-                <img src={warningIcon} alt="Warning" width="60" height="60" />
-              </div>
-              <p className="warning-text">
-                Are you sure you want to reset progress for:
-              </p>
-              <p style={{ fontWeight: 700, color: 'var(--deep-blue)', margin: '8px 0' }}>
-                {resetModal.user?.email}
-              </p>
-              <p className="warning-subtext">
-                This will permanently delete all submission records (Self-Assessment and Action Plan)
-                from Firestore for this agency. The files in Google Drive will NOT be deleted.
-                This action cannot be undone.
-              </p>
-            </div>
-            <div className="modal-actions warning-actions">
-              <button className="cancel-btn" onClick={closeResetModal}>
-                Cancel
-              </button>
-              <button
-                className="proceed-btn"
-                onClick={confirmReset}
-                disabled={resetLoading}
-              >
-                {resetLoading ? 'Resetting...' : 'Confirm Reset'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={resetModal.open}
+        onClose={closeResetModal}
+        title="Reset Agency Progress"
+        variant="warning"
+        actions={
+          <>
+            <button className="modal-btn modal-btn-secondary" onClick={closeResetModal}>
+              Cancel
+            </button>
+            <button
+              className="modal-btn modal-btn-danger"
+              onClick={confirmReset}
+              disabled={resetLoading}
+            >
+              {resetLoading ? 'Resetting...' : 'Confirm Reset'}
+            </button>
+          </>
+        }
+      >
+        <p style={{ fontWeight: 700, color: 'var(--deep-blue)', margin: '8px 0' }}>
+          {resetModal.user?.email}
+        </p>
+        <p className="modal-subtext">
+          This will permanently delete all submission records (Self-Assessment and Action Plan)
+          from Firestore for this agency. The files in Google Drive will NOT be deleted.
+          This action cannot be undone.
+        </p>
+      </Modal>
 
       {/* Clock */}
       <div className="stat-time stat-container">

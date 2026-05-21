@@ -3,13 +3,16 @@ import '../css/auth.css';
 import logo from '../assets/logo.svg';
 import googleIcon from '../assets/google-icon.svg';
 import { signInWithPopup, signInWithEmailAndPassword, GoogleAuthProvider, signOut } from 'firebase/auth';
-import { auth, googleProvider, db } from '../firebase/config.js';
+import { auth, googleProvider } from '../firebase/config.js';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { getUserById, createUser } from '../firebase/collections/users';
 import { logActivity } from '../firebase/activityLog';
-import '../css/lock-modal.css';
-import closeIcon from '../assets/close.svg';
-import warningIcon from '../assets/warning.svg';
+import Spinner from '../components/Spinner';
+import Modal from '../components/Modal';
+import { db } from '../firebase/config.js';
+import { getDocs, collection } from 'firebase/firestore';
+
+const MAX_AGENCY_USERS = Number(import.meta.env.VITE_MAX_AGENCY_USERS) || 25;
 
 
 export default function Login() {
@@ -20,21 +23,21 @@ export default function Login() {
     const [error, setError] = useState('');
     const [showPendingModal, setShowPendingModal] = useState(false);
     const [showFirstTimeModal, setShowFirstTimeModal] = useState(false);
+    const [showCapacityModal, setShowCapacityModal] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
     const handleUserRoleAndRedirect = async (user) => {
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
+        const existingUser = await getUserById(user.uid);
 
         let role = "u";
         let approvalStatus;
         let isFirstTimeGoogle = false;
 
-        if (!userSnap.exists()) {
+        if (!existingUser) {
             isFirstTimeGoogle = true;
             approvalStatus = 'pending';
 
-            await setDoc(userRef, {
+            await createUser(user.uid, {
                 email: user.email,
                 role: role,
                 approvalStatus: 'pending',
@@ -49,8 +52,8 @@ export default function Login() {
                 message: `New user ${user.email} registered via Google`
             });
         } else {
-            role = userSnap.data().role;
-            approvalStatus = userSnap.data().approvalStatus || 'approved';
+            role = existingUser.role;
+            approvalStatus = existingUser.approvalStatus || 'approved';
         }
 
         if (approvalStatus !== 'approved') {
@@ -61,6 +64,29 @@ export default function Login() {
                 setShowPendingModal(true);
             }
             return;
+        }
+
+        // Check concurrent user limit for agency users only
+        if (role === 'u') {
+            try {
+                const sessionsSnap = await getDocs(collection(db, 'activeSessions'));
+                const now = Date.now();
+                const activeCount = sessionsSnap.docs.filter(d => {
+                    const data = d.data();
+                    if (data.role !== 'u') return false;
+                    const hb = data.lastHeartbeat?.toMillis?.() || 0;
+                    return now - hb < 2 * 60 * 1000; // 2 minutes
+                }).length;
+
+                if (activeCount >= MAX_AGENCY_USERS) {
+                    await signOut(auth);
+                    setShowCapacityModal(true);
+                    return;
+                }
+            } catch (err) {
+                console.error('Error checking active sessions:', err);
+                // Fail open: if we can't check, allow login
+            }
         }
 
         const displayEmail = user.email || user.providerData?.[0]?.email || 'unknown';
@@ -164,7 +190,7 @@ export default function Login() {
                         </div>
                         <button type="submit" className="auth-button" id="email-login" disabled={isLoading}>
                             {isLoading ? (
-                                <div className="auth-button-spinner"></div>
+                                <Spinner size="sm" color="dark" />
                             ) : (
                                 "Login"
                             )}
@@ -185,59 +211,52 @@ export default function Login() {
             </div>
 
             {/* Account Pending Approval Modal */}
-            {showPendingModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content lock-modal">
-                        <div className="modal-header">
-                            <h2>Account Under Review</h2>
-                            <button className="modal-close" onClick={() => setShowPendingModal(false)}>
-                                <img src={closeIcon} alt="Close" width="20" height="20"/>
-                            </button>
-                        </div>
-                        <div className="lock-body">
-                            <div className="lock-icon-large">
-                                <img src={warningIcon} alt="Pending" width="45" height="45" className="grey-filter"/>
-                            </div>
-                            <p className="lock-message">Your account is pending approval</p>
-                            <p className="lock-subtext">Your account has not yet been approved by an administrator. Please wait for approval or contact your system administrator.</p>
-                        </div>
-                        <div className="modal-actions lock-actions">
-                            <button className="understood-btn" onClick={() => setShowPendingModal(false)}>
-                                OK
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <Modal
+              isOpen={showPendingModal}
+              onClose={() => setShowPendingModal(false)}
+              title="Account Under Review"
+              variant="warning"
+              actions={
+                <button className="modal-btn modal-btn-primary modal-btn-full" onClick={() => setShowPendingModal(false)}>
+                  OK
+                </button>
+              }
+            >
+              <p style={{ fontWeight: 600 }}>Your account is pending approval</p>
+              <p className="modal-subtext">Your account has not yet been approved by an administrator. Please wait for approval or contact your system administrator.</p>
+            </Modal>
 
             {/* First-Time Google Sign-In Modal */}
-            {showFirstTimeModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content lock-modal">
-                        <div className="modal-header">
-                            <h2>Welcome</h2>
-                            <button className="modal-close" onClick={() => setShowFirstTimeModal(false)}>
-                                <img src={closeIcon} alt="Close" width="20" height="20"/>
-                            </button>
-                        </div>
-                        <div className="lock-body">
-                            <div className="lock-icon-large">
-                                <img src={warningIcon} alt="Welcome" width="45" height="45" className="grey-filter"/>
-                            </div>
-                            <p className="lock-message">Account created successfully!</p>
-                            <p className="lock-subtext">
-                                This is the first time you are logging in with this google account,
-                                it will be approved first before you can enter.
-                            </p>
-                        </div>
-                        <div className="modal-actions lock-actions">
-                            <button className="understood-btn" onClick={() => setShowFirstTimeModal(false)}>
-                                OK
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <Modal
+              isOpen={showFirstTimeModal}
+              onClose={() => setShowFirstTimeModal(false)}
+              title="Welcome"
+              variant="info"
+              actions={
+                <button className="modal-btn modal-btn-primary modal-btn-full" onClick={() => setShowFirstTimeModal(false)}>
+                  OK
+                </button>
+              }
+            >
+              <p style={{ fontWeight: 600 }}>Account created successfully!</p>
+              <p className="modal-subtext">This is the first time you are logging in with this google account, it will be approved first before you can enter.</p>
+            </Modal>
+
+            {/* Max Capacity Modal */}
+            <Modal
+              isOpen={showCapacityModal}
+              onClose={() => setShowCapacityModal(false)}
+              title="System at Capacity"
+              variant="warning"
+              actions={
+                <button className="modal-btn modal-btn-primary modal-btn-full" onClick={() => setShowCapacityModal(false)}>
+                  OK
+                </button>
+              }
+            >
+              <p style={{ fontWeight: 600 }}>Maximum number of users reached</p>
+              <p className="modal-subtext">The system currently has the maximum of {MAX_AGENCY_USERS} agency users logged in. Please try logging in at another time.</p>
+            </Modal>
         </div>
     );
 }

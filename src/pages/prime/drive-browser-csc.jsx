@@ -5,6 +5,7 @@ import folderIcon from '../../assets/folder.svg';
 import fileIcon from '../../assets/file.svg';
 import downloadIcon from '../../assets/download.svg';
 import viewIcon from '../../assets/view.svg';
+import Spinner from '../../components/Spinner';
 
 function formatBytes(bytes) {
   if (!bytes) return '—';
@@ -26,7 +27,7 @@ function formatDate(isoString) {
 export default function DriveBrowserCSC() {
   const {
     breadcrumbs, loading, error, searchQuery,
-    filteredFolders, filteredFiles,
+    filteredFolders, filteredFiles, recentlyChangedFolders,
     setSearchQuery, fetchContents,
     navigateToFolder, navigateToBreadcrumb,
     handleView, handleDownload
@@ -76,9 +77,28 @@ export default function DriveBrowserCSC() {
 
         {loading && (
           <div className="drive-loading-inline">
-            <div className="drive-spinner"></div>
+            <Spinner size="lg" color="primary" />
             <span>Loading contents...</span>
           </div>
+        )}
+
+        {!loading && recentlyChangedFolders.length > 0 && (
+          <>
+            <h2 className="drive-section-title">Recently Changed</h2>
+            <div className="drive-folder-grid drive-recent-grid">
+              {recentlyChangedFolders.map(folder => (
+                <div
+                  key={folder.id}
+                  className="drive-folder-card drive-recent-card"
+                  onClick={() => navigateToFolder(folder)}
+                >
+                  <img src={folderIcon} alt="Folder" width="48" height="48" className="deep-blue-filter" />
+                  <span className="drive-folder-name">{folder.name}</span>
+                  <span className="drive-recent-date">{formatDate(folder.modifiedTime)}</span>
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
         {!loading && filteredFolders.length > 0 && (
@@ -86,8 +106,8 @@ export default function DriveBrowserCSC() {
             <h2 className="drive-section-title">Folders</h2>
             <div className="drive-folder-grid">
               {filteredFolders.map(folder => (
-                <div 
-                  key={folder.id} 
+                <div
+                  key={folder.id}
                   className="drive-folder-card"
                   onClick={() => navigateToFolder(folder)}
                 >

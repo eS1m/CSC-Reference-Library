@@ -103,26 +103,6 @@
     text-align: end;
 }
 
-#btn-sign-out {
-    border: none;
-    border-radius: 4px;
-    background: transparent;
-    cursor: pointer;
-    padding: 0;
-
-    font-family: 'Outfit', sans-serif;
-    font-size: 16px;
-
-    transition: 0.3s;
-
-    color: var(--cream-white)
-}
-
-#btn-sign-out:hover {
-    padding: 4px 8px;
-    background: var(--glass-border-ham);
-}
-
 /* SIDEBAR STYLES */
 .dashboard-container {
     display: flex;
@@ -291,4 +271,23 @@
 .sidebar.closed .nav-item-admin.nav-locked:hover {
     padding-left: 0;
     border-left: none;
+}
+
+/* Sign-out section pushed to bottom */
+.sidebar-section.sign-out-section {
+    margin-top: auto;
+}
+
+.sidebar-footer-divider {
+    width: 100%;
+    height: 1px;
+    background-color: #e0e0e0;
+    margin: 0;
+}
+
+/* Reset button defaults so sign-out matches nav links */
+button.nav-item-admin {
+    border: none;
+    background: transparent;
+    font-family: 'Outfit', sans-serif;
 }

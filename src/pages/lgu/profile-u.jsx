@@ -6,15 +6,17 @@ import '../../css/lgu/uprofile.css';
 import editIcon from '../../assets/edit.svg'
 import addSquare from '../../assets/add-square.svg';
 import removeSquare from '../../assets/min-square.svg';
-import { auth, db } from '../../firebase/config';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { auth } from '../../firebase/config';
+import { serverTimestamp } from 'firebase/firestore';
+import { setProfile } from '../../firebase/collections/agencyProfiles';
 import { signOut } from 'firebase/auth';
-import { useAgencyData } from '../../hooks/useAgencyData';
+import { useAgencyWorkflow } from '../../hooks/useAgencyWorkflow';
 import { logActivity } from '../../firebase/activityLog';
 import { createAdminNotifications } from '../../firebase/notifications';
+import Spinner from '../../components/Spinner';
 
 export default function Uprofile() {
-  const { profile, loading, isAgencyDone } = useAgencyData();
+  const { profile, loading, isAgencyDone } = useAgencyWorkflow();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -129,7 +131,7 @@ export default function Uprofile() {
             lastUpdated: serverTimestamp()
         };
 
-        await setDoc(doc(db, "agencyProfiles", user.uid), masterProfile, { merge: true });
+        await setProfile(user.uid, masterProfile, true);
 
         await logActivity({
           userId: user.uid,
@@ -378,7 +380,7 @@ export default function Uprofile() {
                 >
                   {isSaving ? (
                     <>
-                      <div className="spinner"></div>
+                      <Spinner size="sm" color="white" />
                       <span>Saving...</span>
                     </>
                   ) : (

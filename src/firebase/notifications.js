@@ -9,8 +9,14 @@ import {
   updateDoc,
   deleteDoc,
   doc,
-  writeBatch
+  writeBatch,
+  Timestamp
 } from 'firebase/firestore';
+
+/** Notifications older than this are permanently deleted. */
+export const NOTIFICATION_RETENTION_DAYS = 30;
+
+const FIRESTORE_BATCH_LIMIT = 500;
 
 /**
  * Create a notification for every admin and CSC RO X user.
@@ -88,8 +94,114 @@ function getNotificationText(type, agencyName, fileName) {
         title: 'Action Plan Uploaded',
         message: `${agencyName} uploaded an Action Plan file${fileName ? `: ${fileName}` : '.'}`
       };
+    case 'EVIDENCE_UPLOAD':
+      return {
+        title: 'Evidence Requirements Uploaded',
+        message: `${agencyName} uploaded ${fileName || 'evidence files'}.`
+      };
     default:
       return { title: 'New Notification', message: 'You have a new notification.' };
+  }
+}
+
+/**
+ * Create a notification for a single user (e.g. agency user).
+ * @param {string} recipientId - Firebase Auth UID of the recipient
+ * @param {Object} params
+ * @param {string} params.type - Notification type identifier
+ * @param {string} params.title - Notification title
+ * @param {string} params.message - Notification body
+ * @param {string} [params.agencyId] - Optional agency UID
+ * @param {string} [params.agencyName] - Optional agency display name
+ * @param {string} [params.fileName] - Optional related file name
+ */
+export async function createUserNotification(recipientId, { type, title, message, agencyId, agencyName, fileName }) {
+  if (!recipientId) return;
+
+  try {
+    await addDoc(collection(db, 'users', recipientId, 'notifications'), {
+      type,
+      title,
+      message,
+      agencyId: agencyId || null,
+      agencyName: agencyName || null,
+      fileName: fileName || null,
+      read: false,
+      createdAt: serverTimestamp()
+    });
+  } catch (err) {
+    console.error('createUserNotification error:', err);
+  }
+}
+
+/**
+ * Notify an agency that they have been recommended for onsite assessment.
+ * @param {string} agencyId - Firebase Auth UID of the agency user
+ * @param {string} [agencyName] - Display name of the agency
+ */
+export async function notifyAgencyEvidenceRequired(agencyId, agencyName) {
+  await createUserNotification(agencyId, {
+    type: 'EVIDENCE_REQUIRED',
+    title: 'Evidence Requirements Available',
+    message: 'You have been selected for Field Office Monitoring. Please submit your Evidence Requirements.',
+    agencyId,
+    agencyName: agencyName || null
+  });
+}
+
+export async function notifyAgencyOARecommended(agencyId, agencyName) {
+  await createUserNotification(agencyId, {
+    type: 'OA_RECOMMENDED',
+    title: 'Onsite Assessment Recommendation',
+    message: 'You have been recommended for Onsite Assessment',
+    agencyId,
+    agencyName: agencyName || null
+  });
+}
+
+/**
+ * Delete notifications older than NOTIFICATION_RETENTION_DAYS for one user.
+ * @param {string} recipientId - Firebase Auth UID of the recipient
+ * @returns {number} Number of notifications deleted
+ */
+export async function deleteExpiredNotifications(recipientId) {
+  if (!recipientId) return 0;
+
+  try {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - NOTIFICATION_RETENTION_DAYS);
+
+    const q = query(
+      collection(db, 'users', recipientId, 'notifications'),
+      where('createdAt', '<', Timestamp.fromDate(cutoff))
+    );
+    const snap = await getDocs(q);
+    if (snap.empty) return 0;
+
+    let batch = writeBatch(db);
+    let opsInBatch = 0;
+    let deletedCount = 0;
+
+    for (const notifDoc of snap.docs) {
+      batch.delete(notifDoc.ref);
+      opsInBatch += 1;
+      deletedCount += 1;
+
+      if (opsInBatch >= FIRESTORE_BATCH_LIMIT) {
+        await batch.commit();
+        batch = writeBatch(db);
+        opsInBatch = 0;
+      }
+    }
+
+    if (opsInBatch > 0) {
+      await batch.commit();
+    }
+
+    return deletedCount;
+  } catch (err) {
+    console.error('deleteExpiredNotifications error:', err);
+    return 0;
   }
 }
 

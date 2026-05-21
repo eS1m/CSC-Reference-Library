@@ -6,11 +6,13 @@ import '../../css/lgu/uemployee.css';
 import editIcon from '../../assets/edit.svg'
 import addSquare from '../../assets/add-square.svg';
 import removeSquare from '../../assets/min-square.svg';
-import { auth, db } from '../../firebase/config';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { useAgencyData } from '../../hooks/useAgencyData';
+import { auth } from '../../firebase/config';
+import { serverTimestamp } from 'firebase/firestore';
+import { setEmployees } from '../../firebase/collections/agencyEmployees';
+import { useAgencyWorkflow } from '../../hooks/useAgencyWorkflow';
 import { logActivity } from '../../firebase/activityLog';
 import { createAdminNotifications } from '../../firebase/notifications';
+import Spinner from '../../components/Spinner';
 
 export default function Uemployee() {
 
@@ -58,7 +60,7 @@ export default function Uemployee() {
   const filledCells = Object.keys(tableData).length;
 
   // Fetching data from Firebase/Firestore via hook
-  const { employees, loading, isEmployeeDone, agencyName } = useAgencyData();
+  const { employees, loading, isEmployeeDone, agencyName } = useAgencyWorkflow();
   
   useEffect(() => {
     if (employees) {
@@ -133,9 +135,7 @@ export default function Uemployee() {
 
     setIsSaving(true);
     try {
-      const docRef = doc(db, "agencyEmployees", user.uid);
-
-      await setDoc(docRef, {
+      await setEmployees(user.uid, {
         uid: user.uid,
         dataAsOf: dataAsOf,
         lastUpdated: serverTimestamp(),
@@ -411,7 +411,7 @@ export default function Uemployee() {
                 >
                   {isSaving ? (
                     <>
-                      <div className="spinner"></div>
+                      <Spinner size="sm" color="white" />
                       <span>Saving...</span>
                     </>
                   ) : (

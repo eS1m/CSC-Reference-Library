@@ -168,7 +168,7 @@ CSC-Reference-Library/
 ├── src/
 │   ├── App.jsx                 # Root router with role-based routes
 │   ├── firebase/               # Firebase config and activity logging
-│   ├── hooks/                  # Central data hooks (useAgencyData)
+│   ├── hooks/                  # Central data hooks (useAgencyWorkflow, useAdminData, etc.)
 │   ├── utils/                  # Shared utilities (date formatting, validation)
 │   ├── components/             # Layouts, guards, modals
 │   ├── pages/                  # Role-based page components

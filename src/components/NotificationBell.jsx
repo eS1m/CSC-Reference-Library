@@ -8,7 +8,11 @@ import {
   updateDoc
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { markNotificationRead, deleteNotification } from '../firebase/notifications';
+import {
+  markNotificationRead,
+  deleteNotification,
+  deleteExpiredNotifications
+} from '../firebase/notifications';
 import { formatFirestoreDate } from '../utils/formatFirestoreDate';
 import notifIcon from '../assets/notification.svg';
 import closeIcon from '../assets/close.svg';
@@ -24,25 +28,41 @@ export default function NotificationBell({ user }) {
   useEffect(() => {
     if (!uid) return;
 
-    const q = query(
-      collection(db, 'users', uid, 'notifications'),
-      orderBy('createdAt', 'desc')
-    );
+    let unsub = null;
+    let cancelled = false;
 
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        setNotifications(data);
-        setLoading(false);
-      },
-      (err) => {
-        console.error('Notifications listener error:', err);
-        setLoading(false);
+    (async () => {
+      try {
+        await deleteExpiredNotifications(uid);
+      } catch (err) {
+        console.error('Notification retention cleanup error:', err);
       }
-    );
 
-    return () => unsub();
+      if (cancelled) return;
+
+      const q = query(
+        collection(db, 'users', uid, 'notifications'),
+        orderBy('createdAt', 'desc')
+      );
+
+      unsub = onSnapshot(
+        q,
+        (snap) => {
+          const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          setNotifications(data);
+          setLoading(false);
+        },
+        (err) => {
+          console.error('Notifications listener error:', err);
+          setLoading(false);
+        }
+      );
+    })();
+
+    return () => {
+      cancelled = true;
+      if (unsub) unsub();
+    };
   }, [uid]);
 
   /* Close dropdown when clicking outside */

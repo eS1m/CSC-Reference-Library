@@ -6,15 +6,18 @@ import ImageModule from '@slosarek/docxtemplater-image-module-free';
 import mammoth from 'mammoth';
 import { saveAs } from 'file-saver';
 import '../../css/lgu/action-plan-u.css';
-import closeIcon from '../../assets/close.svg';
 import tooltipIcon from '../../assets/tooltip.svg';
 import LockModal from '../../components/LockModal.jsx';
+import Modal from '../../components/Modal';
+import GenerateModal from '../../components/GenerateModal';
+import Spinner from '../../components/Spinner';
 
-import { auth, db } from '../../firebase/config';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { auth } from '../../firebase/config';
+import { serverTimestamp } from 'firebase/firestore';
+import { createSubmission } from '../../firebase/collections/agencySubmissions';
 import { logActivity } from '../../firebase/activityLog';
 import { createAdminNotifications } from '../../firebase/notifications';
-import { useAgencyData } from '../../hooks/useAgencyData';
+import { useAgencyWorkflow } from '../../hooks/useAgencyWorkflow';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -31,7 +34,7 @@ const TOOLTIP_TEXT = {
 
 export default function ActionPlanU() {
   const navigate = useNavigate();
-  const { agencyName, submissions, hasActionPlan } = useAgencyData();
+  const { agencyName, submissions, hasActionPlan } = useAgencyWorkflow();
 
   const [inputs, setInputs] = useState({
     currentMaturityLevel: '',
@@ -474,7 +477,7 @@ export default function ActionPlanU() {
       const year = new Date().getFullYear();
       const fileName = `Action Plan - ${agencyName} - ${year}.docx`;
 
-      await addDoc(collection(db, 'agencySubmissions'), {
+      await createSubmission({
         userId: auth.currentUser.uid,
         agencyName: agencyName,
         fileName: fileName,
@@ -1174,7 +1177,7 @@ export default function ActionPlanU() {
                 onClick={handleGeneratePreview}
                 disabled={isGenerating || isUploading}
               >
-                {isGenerating ? <div className="spinner-small"></div> : 'Generate Preview'}
+                {isGenerating ? <Spinner size="xs" color="primary" /> : 'Generate Preview'}
               </button>
               {uploadStatus && !showModal && (
                 <span className={`inline-status ${uploadStatusType}`}>{uploadStatus}</span>
@@ -1184,113 +1187,64 @@ export default function ActionPlanU() {
         )}
       </div>
 
-      {/* PREVIEW MODAL */}
-      {showModal && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="preview-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="preview-modal-header">
-              <h2>Document Preview</h2>
-              <button className="modal-close" onClick={closeModal}>
-                <img src={closeIcon} alt="Close" width="20" height="20" />
-              </button>
-            </div>
+      <GenerateModal
+        isOpen={showModal}
+        onClose={closeModal}
+        title="Document Preview"
+        blobUrl={previewBlobUrl}
+        onDownload={handleDownload}
+        onUpload={handleUploadToDrive}
+        isUploading={isUploading}
+        uploadError={uploadStatus && uploadStatusType === 'error' ? uploadStatus : ''}
+        downloadDisabled={!generatedDocx}
+        uploadDisabled={!generatedDocx}
+      />
 
-            <div className="preview-modal-body">
-              <iframe
-                src={previewBlobUrl}
-                title="Document Preview"
-                className="preview-iframe"
-              />
-            </div>
+      <Modal
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          navigate('/dashboard-u');
+        }}
+        title="Action Plan Submitted"
+        variant="success"
+        actions={
+          <button
+            className="modal-btn modal-btn-primary modal-btn-full"
+            onClick={() => {
+              setShowSuccessModal(false);
+              navigate('/dashboard-u');
+            }}
+          >
+            Okay
+          </button>
+        }
+      >
+        <p style={{ fontWeight: 600 }}>Your Action Plan has been successfully submitted.</p>
+        <p className="modal-subtext">Please wait for the CSC RO X for any updates.</p>
+      </Modal>
 
-            <div className="preview-modal-footer">
-              <p className="preview-disclaimer">
-                Note: This preview does not accurately show the actual document. This is to view if your data is correct. Please download the file for the actual result.
-              </p>
-              {uploadStatus && (
-                <span className={`footer-status ${uploadStatusType}`}>{uploadStatus}</span>
-              )}
-              <div className="preview-modal-actions">
-                <button className="cancel-btn" onClick={closeModal}>
-                  Close
-                </button>
-                <button className="download-btn" onClick={handleDownload} disabled={!generatedDocx}>
-                  Download as Word
-                </button>
-                <button
-                  className="upload-confirm-btn"
-                  onClick={handleUploadToDrive}
-                  disabled={isUploading || !generatedDocx}
-                >
-                  {isUploading ? <div className="spinner-small white"></div> : 'Upload to Google Drive'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* POST-UPLOAD SUCCESS MODAL */}
-      {showSuccessModal && (
-        <div className="modal-overlay">
-          <div className="modal-content success-modal">
-            <div className="modal-header">
-              <h2>Action Plan Submitted</h2>
-            </div>
-            <div className="modal-body success-body">
-              <p className="success-message">
-                Your Action Plan has been successfully submitted.
-              </p>
-              <p className="success-subtext">
-                Please wait for the CSC RO X for any updates.
-              </p>
-            </div>
-            <div className="modal-actions success-actions">
-              <button
-                className="okay-btn"
-                onClick={() => {
-                  setShowSuccessModal(false);
-                  navigate('/dashboard-u');
-                }}
-              >
-                Okay
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* VALIDATION ERROR MODAL */}
-      {showValidationModal && (
-        <div className="modal-overlay" onClick={() => setShowValidationModal(false)}>
-          <div className="modal-content warning-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Missing Required Fields</h2>
-              <button className="modal-close" onClick={() => setShowValidationModal(false)}>
-                <img src={closeIcon} alt="Close" width="20" height="20" />
-              </button>
-            </div>
-            <div className="modal-body warning-body">
-              <p className="warning-text">
-                Please fill in the following fields before uploading:
-              </p>
-              <ul className="validation-error-list">
-                {validationErrors.map((err, i) => (
-                  <li key={i}>{err}</li>
-                ))}
-              </ul>
-              <p className="warning-subtext">
-                You can still generate a preview or download the file, but all fields must be completed to submit to Google Drive.
-              </p>
-            </div>
-            <div className="modal-actions warning-actions">
-              <button className="cancel-btn" onClick={() => setShowValidationModal(false)}>
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={showValidationModal}
+        onClose={() => setShowValidationModal(false)}
+        title="Missing Required Fields"
+        variant="warning"
+        actions={
+          <button className="modal-btn modal-btn-secondary modal-btn-full" onClick={() => setShowValidationModal(false)}>
+            Close
+          </button>
+        }
+      >
+        <p style={{ fontWeight: 600 }}>Please fill in the following fields before uploading:</p>
+        <ul className="validation-error-list">
+          {validationErrors.map((err, i) => (
+            <li key={i}>{err}</li>
+          ))}
+        </ul>
+        <p className="modal-subtext">
+          You can still generate a preview or download the file, but all fields must be completed to submit to Google Drive.
+        </p>
+      </Modal>
 
       {/* LOCKED STATE: Action Plan already submitted */}
       {showLockModal && (
