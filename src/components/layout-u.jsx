@@ -44,7 +44,7 @@ export default function Ulayout() {
 
     /* Upload Restriction Functionality */
     const { isLocked, currentStep, hasActionPlan, agencyName, loading } = useAgencyWorkflow();
-    const { isUnlocked: isERUnlocked } = useAgencyEvidenceUnlock();
+    const { isUnlocked: isERUnlocked, lockedReason: erLockedReason } = useAgencyEvidenceUnlock();
 
     const isUploadNavLocked = isLocked || hasActionPlan;
     const isActionPlanNavLocked = currentStep < 4 || hasActionPlan;
@@ -184,10 +184,15 @@ export default function Ulayout() {
                                 onClick={(e) => {
                                     if (!isERUnlocked) {
                                         e.preventDefault();
+                                        const isOARecommended = erLockedReason === 'oa-recommended';
                                         setLockModalConfig({
-                                            title: 'Evidence Requirements Locked',
-                                            message: 'Your agency has not been selected for Field Office Monitoring yet.',
-                                            subtext: 'Please wait for the CSC RO X to select your agency. You will be notified via the notification bell when Evidence Requirements becomes available.'
+                                            title: isOARecommended ? 'Onsite Assessment Recommended' : 'Evidence Requirements Locked',
+                                            message: isOARecommended
+                                                ? 'You have been recommended for Onsite Assessment.'
+                                                : 'Your agency has not been selected for Field Office Monitoring yet.',
+                                            subtext: isOARecommended
+                                                ? 'Evidence Requirements has been disabled. Please wait for further updates from the CSC RO X.'
+                                                : 'Please wait for the CSC RO X to select your agency. You will be notified via the notification bell when Evidence Requirements becomes available.'
                                         });
                                         setLockModalOpen(true);
                                     }

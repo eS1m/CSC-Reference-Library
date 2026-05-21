@@ -1,6 +1,7 @@
 import '../css/shared/contact-us.css';
 import simbajonImg from '../assets/contact_pics/simbajon.jpg';
 import poImg from '../assets/contact_pics/po.jpg';
+import balbonImg from '../assets/contact_pics/balbon.jpg';
 
 import githubIcon from '../assets/contact_socials/github.svg';
 import facebookIcon from '../assets/contact_socials/facebook.svg';
@@ -21,7 +22,7 @@ export default function ContactUs() {
             <div className="contact-content">
                 <div className="contact-card-container">
                     <div className="contact-card balbon">
-                        {/* <img src={simbajonImg} alt="balbon" className="balbon-png contact-png" /> */}
+                        <img src={balbonImg} alt="balbon" className="balbon-png contact-png" />
                         <div className="contact-info">
                             <h3 className="name">Zachary Lance Balbon</h3>
                             <p className="role">Quality Assurance Testing</p>
@@ -71,7 +72,7 @@ export default function ContactUs() {
                             <p className="role">Head Developer</p>
                             <p className="course">Information Technology - 3</p>
                             <div className="socials">
-                                <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+                                <a href="https://github.com/eS1m" target="_blank" rel="noopener noreferrer">
                                     <img src={githubIcon} alt="GitHub" className="github socials-icon" />
                                 </a>
                                 <a href="https://www.facebook.com/eS1mulae/" target="_blank" rel="noopener noreferrer">

@@ -5,6 +5,7 @@ import { subscribeEvidenceUnlock } from '../firebase/collections/evidenceUnlocks
 
 export function useAgencyEvidenceUnlock() {
   const [isUnlocked, setIsUnlocked] = useState(false);
+  const [lockedReason, setLockedReason] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,11 +24,13 @@ export function useAgencyEvidenceUnlock() {
         currentUser.uid,
         (data) => {
           setIsUnlocked(!!data.unlocked);
+          setLockedReason(data.lockedReason || null);
           setLoading(false);
         },
         (err) => {
           console.error('Evidence unlock listener error:', err);
           setIsUnlocked(false);
+          setLockedReason(null);
           setLoading(false);
         }
       );
@@ -39,5 +42,5 @@ export function useAgencyEvidenceUnlock() {
     };
   }, []);
 
-  return { isUnlocked, loading };
+  return { isUnlocked, lockedReason, loading };
 }

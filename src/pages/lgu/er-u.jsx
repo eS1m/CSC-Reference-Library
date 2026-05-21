@@ -21,7 +21,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 export default function ERU() {
   const navigate = useNavigate();
   const { agencyName, submissions, loading } = useAgencyWorkflow();
-  const { isUnlocked } = useAgencyEvidenceUnlock();
+  const { isUnlocked, lockedReason } = useAgencyEvidenceUnlock();
   const { requests: deletionRequests } = useDeletionRequests({ userId: auth.currentUser?.uid });
 
   const [showLockedModal, setShowLockedModal] = useState(false);
@@ -389,7 +389,7 @@ export default function ERU() {
           setShowLockedModal(false);
           navigate('/dashboard-u');
         }}
-        title="Evidence Requirements Disabled"
+        title={lockedReason === 'oa-recommended' ? 'Onsite Assessment Recommended' : 'Evidence Requirements Disabled'}
         variant="warning"
         actions={
           <button className="modal-btn modal-btn-primary" onClick={() => {
@@ -400,7 +400,11 @@ export default function ERU() {
           </button>
         }
       >
-        <p>You have been recommended for Onsite Assessment.</p>
+        <p>
+          {lockedReason === 'oa-recommended'
+            ? 'You have been recommended for Onsite Assessment.'
+            : 'Evidence Requirements is no longer available.'}
+        </p>
         <p className="modal-subtext" style={{ marginTop: '8px' }}>
           Evidence Requirements has been disabled. You will be redirected to your dashboard.
         </p>

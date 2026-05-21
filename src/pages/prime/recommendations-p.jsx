@@ -182,7 +182,7 @@ export default function RecommendationsP() {
       await deleteRecommendation(deleteModal.recId);
       // Lock the agency's Evidence Requirements since they are no longer selected
       if (rec?.agencyId) {
-        await lockEvidence(rec.agencyId);
+        await lockEvidence(rec.agencyId, 'removed');
       }
       setDeleteModal({ open: false, recId: null });
     } catch (err) {
@@ -208,7 +208,7 @@ export default function RecommendationsP() {
 
       // Lock previous agency if there was one
       if (rec?.agencyId) {
-        await lockEvidence(rec.agencyId);
+        await lockEvidence(rec.agencyId, 'removed');
       }
 
       // Unlock new agency and notify
@@ -251,7 +251,7 @@ export default function RecommendationsP() {
         oaRecommendedAt: serverTimestamp()
       });
       // Lock Evidence Requirements for this agency
-      await lockEvidence(rec.agencyId);
+      await lockEvidence(rec.agencyId, 'oa-recommended');
       await notifyAgencyOARecommended(rec.agencyId, rec.agencyName);
     } catch (err) {
       console.error('Error locking recommendation:', err);
