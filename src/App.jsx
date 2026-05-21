@@ -37,12 +37,14 @@ import ActiveUsersA from './pages/admin/active-users-a';
 import ProtectedRoute from './components/ProtectedRoute'
 import ProfileGuard from './components/ProfileGuard';
 import SessionTracker from './components/SessionTracker';
+import IdleTimeoutModal from './components/IdleTimeoutModal';
 
 function App() {
   return (
     <>
       <SessionTracker />
       <Router>
+        <IdleTimeoutModal />
         <Routes>
 
           <Route path="/" element={<Login/>} />

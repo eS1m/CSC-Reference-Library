@@ -12,6 +12,8 @@ import Modal from '../components/Modal';
 import { db } from '../firebase/config.js';
 import { getDocs, collection } from 'firebase/firestore';
 
+const MAX_AGENCY_USERS = Number(import.meta.env.VITE_MAX_AGENCY_USERS) || 25;
+
 
 export default function Login() {
     const nav = useNavigate();
@@ -76,7 +78,7 @@ export default function Login() {
                     return now - hb < 2 * 60 * 1000; // 2 minutes
                 }).length;
 
-                if (activeCount >= 25) {
+                if (activeCount >= MAX_AGENCY_USERS) {
                     await signOut(auth);
                     setShowCapacityModal(true);
                     return;
@@ -253,7 +255,7 @@ export default function Login() {
               }
             >
               <p style={{ fontWeight: 600 }}>Maximum number of users reached</p>
-              <p className="modal-subtext">The system currently has the maximum of 25 agency users logged in. Please try logging in at another time.</p>
+              <p className="modal-subtext">The system currently has the maximum of {MAX_AGENCY_USERS} agency users logged in. Please try logging in at another time.</p>
             </Modal>
         </div>
     );
