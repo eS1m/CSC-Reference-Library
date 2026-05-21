@@ -120,7 +120,7 @@ function App() {
                 <DeletionRequestsP/>
               </ProtectedRoute> 
             } />
-            <Route path="/recommendations-p" element={
+            <Route path="/fom" element={
               <ProtectedRoute requiredRole="p">
                 <RecommendationsP/>
               </ProtectedRoute> 

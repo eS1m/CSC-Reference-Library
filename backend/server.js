@@ -85,6 +85,17 @@ async function buildDrivePath(fileId) {
   return parts.join(' > ');
 }
 
+async function isDescendantOf(fileId, ancestorId, depth = 0) {
+  if (depth > 5) return false;
+  const file = await drive.files.get({ fileId, fields: 'parents' });
+  const parents = file.data.parents || [];
+  for (const parentId of parents) {
+    if (parentId === ancestorId) return true;
+    if (await isDescendantOf(parentId, ancestorId, depth + 1)) return true;
+  }
+  return false;
+}
+
 async function findFolder(folderName, parentId = null) {
   const searchParent = parentId || process.env.GOOGLE_FOLDER_ID;
   const query = `name = '${escapeDriveQuery(folderName)}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false and '${searchParent}' in parents`;
@@ -196,13 +207,29 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     const agencyFolderId = await getOrCreateFolder(agencyName);
     const yearFolderId = await getOrCreateFolder(currentYear, agencyFolderId);
 
+    // Field Office Monitoring uploads go into their own folder
+    const FOM_FILE_TYPES = ['Assist-Plan', 'Progress-Log'];
+    const RECOMMENDATION_FILE_TYPES = [
+      'Evaluation-Capability-Card',
+      'Field-Director-Guidepost',
+      'Regional-Director-Guidepost',
+      'Narrative-Report'
+    ];
+
+    let uploadFolderId = yearFolderId;
+    if (FOM_FILE_TYPES.includes(fileType)) {
+      uploadFolderId = await getOrCreateFolder('Field Office Monitoring', yearFolderId);
+    } else if (RECOMMENDATION_FILE_TYPES.includes(fileType)) {
+      uploadFolderId = await getOrCreateFolder('Recommendations', yearFolderId);
+    }
+
     const bufferStream = new stream.PassThrough();
     bufferStream.end(req.file.buffer);
 
     const response = await drive.files.create({
       requestBody: {
         name: finalFileName,
-        parents: [yearFolderId],
+        parents: [uploadFolderId],
       },
       media: {
         mimeType: req.file.mimetype,
@@ -583,8 +610,7 @@ app.get('/drive/file-exists', async (req, res) => {
         return res.status(200).json({ exists: false });
       }
 
-      const parents = file.data.parents || [];
-      const isInCorrectFolder = parents.includes(yearFolderId);
+      const isInCorrectFolder = await isDescendantOf(fileId, yearFolderId);
 
       res.status(200).json({ exists: isInCorrectFolder });
     } catch (err) {
