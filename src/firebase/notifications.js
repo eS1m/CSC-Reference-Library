@@ -19,20 +19,21 @@ export const NOTIFICATION_RETENTION_DAYS = 30;
 const FIRESTORE_BATCH_LIMIT = 500;
 
 /**
- * Create a notification for every admin and CSC RO X user.
+ * Create a notification for admin and/or CSC RO X users.
  * Notifications are stored under each user's subcollection:
  *   users/{recipientId}/notifications/{notifId}
  * @param {Object} params
- * @param {string} params.type - "PROFILE_COMPLETE" | "PROFILE_UPDATE" | "EMPLOYEE_COMPLETE" | "EMPLOYEE_UPDATE" | "SELF_ASSESSMENT_UPLOAD" | "ACTION_PLAN_UPLOAD"
+ * @param {string} params.type - "PROFILE_COMPLETE" | "PROFILE_UPDATE" | "EMPLOYEE_COMPLETE" | "EMPLOYEE_UPDATE" | "SELF_ASSESSMENT_UPLOAD" | "ACTION_PLAN_UPLOAD" | "NEW_USER_REGISTERED"
  * @param {string} params.agencyId - Firebase Auth UID of the agency
  * @param {string} params.agencyName - Display name of the agency
  * @param {string} [params.fileName] - Optional file name for upload notifications
+ * @param {string[]} [params.roles] - Target roles (default: ['p', 'admin'])
  */
-export async function createAdminNotifications({ type, agencyId, agencyName, fileName }) {
+export async function createAdminNotifications({ type, agencyId, agencyName, fileName, roles = ['p', 'admin'] }) {
   try {
-    /* Find all admin and CSC RO X users */
+    /* Find all target users */
     const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('role', 'in', ['p', 'admin']));
+    const q = query(usersRef, where('role', 'in', roles));
     const snap = await getDocs(q);
 
     if (snap.empty) return;
@@ -98,6 +99,11 @@ function getNotificationText(type, agencyName, fileName) {
       return {
         title: 'Evidence Requirements Uploaded',
         message: `${agencyName} uploaded ${fileName || 'evidence files'}.`
+      };
+    case 'NEW_USER_REGISTERED':
+      return {
+        title: 'New User Registered',
+        message: `${agencyName} has registered a new account and is pending approval.`
       };
     default:
       return { title: 'New Notification', message: 'You have a new notification.' };

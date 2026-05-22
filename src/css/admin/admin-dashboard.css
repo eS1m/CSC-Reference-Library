@@ -264,6 +264,13 @@
   transform: translateY(-1px);
 }
 
+.approve-user-btn:disabled {
+  background: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .reject-user-btn {
   padding: 6px 14px;
   border: none;

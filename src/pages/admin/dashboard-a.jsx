@@ -219,6 +219,7 @@ export default function Adashboard() {
                     <th>Email</th>
                     <th>Requested Role</th>
                     <th>Registered</th>
+                    <th>Email Verified</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -233,14 +234,21 @@ export default function Adashboard() {
                       </td>
                       <td>{formatFirestoreDate(user.createdAt)}</td>
                       <td>
+                        <span className={`status-badge ${user.emailVerified ? 'approved' : 'rejected'}`}>
+                          {user.emailVerified ? 'Verified' : 'Unverified'}
+                        </span>
+                      </td>
+                      <td>
                         <div className="approval-actions">
-                          <button 
+                          <button
                             className="approve-user-btn"
                             onClick={() => handleApprovalStatus(user.id, 'approved', user.email, user.role)}
+                            disabled={!user.emailVerified}
+                            title={!user.emailVerified ? 'Cannot approve until email is verified' : ''}
                           >
                             Approve
                           </button>
-                          <button 
+                          <button
                             className="reject-user-btn"
                             onClick={() => handleApprovalStatus(user.id, 'rejected', user.email, user.role)}
                           >
@@ -267,6 +275,7 @@ export default function Adashboard() {
                   <th>Email</th>
                   <th>Role</th>
                   <th>Approval Status</th>
+                  <th>Email Verified</th>
                   <th>Registered</th>
                   <th>Actions</th>
                 </tr>
@@ -274,7 +283,7 @@ export default function Adashboard() {
               <tbody>
                 {allUsers.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="no-data">No users found</td>
+                    <td colSpan="7" className="no-data">No users found</td>
                   </tr>
                 ) : (
                   allUsers.map((user) => (
@@ -289,6 +298,11 @@ export default function Adashboard() {
                       <td>
                         <span className={`status-badge ${(user.approvalStatus || 'approved').toLowerCase()}`}>
                           {user.approvalStatus || 'Approved'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`status-badge ${user.emailVerified ? 'approved' : 'rejected'}`}>
+                          {user.emailVerified ? 'Verified' : 'Unverified'}
                         </span>
                       </td>
                       <td>
