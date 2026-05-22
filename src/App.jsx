@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Login from './pages/login'
 import Register from './pages/register'
 import ContactUs from './pages/ContactUs'
+import Forgotp from './pages/forgotp'
 
 import Ulayout from './components/layout-u'
 import Udashboard from './pages/lgu/dashboard-u';
@@ -49,6 +50,7 @@ function App() {
 
           <Route path="/" element={<Login/>} />
           <Route path="/register" element={<Register/>} />
+          <Route path="/forgot" element={<Forgotp/>} />
           
           {/* U Routes - Strictly for LGU/Agency users */}
           <Route element={<Ulayout/>}>

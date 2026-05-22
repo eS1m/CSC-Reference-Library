@@ -4,7 +4,7 @@ import logo from '../assets/logo.svg';
 import googleIcon from '../assets/google-icon.svg';
 import { signInWithPopup, signInWithEmailAndPassword, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase/config.js';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { getUserById, createUser } from '../firebase/collections/users';
 import { logActivity } from '../firebase/activityLog';
 import Spinner from '../components/Spinner';
@@ -98,9 +98,7 @@ export default function Login() {
             message: `User ${displayEmail} logged in`
         });
 
-        if (role === "xu") {
-            nav('/xu-dash');
-        } else if (role === 'admin') {
+        if (role === 'admin') {
             nav('/dashboard-a');
         } else if (role === 'p') {
             nav('/dashboard-p');
@@ -177,7 +175,10 @@ export default function Login() {
                                 required/>
                         </div>
                         <div className="auth-group">
-                            <label className="auth-label" htmlFor="password">Password</label>
+                            <div className="password-labels">
+                                <label className="auth-label" htmlFor="password">Password</label>
+                                <span id="forgot-password"><Link to="/forgot">Forgot Password</Link></span>
+                            </div>
                             <input 
                                 className="auth-input auth-input-login" 
                                 type="password" 

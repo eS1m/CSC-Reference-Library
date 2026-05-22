@@ -130,6 +130,22 @@ body {
     margin-bottom: 12px;
 }
 
+.password-labels {
+    display: flex;
+    justify-content: space-between;
+}
+
+#forgot-password a{
+    font-size:14px;
+    color: var(--stat-description);
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+#forgot-password a:hover {
+    color: var(--cream-white);
+}
+
 .auth-input {
     width: 100%;
     padding: 12px;
@@ -148,6 +164,11 @@ body {
 
 .auth-input-register{
     border: 1px solid var(--light-red);
+    width: 100%;
+}
+
+.auth-input-forgot{
+    border: 1px solid var(--light-green);
     width: 100%;
 }
 
@@ -202,6 +223,11 @@ body {
 
 .auth-button-register:hover {
     box-shadow: 0 0 10px var(--cream-white);
+    transform: translateY(-2px);
+}
+
+.auth-button-forgot:hover {
+    box-shadow: 0 0 10px var(--light-green);
     transform: translateY(-2px);
 }
 
@@ -319,4 +345,16 @@ body {
     color: var(--cream-white)
 }
 
+.auth-card-forgot{
+    background: linear-gradient(to top left, var(--light-green), var(--shade-green));
+}
 
+.auth-logo-forgot {
+    background: linear-gradient(to bottom right, var(--cream-white), var(--light-green));
+}
+
+.auth-button-forgot {
+    background: linear-gradient(to bottom left, var(--cream-white), var(--shade-green));
+    margin-top: 0px;
+    color: var(--cream-white);
+}
