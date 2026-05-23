@@ -10,7 +10,28 @@ const { generateNarrativeReport } = require('./narrativeReport');
 const backupService = require('./backupService');
 
 const app = express();
-app.use(cors());
+
+const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
+  ? process.env.CORS_ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : [
+      'http://localhost',
+      'http://localhost:5173',
+      'http://localhost:8080',
+      'https://ccs-reference-library-staging-vtmh4.ondigitalocean.app',
+      'https://csc-kl.duckdns.org'
+    ];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS policy does not allow access from origin: ${origin}`));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 const upload = multer();
 
