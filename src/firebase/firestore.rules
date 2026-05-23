@@ -116,6 +116,22 @@ service cloud.firestore {
       allow delete: if request.auth != null && (request.auth.uid == userId || isAdminOrPrime());
     }
 
+    // 11. Backup History - only admins can read
+    match /backupHistory/{docId} {
+      allow create: if request.auth != null && isAdmin();
+      allow read: if request.auth != null && isAdmin();
+      allow update: if request.auth != null && isAdmin();
+      allow delete: if request.auth != null && isAdmin();
+    }
+
+    // 12. System Config - only admins can read/write
+    match /systemConfig/{docId} {
+      allow create: if request.auth != null && isAdmin();
+      allow read: if request.auth != null && isAdmin();
+      allow update: if request.auth != null && isAdmin();
+      allow delete: if request.auth != null && isAdmin();
+    }
+
     // 7. Activity Logs - audit trail
     match /activityLogs/{logId} {
       // Any authenticated user can create a log, but only for themselves

@@ -7,6 +7,7 @@ const cors = require('cors');
 const xlsx = require('xlsx');
 const path = require('path');
 const { generateNarrativeReport } = require('./narrativeReport');
+const backupService = require('./backupService');
 
 const app = express();
 app.use(cors());
@@ -27,6 +28,8 @@ const oauth2Client = new google.auth.OAuth2(
 oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
 const drive = google.drive({ version: 'v3', auth: oauth2Client });
+
+backupService.initBackupService(drive, getOrCreateFolder);
 
 function escapeDriveQuery(str) {
   return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -644,6 +647,110 @@ app.post('/generate-narrative-report', async (req, res) => {
     res.send(buffer);
   } catch (error) {
     console.error('Generate narrative report error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/* ─── Backup Endpoints ─── */
+app.get('/backup/config', async (req, res) => {
+  try {
+    const config = await backupService.getBackupConfig();
+    res.status(200).json({ config: config || {} });
+  } catch (error) {
+    console.error('Backup config get error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/backup/config', async (req, res) => {
+  try {
+    const { enabled, frequency, collections } = req.body;
+    await backupService.saveBackupConfig({ enabled, frequency, collections });
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Backup config save error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/backup/collections', async (req, res) => {
+  try {
+    const collections = await backupService.listCollections();
+    res.status(200).json({ collections });
+  } catch (error) {
+    console.error('Backup collections error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/backup/estimate', async (req, res) => {
+  try {
+    const { collections } = req.body;
+    if (!collections || !Array.isArray(collections) || collections.length === 0) {
+      return res.status(400).json({ error: 'collections array is required' });
+    }
+    const { totalDocs, totalSize } = await backupService.estimateBackupSize(collections);
+    res.status(200).json({
+      totalDocs,
+      totalSize,
+      sizeDisplay: backupService.formatBytes(totalSize)
+    });
+  } catch (error) {
+    console.error('Backup estimate error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/backup/run', async (req, res) => {
+  try {
+    const { collections } = req.body;
+    if (!collections || !Array.isArray(collections) || collections.length === 0) {
+      return res.status(400).json({ error: 'collections array is required' });
+    }
+    const result = await backupService.runBackup(collections);
+    res.status(200).json({ success: true, ...result });
+  } catch (error) {
+    console.error('Backup run error:', error);
+    await backupService.logBackupError(req.body.collections || [], error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/backup/history', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const history = await backupService.getBackupHistory(limit);
+    res.status(200).json({ history });
+  } catch (error) {
+    console.error('Backup history error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/backup/download', async (req, res) => {
+  try {
+    const { fileId, fileName } = req.query;
+    if (!fileId) {
+      return res.status(400).json({ error: 'fileId is required' });
+    }
+
+    const metaRes = await drive.files.get({
+      fileId,
+      fields: 'name, mimeType'
+    });
+
+    const downloadName = fileName || metaRes.data.name || 'backup.json';
+
+    const fileRes = await drive.files.get(
+      { fileId, alt: 'media' },
+      { responseType: 'stream' }
+    );
+
+    res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
+    res.setHeader('Content-Type', metaRes.data.mimeType || 'application/json');
+    fileRes.data.pipe(res);
+  } catch (error) {
+    console.error('Backup download error:', error);
     res.status(500).json({ error: error.message });
   }
 });

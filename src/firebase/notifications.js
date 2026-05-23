@@ -105,6 +105,11 @@ function getNotificationText(type, agencyName, fileName) {
         title: 'New User Registered',
         message: `${agencyName} has registered a new account and is pending approval.`
       };
+    case 'BACKUP_COMPLETED':
+      return {
+        title: 'Firestore Backup Completed',
+        message: fileName || 'A Firestore backup has been completed.'
+      };
     default:
       return { title: 'New Notification', message: 'You have a new notification.' };
   }

@@ -9,6 +9,8 @@ import { useTotalActiveSessionCount } from '../../hooks/useTotalActiveSessionCou
 import { updateUser } from '../../firebase/collections/users';
 import { deleteSubmissionsByUserId } from '../../firebase/collections/agencySubmissions';
 
+const SHOW_RESET_BUTTON = import.meta.env.VITE_SHOW_RESET_BUTTON === 'true';
+
 import agencyIcon from '../../assets/agency.svg';
 import fileIcon from '../../assets/file.svg';
 import reviewIcon from '../../assets/review.svg';
@@ -271,7 +273,6 @@ export default function Adashboard() {
             <table className="admin-submissions-table">
               <thead>
                 <tr>
-                  <th>User ID</th>
                   <th>Email</th>
                   <th>Role</th>
                   <th>Approval Status</th>
@@ -283,12 +284,11 @@ export default function Adashboard() {
               <tbody>
                 {allUsers.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="no-data">No users found</td>
+                    <td colSpan="6" className="no-data">No users found</td>
                   </tr>
                 ) : (
                   allUsers.map((user) => (
                     <tr key={user.id}>
-                      <td className="mono-cell">{user.id}</td>
                       <td>{user.email}</td>
                       <td>
                         <span className={`role-badge ${getRoleBadgeClass(user.role)}`}>
@@ -309,7 +309,7 @@ export default function Adashboard() {
                         {formatFirestoreDate(user.createdAt)}
                       </td>
                       <td>
-                        {user.role === 'u' && (
+                        {SHOW_RESET_BUTTON && user.role === 'u' && (
                           <button
                             className="reset-user-btn"
                             onClick={() => openResetModal(user)}
@@ -324,6 +324,11 @@ export default function Adashboard() {
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="view-all-link">
+            <button onClick={() => nav('/registered-users-a')}>
+              View All Registered Users →
+            </button>
           </div>
         </div>
       </div>
