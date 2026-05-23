@@ -12,6 +12,7 @@ import { useRecommendations } from '../../hooks/useRecommendations';
 import { updateRecommendation } from '../../firebase/collections/recommendations';
 import { getSubmissions } from '../../firebase/collections/agencySubmissions';
 import { unlockEvidence } from '../../firebase/collections/evidenceUnlocks';
+import { createUserNotification } from '../../firebase/notifications';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -85,6 +86,8 @@ export default function RecomP() {
   const [uploadErrors, setUploadErrors] = useState({});
   const [generatingStates, setGeneratingStates] = useState({});
   const [previewModal, setPreviewModal] = useState({ open: false, blobUrl: '', docxBlob: null, agencyName: '', recId: '' });
+  const [collapsedCards, setCollapsedCards] = useState({});
+  const [finishingStates, setFinishingStates] = useState({});
   const fileInputRefs = useRef({});
 
   const recommendedAgencies = recommendations
@@ -116,7 +119,10 @@ export default function RecomP() {
     try {
       await updateRecommendation(recId, {
         oaRecommended: false,
-        oaRecommendedAt: null
+        oaRecommendedAt: null,
+        assessmentFinished: false,
+        assessmentFinishedAt: null,
+        recommendationsFolderUrl: null
       });
       // Re-unlock Evidence Requirements for this agency
       if (rec?.agencyId) {
@@ -125,6 +131,68 @@ export default function RecomP() {
     } catch (err) {
       console.error('Error undoing recommendation:', err);
       alert('Failed to undo recommendation: ' + err.message);
+    }
+  };
+
+  const toggleCollapse = (recId) => {
+    setCollapsedCards(prev => ({ ...prev, [recId]: !prev[recId] }));
+  };
+
+  const isAssessmentComplete = (rec) => {
+    const selfAssessment = getLatestSubmission(submissionsByAgency, rec.agencyId, 'Self-Assessment');
+    return !!(
+      selfAssessment &&
+      rec.evaluationCapabilityCard &&
+      rec.fieldDirectorGuidepost &&
+      rec.regionalDirectorGuidepost &&
+      rec.narrativeReport
+    );
+  };
+
+  const handleFinishAssessment = async (recId) => {
+    const rec = recommendations.find(r => r.id === recId);
+    if (!rec?.agencyName) return;
+
+    setFinishingStates(prev => ({ ...prev, [recId]: true }));
+
+    try {
+      // Get Recommendations folder link
+      const folderRes = await fetch(
+        `${API_BASE_URL}/drive/folder-link?agencyName=${encodeURIComponent(rec.agencyName)}&folderName=Recommendations`
+      );
+      const contentType = folderRes.headers.get('content-type') || '';
+      let folderData;
+      if (contentType.includes('application/json')) {
+        folderData = await folderRes.json();
+      } else {
+        const text = await folderRes.text();
+        throw new Error(`Server returned ${folderRes.status} (${folderRes.statusText}): ${text.slice(0, 200)}`);
+      }
+      if (!folderRes.ok) throw new Error(folderData.error || 'Failed to get folder link');
+
+      // Update recommendation
+      await updateRecommendation(recId, {
+        assessmentFinished: true,
+        assessmentFinishedAt: serverTimestamp(),
+        recommendationsFolderUrl: folderData.folderUrl
+      });
+
+      // Notify agency
+      await createUserNotification(rec.agencyId, {
+        type: 'ASSESSMENT_FINISHED',
+        title: 'Assessment Finished',
+        message: `Your Field Office Monitoring assessment has been completed for ${new Date().getFullYear()}.`,
+        agencyId: rec.agencyId,
+        agencyName: rec.agencyName
+      });
+
+      // Collapse the card
+      setCollapsedCards(prev => ({ ...prev, [recId]: true }));
+    } catch (err) {
+      console.error('Finish assessment error:', err);
+      alert('Failed to finish assessment: ' + err.message);
+    } finally {
+      setFinishingStates(prev => ({ ...prev, [recId]: false }));
     }
   };
 
@@ -506,41 +574,120 @@ export default function RecomP() {
                   message: uploadErrors[`${rec.id}-${f.key}`]
                 }));
 
+              const isFinished = rec.assessmentFinished === true;
+              const isComplete = isAssessmentComplete(rec);
+              const isCollapsed = collapsedCards[rec.id] ?? isFinished;
+
               return (
-                <div key={rec.id} className="rec-card recom-card">
+                <div key={rec.id} className={`rec-card recom-card${isFinished ? ' finished' : ''}${isCollapsed ? ' collapsed' : ''}`}>
                   <div className="recom-card-header">
                     <div className="recom-card-title">
                       <h2 className="recom-agency-name">{rec.agencyName}</h2>
                       {rec.fieldDirector && (
                         <p className="recom-agency-director">Field Director: {rec.fieldDirector}</p>
                       )}
+                      {isFinished && (
+                        <span className="recom-finished-badge">Assessment Complete</span>
+                      )}
                     </div>
-                    <button
-                      type="button"
-                      className="recom-undo-btn"
-                      onClick={() => handleUndoRecommend(rec.id)}
-                      title="Debug: Undo this recommendation and unlock the card"
-                    >
-                      Undo Recommendation
-                    </button>
+                    <div className="recom-header-actions">
+                      <button
+                        type="button"
+                        className="recom-collapse-btn"
+                        onClick={() => toggleCollapse(rec.id)}
+                        title={isCollapsed ? 'Expand' : 'Collapse'}
+                      >
+                        {isCollapsed ? '▼' : '▲'}
+                      </button>
+                      <button
+                        type="button"
+                        className="recom-undo-btn"
+                        onClick={() => handleUndoRecommend(rec.id)}
+                        title="Undo this recommendation and unlock the card"
+                      >
+                        Undo Recommendation
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="rec-upload-row recom-files-row">
-                    {COMPILED_FILES.map(fileConfig => (
-                      <div key={fileConfig.key} className="rec-upload-cell recom-file-cell">
-                        <span className="recom-file-label">{fileConfig.label}</span>
-                        {renderFileSlot(rec, fileConfig)}
-                      </div>
-                    ))}
-                  </div>
-
-                  {recErrors.length > 0 && (
-                    <div className="rec-error-banner">
-                      {recErrors.map(({ label, message }) => (
-                        <p key={label}>{label}: {message}</p>
-                      ))}
+                  {rec.recommendationsFolderUrl && (
+                    <div className="recom-folder-link">
+                      <a
+                        href={rec.recommendationsFolderUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Open Recommendations Folder →
+                      </a>
                     </div>
                   )}
+
+                  <div className={`recom-card-body${isCollapsed ? ' collapsed' : ''}`}>
+                    <div className="rec-upload-row recom-files-row">
+                      {COMPILED_FILES.map(fileConfig => (
+                        <div key={fileConfig.key} className="rec-upload-cell recom-file-cell">
+                          <span className="recom-file-label">{fileConfig.label}</span>
+                          {isFinished ? (
+                            <div className="recom-file-locked">
+                              {fileConfig.source === 'submission' ? (
+                                (() => {
+                                  const submission = getLatestSubmission(submissionsByAgency, rec.agencyId, fileConfig.submissionType);
+                                  return submission ? (
+                                    <button
+                                      type="button"
+                                      className="rec-file-btn uploaded"
+                                      onClick={() => handleViewFile(getDriveUrl(submission.fileId, submission.fileUrl))}
+                                    >
+                                      {submission.fileName}
+                                    </button>
+                                  ) : (
+                                    <span className="recom-locked-label">Not available</span>
+                                  );
+                                })()
+                              ) : rec[fileConfig.field] ? (
+                                <button
+                                  type="button"
+                                  className="rec-file-btn uploaded"
+                                  onClick={() => handleViewFile(getDriveUrl(rec[fileConfig.field].fileId, rec[fileConfig.field].fileUrl))}
+                                >
+                                  {rec[fileConfig.field].fileName}
+                                </button>
+                              ) : (
+                                <span className="recom-locked-label">Not uploaded</span>
+                              )}
+                            </div>
+                          ) : (
+                            renderFileSlot(rec, fileConfig)
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {isComplete && !isFinished && (
+                      <div className="recom-finish-row">
+                        <button
+                          type="button"
+                          className="recom-finish-btn"
+                          onClick={() => handleFinishAssessment(rec.id)}
+                          disabled={finishingStates[rec.id]}
+                        >
+                          {finishingStates[rec.id] ? (
+                            <Spinner size="sm" color="white" />
+                          ) : (
+                            'Finish Assessment'
+                          )}
+                        </button>
+                      </div>
+                    )}
+
+                    {recErrors.length > 0 && (
+                      <div className="rec-error-banner">
+                        {recErrors.map(({ label, message }) => (
+                          <p key={label}>{label}: {message}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}

@@ -755,6 +755,35 @@ app.get('/backup/download', async (req, res) => {
   }
 });
 
+app.get('/drive/folder-link', async (req, res) => {
+  try {
+    const { agencyName, folderName } = req.query;
+    if (!agencyName || !folderName) {
+      return res.status(400).json({ error: 'agencyName and folderName are required' });
+    }
+
+    const currentYear = new Date().getFullYear().toString();
+    const agencyFolderId = await findFolder(agencyName);
+    if (!agencyFolderId) {
+      return res.status(404).json({ error: 'Agency folder not found' });
+    }
+
+    const yearFolderId = await findFolder(currentYear, agencyFolderId);
+    if (!yearFolderId) {
+      return res.status(404).json({ error: 'Year folder not found' });
+    }
+
+    const targetFolderId = await getOrCreateFolder(folderName, yearFolderId);
+    res.status(200).json({
+      folderId: targetFolderId,
+      folderUrl: `https://drive.google.com/drive/folders/${targetFolderId}`
+    });
+  } catch (error) {
+    console.error('Folder link error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/read-excel', async (req, res) => {
   try {
     const filePath = path.join(__dirname, '..', 'src', 'excel_test_data', 'PRIME-HRM EXAMPLE DATA.xlsx');

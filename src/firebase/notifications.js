@@ -110,6 +110,11 @@ function getNotificationText(type, agencyName, fileName) {
         title: 'Firestore Backup Completed',
         message: fileName || 'A Firestore backup has been completed.'
       };
+    case 'ASSESSMENT_FINISHED':
+      return {
+        title: 'Assessment Finished',
+        message: `${agencyName ? agencyName + ' — ' : ''}Your Field Office Monitoring assessment has been completed.`
+      };
     default:
       return { title: 'New Notification', message: 'You have a new notification.' };
   }
