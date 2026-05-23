@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { authFetch } from '../utils/apiClient';
 
 export function useDriveBrowser() {
   const [breadcrumbs, setBreadcrumbs] = useState([]);
@@ -24,7 +23,7 @@ export function useDriveBrowser() {
         ? `${API_URL}/drive/browse?folderId=${encodeURIComponent(currentFolderId)}`
         : `${API_URL}/drive/browse`;
       
-      const res = await fetch(url);
+      const res = await authFetch(url);
       if (!res.ok) throw new Error('Failed to fetch folder contents');
       const data = await res.json();
       
@@ -66,7 +65,7 @@ export function useDriveBrowser() {
   };
 
   const deleteItem = async (item) => {
-    const res = await fetch(`${API_URL}/drive/delete`, {
+    const res = await authFetch('/drive/delete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fileId: item.id })

@@ -15,8 +15,7 @@ import { useDeletionRequests } from '../../hooks/useDeletionRequests';
 import { createDeletionRequest } from '../../firebase/collections/deletionRequests';
 import { logActivity } from '../../firebase/activityLog';
 import { createAdminNotifications } from '../../firebase/notifications';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { authFetch } from '../../utils/apiClient';
 
 export default function ERU() {
   const navigate = useNavigate();
@@ -134,7 +133,7 @@ export default function ERU() {
     formData.append('assessmentYear', String(assessmentYear));
 
     try {
-      const response = await fetch(`${API_BASE_URL}/upload-evidence`, {
+      const response = await authFetch('/upload-evidence', {
         method: 'POST',
         body: formData,
       });

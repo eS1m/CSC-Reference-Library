@@ -13,8 +13,7 @@ import { updateRecommendation } from '../../firebase/collections/recommendations
 import { getSubmissions } from '../../firebase/collections/agencySubmissions';
 import { unlockEvidence } from '../../firebase/collections/evidenceUnlocks';
 import { createUserNotification } from '../../firebase/notifications';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { authFetch } from '../../utils/apiClient';
 
 const EXCEL_ACCEPT = '.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel';
 const WORD_ACCEPT = '.docx,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword';
@@ -157,8 +156,8 @@ export default function RecomP() {
 
     try {
       // Get Recommendations folder link
-      const folderRes = await fetch(
-        `${API_BASE_URL}/drive/folder-link?agencyName=${encodeURIComponent(rec.agencyName)}&folderName=Recommendations`
+      const folderRes = await authFetch(
+        `/drive/folder-link?agencyName=${encodeURIComponent(rec.agencyName)}&folderName=Recommendations`
       );
       const contentType = folderRes.headers.get('content-type') || '';
       let folderData;
@@ -223,7 +222,7 @@ export default function RecomP() {
     formData.append('fileType', 'Narrative-Report');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/upload`, {
+      const response = await authFetch('/upload', {
         method: 'POST',
         body: formData,
       });
@@ -278,7 +277,7 @@ export default function RecomP() {
     setGeneratingStates(prev => ({ ...prev, [recId]: true }));
 
     try {
-      const response = await fetch(`${API_BASE_URL}/generate-narrative-report`, {
+      const response = await authFetch('/generate-narrative-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

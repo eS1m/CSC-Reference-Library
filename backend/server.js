@@ -9,6 +9,48 @@ const xlsx = require('xlsx');
 const path = require('path');
 const { generateNarrativeReport } = require('./narrativeReport');
 const backupService = require('./backupService');
+const admin = require('firebase-admin');
+
+// Initialize Firebase Admin for token verification
+let adminAuth = null;
+try {
+  const serviceAccountB64 = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (serviceAccountB64) {
+    const serviceAccount = JSON.parse(Buffer.from(serviceAccountB64, 'base64').toString());
+    if (!admin.apps.length) {
+      admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+    }
+    adminAuth = admin.auth();
+    console.log('Firebase Admin initialized for authentication');
+  } else {
+    console.warn('FIREBASE_SERVICE_ACCOUNT not set. Backend auth verification is disabled.');
+  }
+} catch (err) {
+  console.error('Firebase Admin auth init failed:', err.message);
+}
+
+// Middleware: Verify Firebase ID Token
+async function verifyFirebaseToken(req, res, next) {
+  if (!adminAuth) {
+    // Skip auth if Firebase Admin is not configured (local dev fallback)
+    return next();
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized: Missing or invalid authorization header' });
+  }
+
+  const idToken = authHeader.split('Bearer ')[1];
+  try {
+    const decodedToken = await adminAuth.verifyIdToken(idToken);
+    req.user = decodedToken;
+    next();
+  } catch (error) {
+    console.error('Token verification failed:', error.message);
+    return res.status(401).json({ error: 'Unauthorized: Invalid or expired token' });
+  }
+}
 
 const app = express();
 
@@ -74,6 +116,12 @@ if (process.env.NODE_ENV === 'production') {
     res.status(400).json({ error: 'HTTPS required. Access the API via the secure endpoint.' });
   });
 }
+
+// Apply Firebase token verification to all routes (skip OPTIONS for CORS preflight)
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') return next();
+  return verifyFirebaseToken(req, res, next);
+});
 
 const upload = multer();
 

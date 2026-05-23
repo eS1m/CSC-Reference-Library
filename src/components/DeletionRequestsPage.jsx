@@ -7,9 +7,8 @@ import { updateDeletionRequest } from '../firebase/collections/deletionRequests'
 import { deleteSubmission } from '../firebase/collections/agencySubmissions';
 import { logActivity } from '../firebase/activityLog';
 import { formatFirestoreDate } from '../utils/formatFirestoreDate';
+import { authFetch } from '../utils/apiClient';
 import Modal from '../components/Modal';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function DeletionRequestsPage({ viewerRole }) {
   const { requests, loading } = useDeletionRequests({ status: ['pending', 'approved', 'rejected'] });
@@ -48,7 +47,7 @@ export default function DeletionRequestsPage({ viewerRole }) {
     setModalStatus('Deleting file from Google Drive...');
 
     try {
-      const res = await fetch(`${API_URL}/approve-deletion`, {
+      const res = await authFetch('/approve-deletion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fileId: selectedRequest.fileId })

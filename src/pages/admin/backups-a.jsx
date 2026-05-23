@@ -5,8 +5,7 @@ import Spinner from '../../components/Spinner';
 import Modal from '../../components/Modal';
 import { subscribeBackupHistory } from '../../firebase/collections/backupHistory';
 import { formatFirestoreDate } from '../../utils/formatFirestoreDate';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { authFetch } from '../../utils/apiClient';
 
 const FREQUENCY_OPTIONS = [
   { value: 'manual', label: 'Manual only' },
@@ -41,8 +40,8 @@ export default function BackupsA() {
     async function load() {
       try {
         const [configRes, colRes] = await Promise.all([
-          fetch(`${API_URL}/backup/config`),
-          fetch(`${API_URL}/backup/collections`)
+          authFetch('/backup/config'),
+          authFetch('/backup/collections')
         ]);
 
         if (cancelled) return;
@@ -92,7 +91,7 @@ export default function BackupsA() {
     setSavingConfig(true);
     setError('');
     try {
-      const res = await fetch(`${API_URL}/backup/config`, {
+      const res = await authFetch('/backup/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config)
@@ -116,7 +115,7 @@ export default function BackupsA() {
     setError('');
     setEstimateResult(null);
     try {
-      const res = await fetch(`${API_URL}/backup/estimate`, {
+      const res = await authFetch('/backup/estimate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ collections: config.collections })
@@ -140,7 +139,7 @@ export default function BackupsA() {
     setError('');
     setLastBackupResult(null);
     try {
-      const res = await fetch(`${API_URL}/backup/run`, {
+      const res = await authFetch('/backup/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ collections: config.collections })
@@ -161,8 +160,8 @@ export default function BackupsA() {
     if (!fileId) return;
     setDownloadingId(fileId);
     try {
-      const response = await fetch(
-        `${API_URL}/backup/download?fileId=${encodeURIComponent(fileId)}&fileName=${encodeURIComponent(fileName || '')}`
+      const response = await authFetch(
+        `/backup/download?fileId=${encodeURIComponent(fileId)}&fileName=${encodeURIComponent(fileName || '')}`
       );
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));

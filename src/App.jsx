@@ -41,6 +41,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import ProfileGuard from './components/ProfileGuard';
 import SessionTracker from './components/SessionTracker';
 import IdleTimeoutModal from './components/IdleTimeoutModal';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   return (
@@ -48,9 +49,10 @@ function App() {
       <SessionTracker />
       <Router>
         <IdleTimeoutModal />
-        <Routes>
+        <ErrorBoundary>
+          <Routes>
 
-          <Route path="/" element={<Login/>} />
+            <Route path="/" element={<Login/>} />
           <Route path="/register" element={<Register/>} />
           <Route path="/forgot" element={<Forgotp/>} />
           
@@ -198,9 +200,10 @@ function App() {
                 <TestPageA/>
               </ProtectedRoute> 
             } /> */}
-          </Route>
+            </Route>
 
-        </Routes>
+          </Routes>
+        </ErrorBoundary>
       </Router>
     </>
   )
