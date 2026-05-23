@@ -10,6 +10,7 @@ import { serverTimestamp } from 'firebase/firestore';
 import { useDeletionRequests } from '../../hooks/useDeletionRequests';
 import { createDeletionRequest } from '../../firebase/collections/deletionRequests';
 import { logActivity } from '../../firebase/activityLog';
+import { API_BASE_URL } from '../../utils/apiClient';
 
 export default function Uview() {
   const { submissions, loading, error } = useAgencyWorkflow();
@@ -21,12 +22,26 @@ export default function Uview() {
   const [modalStatus, setModalStatus] = useState('');
   const [modalStatusType, setModalStatusType] = useState('');
 
-  const getDriveUrl = (file) => {
-    if (!file) return '#';
-    if (file.fileId) {
-      return `https://drive.google.com/file/d/${file.fileId}/view`;
+  const handleViewFile = async (file) => {
+    if (!file?.fileId) return;
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const url = `${API_BASE_URL}/file-proxy/${file.fileId}`;
+      const response = await fetch(url, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: 'Failed to open file' }));
+        alert(err.error || 'Failed to open file');
+        return;
+      }
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      window.open(objectUrl, '_blank');
+    } catch (err) {
+      console.error('View file error:', err);
+      alert('Failed to open file. Please try again.');
     }
-    return file.fileUrl || '#';
   };
 
   const getDeletionStatus = (submissionId) => {
@@ -131,7 +146,7 @@ export default function Uview() {
               <div
                 key={file.id}
                 className="file-block"
-                onClick={() => window.open(getDriveUrl(file), '_blank')}
+                onClick={() => handleViewFile(file)}
               >
                 <img src={fileIcon} alt="File" width="80" height="80" className="deep-blue-filter"/>
                 <p>{file.fileName}</p>

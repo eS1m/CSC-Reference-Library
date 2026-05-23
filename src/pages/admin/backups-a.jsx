@@ -5,7 +5,8 @@ import Spinner from '../../components/Spinner';
 import Modal from '../../components/Modal';
 import { subscribeBackupHistory } from '../../firebase/collections/backupHistory';
 import { formatFirestoreDate } from '../../utils/formatFirestoreDate';
-import { authFetch } from '../../utils/apiClient';
+import { authFetch, API_BASE_URL } from '../../utils/apiClient';
+import { auth } from '../../firebase/config';
 
 const FREQUENCY_OPTIONS = [
   { value: 'manual', label: 'Manual only' },
@@ -369,10 +370,21 @@ export default function BackupsA() {
                       <td>{item.collections?.join(', ') || '—'}</td>
                       <td>
                         <div className="backups-file-actions">
-                          {item.fileUrl && (
-                            <a href={item.fileUrl} target="_blank" rel="noopener noreferrer" className="backups-file-link">
+                          {item.fileId && (
+                            <button
+                              className="backups-file-link"
+                              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}
+                              onClick={async () => {
+                                try {
+                                  const token = await auth.currentUser?.getIdToken();
+                                  window.open(`${API_BASE_URL}/file-proxy/${item.fileId}?token=${token}`, '_blank');
+                                } catch (err) {
+                                  console.error('View error:', err);
+                                }
+                              }}
+                            >
                               View in Drive
-                            </a>
+                            </button>
                           )}
                           {item.fileId && (
                             <button

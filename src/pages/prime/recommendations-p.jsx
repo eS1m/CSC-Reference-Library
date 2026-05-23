@@ -10,7 +10,7 @@ import { getSubmissions } from '../../firebase/collections/agencySubmissions';
 import { getProfiles } from '../../firebase/collections/agencyProfiles';
 import { notifyAgencyEvidenceRequired, notifyAgencyOARecommended } from '../../firebase/notifications';
 import { unlockEvidence, lockEvidence } from '../../firebase/collections/evidenceUnlocks';
-import { authFetch } from '../../utils/apiClient';
+import { authFetch, API_BASE_URL } from '../../utils/apiClient';
 
 function canGenerateOARecommendation(rec) {
   return Boolean(
@@ -294,7 +294,7 @@ export default function RecommendationsP() {
       const fileData = {
         fileId: driveData.fileId,
         fileName: driveData.fileName,
-        fileUrl: `https://drive.google.com/file/d/${driveData.fileId}/view`,
+        fileUrl: null,
         uploadedAt: serverTimestamp(),
         uploadedBy: auth.currentUser?.uid || ''
       };
@@ -319,8 +319,16 @@ export default function RecommendationsP() {
     }
   };
 
-  const handleViewFile = (url) => {
-    if (url) window.open(url, '_blank');
+  const handleViewFile = async (fileId) => {
+    if (!fileId) return;
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const url = `${API_BASE_URL}/file-proxy/${fileId}?token=${token}`;
+      window.open(url, '_blank');
+    } catch (err) {
+      console.error('View error:', err);
+      alert('Failed to open file');
+    }
   };
 
   return (
@@ -395,7 +403,7 @@ export default function RecommendationsP() {
                       <>
                         <button
                           className="rec-file-btn uploaded"
-                          onClick={() => handleViewFile(rec.assistPlan.fileUrl)}
+                          onClick={() => handleViewFile(rec.assistPlan.fileId)}
                           title="Open in Google Drive"
                         >
                           {rec.assistPlan.fileName}
@@ -435,7 +443,7 @@ export default function RecommendationsP() {
                       <>
                         <button
                           className="rec-file-btn uploaded progress-log"
-                          onClick={() => handleViewFile(rec.progressLog.fileUrl)}
+                          onClick={() => handleViewFile(rec.progressLog.fileId)}
                           title="Open in Google Drive"
                         >
                           {rec.progressLog.fileName}

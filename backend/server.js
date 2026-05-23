@@ -38,6 +38,10 @@ async function verifyFirebaseToken(req, res, next) {
 
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Allow file-proxy requests without header so they can use ?token query param
+    if (req.path.startsWith('/file-proxy')) {
+      return next();
+    }
     return res.status(401).json({ error: 'Unauthorized: Missing or invalid authorization header' });
   }
 
@@ -354,11 +358,6 @@ app.post('/upload', uploadLimiter, upload.single('file'), async (req, res) => {
 
     const fileId = response.data.id;
 
-    await drive.permissions.create({
-      fileId: fileId,
-      requestBody: { role: 'reader', type: 'anyone' },
-    });
-
     res.status(200).json({ 
       fileId: fileId, 
       webViewLink: response.data.webViewLink,
@@ -420,11 +419,6 @@ app.post('/upload-evidence', uploadLimiter, upload.array('files'), async (req, r
       });
 
       const fileId = response.data.id;
-
-      await drive.permissions.create({
-        fileId: fileId,
-        requestBody: { role: 'reader', type: 'anyone' },
-      });
 
       uploadedFiles.push({
         fileId: fileId,
@@ -556,11 +550,6 @@ app.post('/upload-action-plan', uploadLimiter, upload.single('file'), async (req
     });
 
     const fileId = response.data.id;
-
-    await drive.permissions.create({
-      fileId: fileId,
-      requestBody: { role: 'reader', type: 'anyone' },
-    });
 
     res.status(200).json({
       fileId: fileId,
@@ -921,7 +910,88 @@ app.get('/read-excel', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5000; 
+// Secure file proxy endpoint
+// Supports token via Authorization header (authFetch) or ?token query param (window.open)
+app.get('/file-proxy/:fileId', async (req, res) => {
+  const { fileId } = req.params;
+  let userId = req.user?.uid;
+
+  // Fallback: extract and verify token from query parameter (for window.open / direct links)
+  if (!userId && req.query.token && adminAuth) {
+    try {
+      const decodedToken = await adminAuth.verifyIdToken(req.query.token);
+      userId = decodedToken.uid;
+      req.user = decodedToken;
+    } catch (err) {
+      // Invalid token in query param — fall through to unauthorized
+    }
+  }
+
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    let isAuthorized = false;
+
+    if (admin.apps.length) {
+      const db = admin.firestore();
+      const userDoc = await db.collection('users').doc(userId).get();
+      const userRole = userDoc.data()?.role;
+
+      if (userRole === 'admin' || userRole === 'p') {
+        isAuthorized = true;
+      } else {
+        const submissionsSnapshot = await db.collection('agencySubmissions')
+          .where('fileId', '==', fileId)
+          .where('userId', '==', userId)
+          .limit(1)
+          .get();
+
+        if (!submissionsSnapshot.empty) {
+          isAuthorized = true;
+        }
+      }
+    } else {
+      // Local dev fallback when Firebase Admin is not configured
+      isAuthorized = true;
+    }
+
+    if (!isAuthorized) {
+      return res.status(403).json({ error: 'Forbidden: You do not have access to this file' });
+    }
+
+    // Fetch file metadata for correct Content-Type
+    const fileMeta = await drive.files.get({
+      fileId,
+      fields: 'name, mimeType, trashed',
+      supportsAllDrives: true
+    });
+
+    if (fileMeta.data.trashed) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    // Stream file content from Drive
+    const driveResponse = await drive.files.get(
+      { fileId, alt: 'media', supportsAllDrives: true },
+      { responseType: 'stream' }
+    );
+
+    res.setHeader('Content-Type', fileMeta.data.mimeType || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `inline; filename="${fileMeta.data.name}"`);
+
+    driveResponse.data.pipe(res);
+  } catch (error) {
+    console.error('File proxy error:', error.message);
+    if (error.code === 404) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    res.status(500).json({ error: 'Failed to retrieve file' });
+  }
+});
+
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);

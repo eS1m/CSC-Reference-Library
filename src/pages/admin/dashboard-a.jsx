@@ -8,6 +8,7 @@ import { useAdminData } from '../../hooks/useAdminData';
 import { useTotalActiveSessionCount } from '../../hooks/useTotalActiveSessionCount';
 import { updateUser } from '../../firebase/collections/users';
 import { deleteSubmissionsByUserId } from '../../firebase/collections/agencySubmissions';
+import { API_BASE_URL } from '../../utils/apiClient';
 
 const SHOW_RESET_BUTTON = import.meta.env.VITE_SHOW_RESET_BUTTON === 'true';
 
@@ -354,7 +355,15 @@ export default function Adashboard() {
                   </tr>
                 ) : (
                   recentSubmissions.map((sub) => (
-                    <tr key={sub.id} onClick={() => window.open(sub.fileUrl, '_blank')}>
+                    <tr key={sub.id} onClick={async () => {
+                      if (!sub.fileId) return;
+                      try {
+                        const token = await auth.currentUser?.getIdToken();
+                        window.open(`${API_BASE_URL}/file-proxy/${sub.fileId}?token=${token}`, '_blank');
+                      } catch (err) {
+                        console.error('View error:', err);
+                      }
+                    }}>
                       <td>{sub.agencyName}</td>
                       <td>{sub.fileName}</td>
                       <td>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
-import { db } from '../firebase/config';
-import { authFetch } from '../utils/apiClient';
+import { db, auth } from '../firebase/config';
+import { authFetch, API_BASE_URL } from '../utils/apiClient';
 
 export function useDriveBrowser() {
   const [breadcrumbs, setBreadcrumbs] = useState([]);
@@ -20,8 +20,8 @@ export function useDriveBrowser() {
     setError('');
     try {
       const url = currentFolderId 
-        ? `${API_URL}/drive/browse?folderId=${encodeURIComponent(currentFolderId)}`
-        : `${API_URL}/drive/browse`;
+        ? `/drive/browse?folderId=${encodeURIComponent(currentFolderId)}`
+        : `/drive/browse`;
       
       const res = await authFetch(url);
       if (!res.ok) throw new Error('Failed to fetch folder contents');
@@ -54,14 +54,38 @@ export function useDriveBrowser() {
     }
   };
 
-  const handleView = (item) => {
-    const url = item.webViewLink || (item.id ? `https://drive.google.com/file/d/${item.id}/view` : null);
-    if (url) window.open(url, '_blank');
+  const handleView = async (item) => {
+    if (!item.id) return;
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const url = `${API_BASE_URL}/file-proxy/${item.id}?token=${token}`;
+      window.open(url, '_blank');
+    } catch (err) {
+      console.error('View error:', err);
+      alert('Failed to open file');
+    }
   };
 
-  const handleDownload = (item) => {
-    const url = item.webContentLink || (item.id ? `https://drive.google.com/uc?export=download&id=${item.id}` : null);
-    if (url) window.open(url, '_blank');
+  const handleDownload = async (item) => {
+    if (!item.id) return;
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const url = `${API_BASE_URL}/file-proxy/${item.id}?token=${token}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = item.name || 'download';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      console.error('Download error:', err);
+      alert('Failed to download file');
+    }
   };
 
   const deleteItem = async (item) => {

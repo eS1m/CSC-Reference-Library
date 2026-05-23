@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { auth } from '../../firebase/config';
 import { logActivity } from '../../firebase/activityLog';
 import { formatFirestoreDate } from '../../utils/formatFirestoreDate';
+import { API_BASE_URL } from '../../utils/apiClient';
 import Spinner from '../../components/Spinner';
 import { subscribeSubmissions, updateSubmission } from '../../firebase/collections/agencySubmissions';
 
@@ -73,26 +74,42 @@ export default function Preview() {
     }
   };
 
-  const handleView = (fileUrl) => {
-    if (fileUrl) {
-      window.open(fileUrl, '_blank');
-    } else {
-      alert("File URL not available.");
-    }
-  };
-
-  const handleDownload = (fileId, fileName) => {
+  const handleView = async (fileId) => {
     if (!fileId) {
       alert("File ID not available.");
       return;
     }
-    const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = fileName || 'download';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      window.open(`${API_BASE_URL}/file-proxy/${fileId}?token=${token}`, '_blank');
+    } catch (err) {
+      console.error('View error:', err);
+    }
+  };
+
+  const handleDownload = async (fileId, fileName) => {
+    if (!fileId) {
+      alert("File ID not available.");
+      return;
+    }
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const url = `${API_BASE_URL}/file-proxy/${fileId}?token=${token}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = fileName || 'download';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      console.error('Download error:', err);
+      alert('Failed to download file');
+    }
   };
 
   const closeModal = () => {
@@ -161,7 +178,7 @@ export default function Preview() {
             <div className="action-row file-actions">
               <button
                 className="view-btn"
-                onClick={() => handleView(selectedFile.fileUrl)}
+                onClick={() => handleView(selectedFile.fileId)}
                 disabled={actionLoading}
               >
                 <img src={viewIcon} alt="View" width="16" height="16"/>

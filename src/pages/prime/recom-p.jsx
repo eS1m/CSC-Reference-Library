@@ -13,7 +13,7 @@ import { updateRecommendation } from '../../firebase/collections/recommendations
 import { getSubmissions } from '../../firebase/collections/agencySubmissions';
 import { unlockEvidence } from '../../firebase/collections/evidenceUnlocks';
 import { createUserNotification } from '../../firebase/notifications';
-import { authFetch } from '../../utils/apiClient';
+import { authFetch, API_BASE_URL } from '../../utils/apiClient';
 
 const EXCEL_ACCEPT = '.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel';
 const WORD_ACCEPT = '.docx,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword';
@@ -60,10 +60,16 @@ const COMPILED_FILES = [
   },
 ];
 
-function getDriveUrl(fileId, fileUrl) {
-  if (fileUrl) return fileUrl;
-  if (fileId) return `https://drive.google.com/file/d/${fileId}/view`;
-  return null;
+async function openProxyView(fileId) {
+  if (!fileId) return;
+  try {
+    const token = await auth.currentUser?.getIdToken();
+    const url = `${API_BASE_URL}/file-proxy/${fileId}?token=${token}`;
+    window.open(url, '_blank');
+  } catch (err) {
+    console.error('View error:', err);
+    alert('Failed to open file');
+  }
 }
 
 function getLatestSubmission(submissionsByAgency, agencyId, fileType) {
@@ -236,7 +242,7 @@ export default function RecomP() {
       const fileData = {
         fileId: driveData.fileId,
         fileName: driveData.fileName,
-        fileUrl: `https://drive.google.com/file/d/${driveData.fileId}/view`,
+        fileUrl: null,
         uploadedAt: serverTimestamp(),
         uploadedBy: auth.currentUser?.uid || ''
       };
@@ -374,7 +380,7 @@ export default function RecomP() {
       const fileData = {
         fileId: driveData.fileId,
         fileName: driveData.fileName,
-        fileUrl: `https://drive.google.com/file/d/${driveData.fileId}/view`,
+        fileUrl: null,
         uploadedAt: serverTimestamp(),
         uploadedBy: auth.currentUser?.uid || ''
       };
@@ -398,20 +404,18 @@ export default function RecomP() {
     }
   };
 
-  const handleViewFile = (url) => {
-    if (url) window.open(url, '_blank');
+  const handleViewFile = (fileId) => {
+    openProxyView(fileId);
   };
 
   const renderUploadedFile = (rec, fileConfig, fileData, stateKey) => {
     const accentClass = fileConfig.accent ? ` ${fileConfig.accent}` : '';
-    const viewUrl = getDriveUrl(fileData.fileId, fileData.fileUrl);
-
     return (
       <>
         <button
           type="button"
           className={`rec-file-btn uploaded${accentClass}`}
-          onClick={() => handleViewFile(viewUrl)}
+          onClick={() => handleViewFile(fileData.fileId)}
           title="Open in Google Drive"
         >
           {fileData.fileName}
@@ -460,12 +464,11 @@ export default function RecomP() {
       }
 
       if (submission) {
-        const viewUrl = getDriveUrl(submission.fileId, submission.fileUrl);
         return (
           <button
             type="button"
             className="rec-file-btn uploaded"
-            onClick={() => handleViewFile(viewUrl)}
+            onClick={() => handleViewFile(submission.fileId)}
             title="Open agency Self-Assessment in Google Drive"
           >
             {submission.fileName}
@@ -635,7 +638,7 @@ export default function RecomP() {
                                     <button
                                       type="button"
                                       className="rec-file-btn uploaded"
-                                      onClick={() => handleViewFile(getDriveUrl(submission.fileId, submission.fileUrl))}
+                                      onClick={() => handleViewFile(submission.fileId)}
                                     >
                                       {submission.fileName}
                                     </button>
@@ -647,7 +650,7 @@ export default function RecomP() {
                                 <button
                                   type="button"
                                   className="rec-file-btn uploaded"
-                                  onClick={() => handleViewFile(getDriveUrl(rec[fileConfig.field].fileId, rec[fileConfig.field].fileUrl))}
+                                  onClick={() => handleViewFile(rec[fileConfig.field].fileId)}
                                 >
                                   {rec[fileConfig.field].fileName}
                                 </button>

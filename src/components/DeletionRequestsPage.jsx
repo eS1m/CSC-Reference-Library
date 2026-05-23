@@ -7,7 +7,7 @@ import { updateDeletionRequest } from '../firebase/collections/deletionRequests'
 import { deleteSubmission } from '../firebase/collections/agencySubmissions';
 import { logActivity } from '../firebase/activityLog';
 import { formatFirestoreDate } from '../utils/formatFirestoreDate';
-import { authFetch } from '../utils/apiClient';
+import { authFetch, API_BASE_URL } from '../utils/apiClient';
 import Modal from '../components/Modal';
 
 export default function DeletionRequestsPage({ viewerRole }) {
@@ -183,7 +183,15 @@ export default function DeletionRequestsPage({ viewerRole }) {
                     <td>
                       <button 
                         className="link-btn"
-                        onClick={() => window.open(`https://drive.google.com/file/d/${req.fileId}/view`, '_blank')}
+                        onClick={async () => {
+                          if (!req.fileId) return;
+                          try {
+                            const token = await auth.currentUser?.getIdToken();
+                            window.open(`${API_BASE_URL}/file-proxy/${req.fileId}?token=${token}`, '_blank');
+                          } catch (err) {
+                            console.error('View error:', err);
+                          }
+                        }}
                       >
                         {req.fileName}
                       </button>

@@ -481,7 +481,7 @@ export default function ActionPlanU() {
         agencyName: agencyName,
         fileName: fileName,
         fileId: driveData.fileId,
-        fileUrl: driveData.fileId ? `https://drive.google.com/file/d/${driveData.fileId}/view` : driveData.webViewLink,
+        fileUrl: null,
         fileType: 'Action-Plan',
         uploadedAt: serverTimestamp(),
         assessmentYear: year

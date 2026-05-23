@@ -205,7 +205,7 @@ export default function Uupload() {
         agencyName: agencyName,
         fileName: formattedName,
         fileId: driveData.fileId,
-        fileUrl: driveData.fileId ? `https://drive.google.com/file/d/${driveData.fileId}/view` : driveData.webViewLink,
+        fileUrl: null,
         fileType: fileType,
         uploadedAt: serverTimestamp(),
         assessmentYear: new Date().getFullYear(),

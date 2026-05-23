@@ -15,7 +15,7 @@ import { useDeletionRequests } from '../../hooks/useDeletionRequests';
 import { createDeletionRequest } from '../../firebase/collections/deletionRequests';
 import { logActivity } from '../../firebase/activityLog';
 import { createAdminNotifications } from '../../firebase/notifications';
-import { authFetch } from '../../utils/apiClient';
+import { authFetch, API_BASE_URL } from '../../utils/apiClient';
 
 export default function ERU() {
   const navigate = useNavigate();
@@ -151,7 +151,7 @@ export default function ERU() {
           agencyName: agencyName,
           fileName: uploaded.fileName,
           fileId: uploaded.fileId,
-          fileUrl: uploaded.webViewLink,
+          fileUrl: null,
           fileType: 'Evidence-Requirements',
           uploadedAt: serverTimestamp(),
           assessmentYear: assessmentYear,
@@ -323,10 +323,22 @@ export default function ERU() {
                 const delStatus = getDeletionStatus(sub.id);
                 return (
                   <div key={sub.id} className="er-file-card">
-                    <a href={sub.fileUrl} target="_blank" rel="noopener noreferrer" className="er-file-preview">
+                    <div
+                      className="er-file-preview"
+                      onClick={async () => {
+                        if (!sub.fileId) return;
+                        try {
+                          const token = await auth.currentUser?.getIdToken();
+                          window.open(`${API_BASE_URL}/file-proxy/${sub.fileId}?token=${token}`, '_blank');
+                        } catch (err) {
+                          console.error('View error:', err);
+                        }
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <img src={fileIcon} alt="File" className="er-file-icon" />
                       <span className="er-file-name">{sub.fileName}</span>
-                    </a>
+                    </div>
                     <div className="er-file-meta">
                       {delStatus ? (
                         <span className={`er-status-badge ${delStatus}`}>

@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { formatFirestoreDate } from '../../utils/formatFirestoreDate';
 import { usePrimeData } from '../../hooks/usePrimeData';
 import { useTotalActiveSessionCount } from '../../hooks/useTotalActiveSessionCount';
+import { auth } from '../../firebase/config';
+import { API_BASE_URL } from '../../utils/apiClient';
 
 import reviewIcon from '../../assets/review.svg';
 import agencyIcon from '../../assets/agency.svg';
@@ -111,7 +113,15 @@ export default function Pdashboard() {
                 </tr>
               ) : (
                 recentUploads.map((sub) => (
-                  <tr key={sub.id} onClick={() => window.open(sub.fileUrl, '_blank')}>
+                  <tr key={sub.id} onClick={async () => {
+                    if (!sub.fileId) return;
+                    try {
+                      const token = await auth.currentUser?.getIdToken();
+                      window.open(`${API_BASE_URL}/file-proxy/${sub.fileId}?token=${token}`, '_blank');
+                    } catch (err) {
+                      console.error('View error:', err);
+                    }
+                  }}>
                     <td>{sub.agencyName}</td>
                     <td>{sub.fileName}</td>
                     <td>
