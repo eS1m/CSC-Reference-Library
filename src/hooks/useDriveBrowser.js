@@ -20,8 +20,8 @@ export function useDriveBrowser() {
     setError('');
     try {
       const url = currentFolderId 
-        ? `${API_URL}/drive/browse?folderId=${encodeURIComponent(currentFolderId)}`
-        : `${API_URL}/drive/browse`;
+        ? `/drive/browse?folderId=${encodeURIComponent(currentFolderId)}`
+        : `/drive/browse`;
       
       const res = await authFetch(url);
       if (!res.ok) throw new Error('Failed to fetch folder contents');

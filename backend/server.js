@@ -61,7 +61,9 @@ async function requireApprovedUser(req, res, next) {
   try {
     const userDoc = await admin.firestore().collection('users').doc(req.user.uid).get();
     const userData = userDoc.data();
-    if (!userData || userData.approvalStatus !== 'approved') {
+    // Backward compatibility: existing users without approvalStatus are treated as approved
+    const approvalStatus = userData?.approvalStatus || 'approved';
+    if (!userData || approvalStatus !== 'approved') {
       return res.status(403).json({ error: 'Forbidden: Account is not approved' });
     }
     req.userData = userData;
@@ -77,6 +79,7 @@ function requireRole(...allowedRoles) {
     if (!admin.apps.length) return next();
     const role = req.userData?.role;
     if (!role || !allowedRoles.includes(role)) {
+      console.error(`Role check failed: user has role "${role}", required [${allowedRoles.join(', ')}]`);
       return res.status(403).json({ error: `Forbidden: Requires one of roles [${allowedRoles.join(', ')}]` });
     }
     next();

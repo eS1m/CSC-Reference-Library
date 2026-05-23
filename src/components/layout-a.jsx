@@ -181,7 +181,7 @@ export default function Alayout() {
                         <nav>
                             <NavLink className="nav-item-admin nav-contact-us" to="/contact-a">
                                 <img src={contactIcon} alt="Contact Us" width="20" height="20" className="deep-blue-filter"/>
-                                Contact <Developers></Developers>
+                                Contact Developers
                             </NavLink>
                         </nav>
                         <div className="sidebar-footer-divider"></div>
