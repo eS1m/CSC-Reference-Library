@@ -194,8 +194,8 @@ export default function Uupload() {
       });
 
       if (!response.ok) {
-        const errData = await response.text();
-        throw new Error(errData || 'Upload to Drive failed.');
+        const errData = await response.json().catch(() => null);
+        throw new Error(errData?.error || 'Upload to Drive failed.');
       }
 
       const driveData = await response.json();

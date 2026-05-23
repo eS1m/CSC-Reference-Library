@@ -52,6 +52,153 @@ async function verifyFirebaseToken(req, res, next) {
   }
 }
 
+// ============================================================================
+// SEC-03 Middleware: Backend enforcement of client-side security rules
+// ============================================================================
+
+async function requireApprovedUser(req, res, next) {
+  if (!admin.apps.length) return next(); // local dev fallback
+  try {
+    const userDoc = await admin.firestore().collection('users').doc(req.user.uid).get();
+    const userData = userDoc.data();
+    if (!userData || userData.approvalStatus !== 'approved') {
+      return res.status(403).json({ error: 'Forbidden: Account is not approved' });
+    }
+    req.userData = userData;
+    next();
+  } catch (err) {
+    console.error('requireApprovedUser error:', err);
+    return res.status(500).json({ error: 'Failed to verify user status' });
+  }
+}
+
+function requireRole(...allowedRoles) {
+  return (req, res, next) => {
+    if (!admin.apps.length) return next();
+    const role = req.userData?.role;
+    if (!role || !allowedRoles.includes(role)) {
+      return res.status(403).json({ error: `Forbidden: Requires one of roles [${allowedRoles.join(', ')}]` });
+    }
+    next();
+  };
+}
+
+async function requireCompleteProfile(req, res, next) {
+  if (!admin.apps.length) return next();
+  try {
+    const profileDoc = await admin.firestore().collection('agencyProfiles').doc(req.user.uid).get();
+    const profile = profileDoc.data();
+
+    const agencyDetailFields = ['agencyName', 'region', 'resolutionStatus', 'sector', 'status'];
+    const agencyDone = agencyDetailFields.every(
+      (field) => profile?.agencyDetails?.[field]?.toString().trim()
+    );
+    const headDone = !!(
+      profile?.headDetails?.name?.trim() &&
+      profile?.headDetails?.designation?.trim()
+    );
+    const hrmDone = !!(
+      profile?.hrmOfficers?.[0]?.name?.trim() &&
+      profile?.hrmOfficers?.[0]?.email?.trim()
+    );
+
+    if (!agencyDone || !headDone || !hrmDone) {
+      return res.status(403).json({ error: 'Forbidden: Agency profile is incomplete' });
+    }
+    next();
+  } catch (err) {
+    console.error('requireCompleteProfile error:', err);
+    return res.status(500).json({ error: 'Failed to verify agency profile' });
+  }
+}
+
+async function requireCompleteEmployees(req, res, next) {
+  if (!admin.apps.length) return next();
+  try {
+    const empDoc = await admin.firestore().collection('agencyEmployees').doc(req.user.uid).get();
+    const emp = empDoc.data();
+
+    const hasEmployeeData = emp?.employeeData && Object.keys(emp.employeeData).length > 0;
+    const hasHrmSummary = !!(
+      emp?.hrmSummary?.permanent !== undefined &&
+      emp?.hrmSummary?.tempContractCasual !== undefined &&
+      emp?.hrmSummary?.coterminusOthers !== undefined
+    );
+    const hasPersonnelComplement = !!(
+      emp?.personnelComplement?.firstLevel !== undefined &&
+      emp?.personnelComplement?.secondLevelPT !== undefined &&
+      emp?.personnelComplement?.secondLevelEM !== undefined &&
+      emp?.personnelComplement?.thirdLevelPA !== undefined
+    );
+
+    if (!hasEmployeeData || !hasHrmSummary || !hasPersonnelComplement) {
+      return res.status(403).json({ error: 'Forbidden: Employee data is incomplete' });
+    }
+    next();
+  } catch (err) {
+    console.error('requireCompleteEmployees error:', err);
+    return res.status(500).json({ error: 'Failed to verify employee data' });
+  }
+}
+
+async function requireSelfAssessment(req, res, next) {
+  if (!admin.apps.length) return next();
+  try {
+    const snapshot = await admin.firestore().collection('agencySubmissions')
+      .where('userId', '==', req.user.uid)
+      .where('fileType', '==', 'Self-Assessment')
+      .limit(1)
+      .get();
+
+    if (snapshot.empty) {
+      return res.status(403).json({ error: 'Forbidden: Self-Assessment must be uploaded first' });
+    }
+    next();
+  } catch (err) {
+    console.error('requireSelfAssessment error:', err);
+    return res.status(500).json({ error: 'Failed to verify Self-Assessment' });
+  }
+}
+
+async function requireNoActionPlan(req, res, next) {
+  if (!admin.apps.length) return next();
+  try {
+    const snapshot = await admin.firestore().collection('agencySubmissions')
+      .where('userId', '==', req.user.uid)
+      .where('fileType', '==', 'Action-Plan')
+      .limit(1)
+      .get();
+
+    if (!snapshot.empty) {
+      return res.status(403).json({ error: 'Forbidden: Action Plan already exists' });
+    }
+    next();
+  } catch (err) {
+    console.error('requireNoActionPlan error:', err);
+    return res.status(500).json({ error: 'Failed to verify Action Plan status' });
+  }
+}
+
+async function requireAgencyOwnership(req, res, next) {
+  if (!admin.apps.length) return next();
+  try {
+    const agencyName = req.body?.agencyName || req.query?.agencyName;
+    if (!agencyName) return next(); // endpoints without agencyName skip this check
+
+    const profileDoc = await admin.firestore().collection('agencyProfiles').doc(req.user.uid).get();
+    const profile = profileDoc.data();
+    const userAgencyName = profile?.agencyDetails?.agencyName?.trim();
+
+    if (!userAgencyName || userAgencyName !== agencyName.trim()) {
+      return res.status(403).json({ error: 'Forbidden: Agency name does not match your profile' });
+    }
+    next();
+  } catch (err) {
+    console.error('requireAgencyOwnership error:', err);
+    return res.status(500).json({ error: 'Failed to verify agency ownership' });
+  }
+}
+
 const app = express();
 
 // Rate limiters
@@ -245,7 +392,7 @@ async function getOrCreateFolder(folderName, parentId = null) {
   return folder.data.id;
 }
 
-app.post('/upload', uploadLimiter, upload.single('file'), async (req, res) => {
+app.post('/upload', uploadLimiter, requireApprovedUser, requireCompleteProfile, requireCompleteEmployees, requireAgencyOwnership, upload.single('file'), async (req, res) => {
   try {
     const { agencyName, fileType } = req.body; 
     const currentYear = new Date().getFullYear().toString();
@@ -371,7 +518,7 @@ app.post('/upload', uploadLimiter, upload.single('file'), async (req, res) => {
   }
 });
 
-app.post('/upload-evidence', uploadLimiter, upload.array('files'), async (req, res) => {
+app.post('/upload-evidence', uploadLimiter, requireApprovedUser, requireCompleteProfile, requireCompleteEmployees, requireAgencyOwnership, upload.array('files'), async (req, res) => {
   try {
     const { agencyName, assessmentYear } = req.body;
     const files = req.files;
@@ -446,7 +593,7 @@ app.post('/upload-evidence', uploadLimiter, upload.array('files'), async (req, r
   }
 });
 
-app.get('/drive/list-evidence', async (req, res) => {
+app.get('/drive/list-evidence', requireApprovedUser, requireAgencyOwnership, async (req, res) => {
   try {
     const { agencyName, assessmentYear } = req.query;
 
@@ -481,7 +628,7 @@ app.get('/drive/list-evidence', async (req, res) => {
   }
 });
 
-app.post('/approve-deletion', deleteLimiter, async (req, res) => {
+app.post('/approve-deletion', deleteLimiter, requireApprovedUser, requireRole('admin', 'p'), async (req, res) => {
   try {
     const { fileId } = req.body;
     if (!fileId) {
@@ -522,7 +669,7 @@ app.post('/approve-deletion', deleteLimiter, async (req, res) => {
   }
 });
 
-app.post('/upload-action-plan', uploadLimiter, upload.single('file'), async (req, res) => {
+app.post('/upload-action-plan', uploadLimiter, requireApprovedUser, requireCompleteProfile, requireCompleteEmployees, requireSelfAssessment, requireNoActionPlan, requireAgencyOwnership, upload.single('file'), async (req, res) => {
   try {
     const { agencyName } = req.body;
     const currentYear = new Date().getFullYear().toString();
@@ -574,7 +721,7 @@ app.post('/upload-action-plan', uploadLimiter, upload.single('file'), async (req
   }
 });
 
-app.get('/list-files', async (req, res) => {
+app.get('/list-files', requireApprovedUser, requireRole('admin', 'p'), async (req, res) => {
     const userAccessToken = req.headers.authorization?.split(' ')[1];
     const SHARED_FOLDER_ID = process.env.GOOGLE_FOLDER_ID;
 
@@ -600,7 +747,7 @@ app.get('/list-files', async (req, res) => {
     }
 });
 
-app.get('/drive/browse', async (req, res) => {
+app.get('/drive/browse', requireApprovedUser, requireRole('admin', 'p'), async (req, res) => {
   try {
     const folderId = req.query.folderId || process.env.GOOGLE_FOLDER_ID;
     
@@ -642,7 +789,7 @@ app.get('/drive/browse', async (req, res) => {
   }
 });
 
-app.post('/drive/delete', deleteLimiter, async (req, res) => {
+app.post('/drive/delete', deleteLimiter, requireApprovedUser, requireRole('admin', 'p'), async (req, res) => {
   try {
     const { fileId } = req.body;
     if (!fileId) {
@@ -690,7 +837,7 @@ app.post('/drive/delete', deleteLimiter, async (req, res) => {
   }
 });
 
-app.get('/drive/file-exists', async (req, res) => {
+app.get('/drive/file-exists', requireApprovedUser, requireAgencyOwnership, async (req, res) => {
   try {
     const { fileId, agencyName } = req.query;
     if (!fileId) {
@@ -740,7 +887,7 @@ app.get('/drive/file-exists', async (req, res) => {
   }
 });
 
-app.post('/generate-narrative-report', async (req, res) => {
+app.post('/generate-narrative-report', requireApprovedUser, requireRole('admin', 'p'), async (req, res) => {
   try {
     const { agencyName, selfAssessmentFileId } = req.body;
     if (!agencyName || !selfAssessmentFileId) {
@@ -763,7 +910,7 @@ app.post('/generate-narrative-report', async (req, res) => {
 });
 
 /* ─── Backup Endpoints ─── */
-app.get('/backup/config', async (req, res) => {
+app.get('/backup/config', requireApprovedUser, requireRole('admin'), async (req, res) => {
   try {
     const config = await backupService.getBackupConfig();
     res.status(200).json({ config: config || {} });
@@ -773,7 +920,7 @@ app.get('/backup/config', async (req, res) => {
   }
 });
 
-app.post('/backup/config', async (req, res) => {
+app.post('/backup/config', requireApprovedUser, requireRole('admin'), async (req, res) => {
   try {
     const { enabled, frequency, collections } = req.body;
     await backupService.saveBackupConfig({ enabled, frequency, collections });
@@ -784,7 +931,7 @@ app.post('/backup/config', async (req, res) => {
   }
 });
 
-app.get('/backup/collections', async (req, res) => {
+app.get('/backup/collections', requireApprovedUser, requireRole('admin'), async (req, res) => {
   try {
     const collections = await backupService.listCollections();
     res.status(200).json({ collections });
@@ -794,7 +941,7 @@ app.get('/backup/collections', async (req, res) => {
   }
 });
 
-app.post('/backup/estimate', async (req, res) => {
+app.post('/backup/estimate', requireApprovedUser, requireRole('admin'), async (req, res) => {
   try {
     const { collections } = req.body;
     if (!collections || !Array.isArray(collections) || collections.length === 0) {
@@ -812,7 +959,7 @@ app.post('/backup/estimate', async (req, res) => {
   }
 });
 
-app.post('/backup/run', async (req, res) => {
+app.post('/backup/run', requireApprovedUser, requireRole('admin'), async (req, res) => {
   try {
     const { collections } = req.body;
     if (!collections || !Array.isArray(collections) || collections.length === 0) {
@@ -827,7 +974,7 @@ app.post('/backup/run', async (req, res) => {
   }
 });
 
-app.get('/backup/history', async (req, res) => {
+app.get('/backup/history', requireApprovedUser, requireRole('admin'), async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 50;
     const history = await backupService.getBackupHistory(limit);
@@ -838,7 +985,7 @@ app.get('/backup/history', async (req, res) => {
   }
 });
 
-app.get('/backup/download', async (req, res) => {
+app.get('/backup/download', requireApprovedUser, requireRole('admin'), async (req, res) => {
   try {
     const { fileId, fileName } = req.query;
     if (!fileId) {
@@ -866,7 +1013,7 @@ app.get('/backup/download', async (req, res) => {
   }
 });
 
-app.get('/drive/folder-link', async (req, res) => {
+app.get('/drive/folder-link', requireApprovedUser, requireAgencyOwnership, async (req, res) => {
   try {
     const { agencyName, folderName } = req.query;
     if (!agencyName || !folderName) {

@@ -47,8 +47,9 @@ service cloud.firestore {
 
     // 4. Document Submissions
     match /agencySubmissions/{submissionId} {
-      // Any logged-in user can create
-      allow create: if request.auth != null;
+      // Users can only create submissions for themselves
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
 
       // Users read their own; PRIME and admin read all
       allow read: if request.auth != null && (
