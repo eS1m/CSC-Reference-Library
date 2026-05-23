@@ -4,12 +4,40 @@ const { google } = require('googleapis');
 const multer = require('multer');
 const stream = require('stream');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const xlsx = require('xlsx');
 const path = require('path');
 const { generateNarrativeReport } = require('./narrativeReport');
 const backupService = require('./backupService');
 
 const app = express();
+
+// Rate limiters
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests from this IP, please try again later.' }
+});
+
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // limit each IP to 10 uploads per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many file uploads from this IP, please try again later.' }
+});
+
+const deleteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 deletions per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many deletion requests from this IP, please try again later.' }
+});
+
+app.use(generalLimiter);
 
 const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
   ? process.env.CORS_ALLOWED_ORIGINS.split(',').map(o => o.trim())
@@ -33,6 +61,20 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+
+// Trust proxy headers from Nginx / App Platform
+app.set('trust proxy', 1);
+
+// Enforce HTTPS in production
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.secure || req.headers['x-forwarded-proto'] === 'https') {
+      return next();
+    }
+    res.status(400).json({ error: 'HTTPS required. Access the API via the secure endpoint.' });
+  });
+}
+
 const upload = multer();
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
@@ -155,7 +197,7 @@ async function getOrCreateFolder(folderName, parentId = null) {
   return folder.data.id;
 }
 
-app.post('/upload', upload.single('file'), async (req, res) => {
+app.post('/upload', uploadLimiter, upload.single('file'), async (req, res) => {
   try {
     const { agencyName, fileType } = req.body; 
     const currentYear = new Date().getFullYear().toString();
@@ -281,7 +323,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-app.post('/upload-evidence', upload.array('files'), async (req, res) => {
+app.post('/upload-evidence', uploadLimiter, upload.array('files'), async (req, res) => {
   try {
     const { agencyName, assessmentYear } = req.body;
     const files = req.files;
@@ -391,7 +433,7 @@ app.get('/drive/list-evidence', async (req, res) => {
   }
 });
 
-app.post('/approve-deletion', async (req, res) => {
+app.post('/approve-deletion', deleteLimiter, async (req, res) => {
   try {
     const { fileId } = req.body;
     if (!fileId) {
@@ -432,7 +474,7 @@ app.post('/approve-deletion', async (req, res) => {
   }
 });
 
-app.post('/upload-action-plan', upload.single('file'), async (req, res) => {
+app.post('/upload-action-plan', uploadLimiter, upload.single('file'), async (req, res) => {
   try {
     const { agencyName } = req.body;
     const currentYear = new Date().getFullYear().toString();
@@ -552,7 +594,7 @@ app.get('/drive/browse', async (req, res) => {
   }
 });
 
-app.post('/drive/delete', async (req, res) => {
+app.post('/drive/delete', deleteLimiter, async (req, res) => {
   try {
     const { fileId } = req.body;
     if (!fileId) {
