@@ -4,12 +4,275 @@ const { google } = require('googleapis');
 const multer = require('multer');
 const stream = require('stream');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const xlsx = require('xlsx');
 const path = require('path');
+const { generateNarrativeReport } = require('./narrativeReport');
+const backupService = require('./backupService');
+const admin = require('firebase-admin');
+
+// Initialize Firebase Admin for token verification
+let adminAuth = null;
+try {
+  const serviceAccountB64 = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (serviceAccountB64) {
+    const serviceAccount = JSON.parse(Buffer.from(serviceAccountB64, 'base64').toString());
+    if (!admin.apps.length) {
+      admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+    }
+    adminAuth = admin.auth();
+    console.log('Firebase Admin initialized for authentication');
+  } else {
+    console.warn('FIREBASE_SERVICE_ACCOUNT not set. Backend auth verification is disabled.');
+  }
+} catch (err) {
+  console.error('Firebase Admin auth init failed:', err.message);
+}
+
+// Middleware: Verify Firebase ID Token
+async function verifyFirebaseToken(req, res, next) {
+  if (!adminAuth) {
+    // Skip auth if Firebase Admin is not configured (local dev fallback)
+    return next();
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized: Missing or invalid authorization header' });
+  }
+
+  const idToken = authHeader.split('Bearer ')[1];
+  try {
+    const decodedToken = await adminAuth.verifyIdToken(idToken);
+    req.user = decodedToken;
+    next();
+  } catch (error) {
+    console.error('Token verification failed:', error.message);
+    return res.status(401).json({ error: 'Unauthorized: Invalid or expired token' });
+  }
+}
+
+// ============================================================================
+// SEC-03 Middleware: Backend enforcement of client-side security rules
+// ============================================================================
+
+async function requireApprovedUser(req, res, next) {
+  if (!admin.apps.length) return next(); // local dev fallback
+  try {
+    const userDoc = await admin.firestore().collection('users').doc(req.user.uid).get();
+    const userData = userDoc.data();
+    // Backward compatibility: existing users without approvalStatus are treated as approved
+    const approvalStatus = userData?.approvalStatus || 'approved';
+    if (!userData || approvalStatus !== 'approved') {
+      return res.status(403).json({ error: 'Forbidden: Account is not approved' });
+    }
+    req.userData = userData;
+    next();
+  } catch (err) {
+    console.error('requireApprovedUser error:', err);
+    return res.status(500).json({ error: 'Failed to verify user status' });
+  }
+}
+
+function requireRole(...allowedRoles) {
+  return (req, res, next) => {
+    if (!admin.apps.length) return next();
+    const role = req.userData?.role;
+    if (!role || !allowedRoles.includes(role)) {
+      console.error(`Role check failed: user has role "${role}", required [${allowedRoles.join(', ')}]`);
+      return res.status(403).json({ error: `Forbidden: Requires one of roles [${allowedRoles.join(', ')}]` });
+    }
+    next();
+  };
+}
+
+async function requireCompleteProfile(req, res, next) {
+  if (!admin.apps.length) return next();
+  try {
+    const profileDoc = await admin.firestore().collection('agencyProfiles').doc(req.user.uid).get();
+    const profile = profileDoc.data();
+
+    const agencyDetailFields = ['agencyName', 'region', 'resolutionStatus', 'sector', 'status'];
+    const agencyDone = agencyDetailFields.every(
+      (field) => profile?.agencyDetails?.[field]?.toString().trim()
+    );
+    const headDone = !!(
+      profile?.headDetails?.name?.trim() &&
+      profile?.headDetails?.designation?.trim()
+    );
+    const hrmDone = !!(
+      profile?.hrmOfficers?.[0]?.name?.trim() &&
+      profile?.hrmOfficers?.[0]?.email?.trim()
+    );
+
+    if (!agencyDone || !headDone || !hrmDone) {
+      return res.status(403).json({ error: 'Forbidden: Agency profile is incomplete' });
+    }
+    next();
+  } catch (err) {
+    console.error('requireCompleteProfile error:', err);
+    return res.status(500).json({ error: 'Failed to verify agency profile' });
+  }
+}
+
+async function requireCompleteEmployees(req, res, next) {
+  if (!admin.apps.length) return next();
+  try {
+    const empDoc = await admin.firestore().collection('agencyEmployees').doc(req.user.uid).get();
+    const emp = empDoc.data();
+
+    const hasEmployeeData = emp?.employeeData && Object.keys(emp.employeeData).length > 0;
+    const hasHrmSummary = !!(
+      emp?.hrmSummary?.permanent !== undefined &&
+      emp?.hrmSummary?.tempContractCasual !== undefined &&
+      emp?.hrmSummary?.coterminusOthers !== undefined
+    );
+    const hasPersonnelComplement = !!(
+      emp?.personnelComplement?.firstLevel !== undefined &&
+      emp?.personnelComplement?.secondLevelPT !== undefined &&
+      emp?.personnelComplement?.secondLevelEM !== undefined &&
+      emp?.personnelComplement?.thirdLevelPA !== undefined
+    );
+
+    if (!hasEmployeeData || !hasHrmSummary || !hasPersonnelComplement) {
+      return res.status(403).json({ error: 'Forbidden: Employee data is incomplete' });
+    }
+    next();
+  } catch (err) {
+    console.error('requireCompleteEmployees error:', err);
+    return res.status(500).json({ error: 'Failed to verify employee data' });
+  }
+}
+
+async function requireSelfAssessment(req, res, next) {
+  if (!admin.apps.length) return next();
+  try {
+    const snapshot = await admin.firestore().collection('agencySubmissions')
+      .where('userId', '==', req.user.uid)
+      .where('fileType', '==', 'Self-Assessment')
+      .limit(1)
+      .get();
+
+    if (snapshot.empty) {
+      return res.status(403).json({ error: 'Forbidden: Self-Assessment must be uploaded first' });
+    }
+    next();
+  } catch (err) {
+    console.error('requireSelfAssessment error:', err);
+    return res.status(500).json({ error: 'Failed to verify Self-Assessment' });
+  }
+}
+
+async function requireNoActionPlan(req, res, next) {
+  if (!admin.apps.length) return next();
+  try {
+    const snapshot = await admin.firestore().collection('agencySubmissions')
+      .where('userId', '==', req.user.uid)
+      .where('fileType', '==', 'Action-Plan')
+      .limit(1)
+      .get();
+
+    if (!snapshot.empty) {
+      return res.status(403).json({ error: 'Forbidden: Action Plan already exists' });
+    }
+    next();
+  } catch (err) {
+    console.error('requireNoActionPlan error:', err);
+    return res.status(500).json({ error: 'Failed to verify Action Plan status' });
+  }
+}
+
+async function requireAgencyOwnership(req, res, next) {
+  if (!admin.apps.length) return next();
+  try {
+    const agencyName = req.body?.agencyName || req.query?.agencyName;
+    if (!agencyName) return next(); // endpoints without agencyName skip this check
+
+    const profileDoc = await admin.firestore().collection('agencyProfiles').doc(req.user.uid).get();
+    const profile = profileDoc.data();
+    const userAgencyName = profile?.agencyDetails?.agencyName?.trim();
+
+    if (!userAgencyName || userAgencyName !== agencyName.trim()) {
+      return res.status(403).json({ error: 'Forbidden: Agency name does not match your profile' });
+    }
+    next();
+  } catch (err) {
+    console.error('requireAgencyOwnership error:', err);
+    return res.status(500).json({ error: 'Failed to verify agency ownership' });
+  }
+}
 
 const app = express();
-app.use(cors());
+
+// Rate limiters
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests from this IP, please try again later.' }
+});
+
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // limit each IP to 10 uploads per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many file uploads from this IP, please try again later.' }
+});
+
+const deleteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 deletions per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many deletion requests from this IP, please try again later.' }
+});
+
+app.use(generalLimiter);
+
+const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
+  ? process.env.CORS_ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : [
+      'http://localhost',
+      'http://localhost:5173',
+      'http://localhost:8080',
+      'https://ccs-reference-library-staging-vtmh4.ondigitalocean.app',
+      'https://csc-kl.duckdns.org'
+    ];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS policy does not allow access from origin: ${origin}`));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
+
+// Trust proxy headers from Nginx / App Platform
+app.set('trust proxy', 1);
+
+// Enforce HTTPS in production
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.secure || req.headers['x-forwarded-proto'] === 'https') {
+      return next();
+    }
+    res.status(400).json({ error: 'HTTPS required. Access the API via the secure endpoint.' });
+  });
+}
+
+// Apply Firebase token verification to all routes (skip OPTIONS for CORS preflight)
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') return next();
+  return verifyFirebaseToken(req, res, next);
+});
+
 const upload = multer();
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
@@ -26,6 +289,8 @@ const oauth2Client = new google.auth.OAuth2(
 oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
 const drive = google.drive({ version: 'v3', auth: oauth2Client });
+
+backupService.initBackupService(drive, getOrCreateFolder);
 
 function escapeDriveQuery(str) {
   return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -84,20 +349,38 @@ async function buildDrivePath(fileId) {
   return parts.join(' > ');
 }
 
-async function getOrCreateFolder(folderName, parentId = null) {
+async function isDescendantOf(fileId, ancestorId, depth = 0) {
+  if (depth > 5) return false;
+  const file = await drive.files.get({ fileId, fields: 'parents' });
+  const parents = file.data.parents || [];
+  for (const parentId of parents) {
+    if (parentId === ancestorId) return true;
+    if (await isDescendantOf(parentId, ancestorId, depth + 1)) return true;
+  }
+  return false;
+}
+
+async function findFolder(folderName, parentId = null) {
   const searchParent = parentId || process.env.GOOGLE_FOLDER_ID;
   const query = `name = '${escapeDriveQuery(folderName)}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false and '${searchParent}' in parents`;
-  const res = await drive.files.list({ 
-    q: query, 
+  const res = await drive.files.list({
+    q: query,
     fields: 'files(id)',
     includeItemsFromAllDrives: true,
     supportsAllDrives: true
   });
-  
+
   if (res.data.files.length > 0) {
     return res.data.files[0].id;
   }
+  return null;
+}
 
+async function getOrCreateFolder(folderName, parentId = null) {
+  const existing = await findFolder(folderName, parentId);
+  if (existing) return existing;
+
+  const searchParent = parentId || process.env.GOOGLE_FOLDER_ID;
   const folderMetadata = {
     name: folderName,
     mimeType: 'application/vnd.google-apps.folder',
@@ -112,7 +395,7 @@ async function getOrCreateFolder(folderName, parentId = null) {
   return folder.data.id;
 }
 
-app.post('/upload', upload.single('file'), async (req, res) => {
+app.post('/upload', uploadLimiter, requireApprovedUser, requireCompleteProfile, requireCompleteEmployees, requireAgencyOwnership, upload.single('file'), async (req, res) => {
   try {
     const { agencyName, fileType } = req.body; 
     const currentYear = new Date().getFullYear().toString();
@@ -188,13 +471,29 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     const agencyFolderId = await getOrCreateFolder(agencyName);
     const yearFolderId = await getOrCreateFolder(currentYear, agencyFolderId);
 
+    // Field Office Monitoring uploads go into their own folder
+    const FOM_FILE_TYPES = ['Assist-Plan', 'Progress-Log'];
+    const RECOMMENDATION_FILE_TYPES = [
+      'Evaluation-Capability-Card',
+      'Field-Director-Guidepost',
+      'Regional-Director-Guidepost',
+      'Narrative-Report'
+    ];
+
+    let uploadFolderId = yearFolderId;
+    if (FOM_FILE_TYPES.includes(fileType)) {
+      uploadFolderId = await getOrCreateFolder('Field Office Monitoring', yearFolderId);
+    } else if (RECOMMENDATION_FILE_TYPES.includes(fileType)) {
+      uploadFolderId = await getOrCreateFolder('Recommendations', yearFolderId);
+    }
+
     const bufferStream = new stream.PassThrough();
     bufferStream.end(req.file.buffer);
 
     const response = await drive.files.create({
       requestBody: {
         name: finalFileName,
-        parents: [yearFolderId],
+        parents: [uploadFolderId],
       },
       media: {
         mimeType: req.file.mimetype,
@@ -222,7 +521,117 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-app.post('/approve-deletion', async (req, res) => {
+app.post('/upload-evidence', uploadLimiter, requireApprovedUser, requireCompleteProfile, requireCompleteEmployees, requireAgencyOwnership, upload.array('files'), async (req, res) => {
+  try {
+    const { agencyName, assessmentYear } = req.body;
+    const files = req.files;
+
+    if (!agencyName || !assessmentYear) {
+      return res.status(400).json({ error: 'Agency Name and Assessment Year are required.' });
+    }
+
+    if (!files || files.length === 0) {
+      return res.status(400).json({ error: 'No files provided.' });
+    }
+
+    const allowedMimeTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/jpg',
+      'image/png'
+    ];
+
+    for (const file of files) {
+      if (!allowedMimeTypes.includes(file.mimetype)) {
+        return res.status(400).json({ error: `Invalid file type: ${file.originalname}. Only PDF and image files are allowed.` });
+      }
+    }
+
+    const agencyFolderId = await getOrCreateFolder(agencyName);
+    const yearFolderId = await getOrCreateFolder(assessmentYear, agencyFolderId);
+    const evidenceFolderId = await getOrCreateFolder('Evidence Requirements', yearFolderId);
+
+    const uploadedFiles = [];
+
+    for (const file of files) {
+      const bufferStream = new stream.PassThrough();
+      bufferStream.end(file.buffer);
+
+      const response = await drive.files.create({
+        requestBody: {
+          name: file.originalname,
+          parents: [evidenceFolderId],
+        },
+        media: {
+          mimeType: file.mimetype,
+          body: bufferStream,
+        },
+        fields: 'id, name, webViewLink, mimeType',
+      });
+
+      const fileId = response.data.id;
+
+      await drive.permissions.create({
+        fileId: fileId,
+        requestBody: { role: 'reader', type: 'anyone' },
+      });
+
+      uploadedFiles.push({
+        fileId: fileId,
+        fileName: response.data.name,
+        webViewLink: response.data.webViewLink,
+        mimeType: response.data.mimeType,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      uploadedFiles,
+      count: uploadedFiles.length,
+    });
+
+  } catch (error) {
+    console.error('Upload Evidence Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/drive/list-evidence', requireApprovedUser, requireAgencyOwnership, async (req, res) => {
+  try {
+    const { agencyName, assessmentYear } = req.query;
+
+    if (!agencyName || !assessmentYear) {
+      return res.status(400).json({ error: 'agencyName and assessmentYear are required.' });
+    }
+
+    const agencyFolderId = await getOrCreateFolder(agencyName);
+    const yearFolderId = await getOrCreateFolder(assessmentYear, agencyFolderId);
+    const evidenceFolderId = await getOrCreateFolder('Evidence Requirements', yearFolderId);
+
+    const response = await drive.files.list({
+      q: `'${evidenceFolderId}' in parents and trashed = false`,
+      fields: 'files(id, name, mimeType, webViewLink, modifiedTime, size, webContentLink)',
+      pageSize: 1000,
+      orderBy: 'name',
+      includeItemsFromAllDrives: true,
+      supportsAllDrives: true
+    });
+
+    const files = (response.data.files || []).filter(
+      item => item.mimeType !== 'application/vnd.google-apps.folder'
+    );
+
+    res.status(200).json({
+      folderId: evidenceFolderId,
+      files,
+    });
+  } catch (error) {
+    console.error('List Evidence Error:', error);
+    res.status(500).json({ error: 'Failed to list evidence files' });
+  }
+});
+
+app.post('/approve-deletion', deleteLimiter, requireApprovedUser, requireRole('admin', 'p'), async (req, res) => {
   try {
     const { fileId } = req.body;
     if (!fileId) {
@@ -263,7 +672,7 @@ app.post('/approve-deletion', async (req, res) => {
   }
 });
 
-app.post('/upload-action-plan', upload.single('file'), async (req, res) => {
+app.post('/upload-action-plan', uploadLimiter, requireApprovedUser, requireCompleteProfile, requireCompleteEmployees, requireSelfAssessment, requireNoActionPlan, requireAgencyOwnership, upload.single('file'), async (req, res) => {
   try {
     const { agencyName } = req.body;
     const currentYear = new Date().getFullYear().toString();
@@ -315,7 +724,7 @@ app.post('/upload-action-plan', upload.single('file'), async (req, res) => {
   }
 });
 
-app.get('/list-files', async (req, res) => {
+app.get('/list-files', requireApprovedUser, requireRole('admin', 'p'), async (req, res) => {
     const userAccessToken = req.headers.authorization?.split(' ')[1];
     const SHARED_FOLDER_ID = process.env.GOOGLE_FOLDER_ID;
 
@@ -341,7 +750,7 @@ app.get('/list-files', async (req, res) => {
     }
 });
 
-app.get('/drive/browse', async (req, res) => {
+app.get('/drive/browse', requireApprovedUser, requireRole('admin', 'p'), async (req, res) => {
   try {
     const folderId = req.query.folderId || process.env.GOOGLE_FOLDER_ID;
     
@@ -383,7 +792,7 @@ app.get('/drive/browse', async (req, res) => {
   }
 });
 
-app.post('/drive/delete', async (req, res) => {
+app.post('/drive/delete', deleteLimiter, requireApprovedUser, requireRole('admin', 'p'), async (req, res) => {
   try {
     const { fileId } = req.body;
     if (!fileId) {
@@ -428,6 +837,211 @@ app.post('/drive/delete', async (req, res) => {
   } catch (error) {
     console.error('Drive delete error:', error);
     res.status(500).json({ error: 'Failed to delete item' });
+  }
+});
+
+app.get('/drive/file-exists', requireApprovedUser, requireAgencyOwnership, async (req, res) => {
+  try {
+    const { fileId, agencyName } = req.query;
+    if (!fileId) {
+      return res.status(400).json({ error: 'fileId is required' });
+    }
+
+    try {
+      const file = await drive.files.get({
+        fileId,
+        fields: 'id, trashed, parents'
+      });
+
+      if (file.data.trashed) {
+        return res.status(200).json({ exists: false });
+      }
+
+      // If no agencyName provided, just check existence + trashed
+      if (!agencyName) {
+        return res.status(200).json({ exists: true });
+      }
+
+      // Verify the file is inside the expected agency folder path
+      const currentYear = new Date().getFullYear().toString();
+      const agencyFolderId = await findFolder(agencyName);
+      if (!agencyFolderId) {
+        return res.status(200).json({ exists: false });
+      }
+
+      const yearFolderId = await findFolder(currentYear, agencyFolderId);
+      if (!yearFolderId) {
+        return res.status(200).json({ exists: false });
+      }
+
+      const isInCorrectFolder = await isDescendantOf(fileId, yearFolderId);
+
+      res.status(200).json({ exists: isInCorrectFolder });
+    } catch (err) {
+      if (err.code === 404 || err.message?.includes('notFound')) {
+        res.status(200).json({ exists: false });
+      } else {
+        throw err;
+      }
+    }
+  } catch (error) {
+    console.error('File exists check error:', error);
+    res.status(500).json({ error: 'Failed to check file existence' });
+  }
+});
+
+app.post('/generate-narrative-report', requireApprovedUser, requireRole('admin', 'p'), async (req, res) => {
+  try {
+    const { agencyName, selfAssessmentFileId } = req.body;
+    if (!agencyName || !selfAssessmentFileId) {
+      return res.status(400).json({ error: 'agencyName and selfAssessmentFileId are required' });
+    }
+
+    const { buffer, data } = await generateNarrativeReport({
+      drive,
+      agencyName,
+      selfAssessmentFileId
+    });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="Narrative Report-(${agencyName}).docx"`);
+    res.send(buffer);
+  } catch (error) {
+    console.error('Generate narrative report error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/* ─── Backup Endpoints ─── */
+app.get('/backup/config', requireApprovedUser, requireRole('admin'), async (req, res) => {
+  try {
+    const config = await backupService.getBackupConfig();
+    res.status(200).json({ config: config || {} });
+  } catch (error) {
+    console.error('Backup config get error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/backup/config', requireApprovedUser, requireRole('admin'), async (req, res) => {
+  try {
+    const { enabled, frequency, collections } = req.body;
+    await backupService.saveBackupConfig({ enabled, frequency, collections });
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Backup config save error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/backup/collections', requireApprovedUser, requireRole('admin'), async (req, res) => {
+  try {
+    const collections = await backupService.listCollections();
+    res.status(200).json({ collections });
+  } catch (error) {
+    console.error('Backup collections error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/backup/estimate', requireApprovedUser, requireRole('admin'), async (req, res) => {
+  try {
+    const { collections } = req.body;
+    if (!collections || !Array.isArray(collections) || collections.length === 0) {
+      return res.status(400).json({ error: 'collections array is required' });
+    }
+    const { totalDocs, totalSize } = await backupService.estimateBackupSize(collections);
+    res.status(200).json({
+      totalDocs,
+      totalSize,
+      sizeDisplay: backupService.formatBytes(totalSize)
+    });
+  } catch (error) {
+    console.error('Backup estimate error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/backup/run', requireApprovedUser, requireRole('admin'), async (req, res) => {
+  try {
+    const { collections } = req.body;
+    if (!collections || !Array.isArray(collections) || collections.length === 0) {
+      return res.status(400).json({ error: 'collections array is required' });
+    }
+    const result = await backupService.runBackup(collections);
+    res.status(200).json({ success: true, ...result });
+  } catch (error) {
+    console.error('Backup run error:', error);
+    await backupService.logBackupError(req.body.collections || [], error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/backup/history', requireApprovedUser, requireRole('admin'), async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const history = await backupService.getBackupHistory(limit);
+    res.status(200).json({ history });
+  } catch (error) {
+    console.error('Backup history error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/backup/download', requireApprovedUser, requireRole('admin'), async (req, res) => {
+  try {
+    const { fileId, fileName } = req.query;
+    if (!fileId) {
+      return res.status(400).json({ error: 'fileId is required' });
+    }
+
+    const metaRes = await drive.files.get({
+      fileId,
+      fields: 'name, mimeType'
+    });
+
+    const downloadName = fileName || metaRes.data.name || 'backup.json';
+
+    const fileRes = await drive.files.get(
+      { fileId, alt: 'media' },
+      { responseType: 'stream' }
+    );
+
+    res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
+    res.setHeader('Content-Type', metaRes.data.mimeType || 'application/json');
+    fileRes.data.pipe(res);
+  } catch (error) {
+    console.error('Backup download error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/drive/folder-link', requireApprovedUser, requireAgencyOwnership, async (req, res) => {
+  try {
+    const { agencyName, folderName } = req.query;
+    if (!agencyName || !folderName) {
+      return res.status(400).json({ error: 'agencyName and folderName are required' });
+    }
+
+    const currentYear = new Date().getFullYear().toString();
+    const agencyFolderId = await findFolder(agencyName);
+    if (!agencyFolderId) {
+      return res.status(404).json({ error: 'Agency folder not found' });
+    }
+
+    const yearFolderId = await findFolder(currentYear, agencyFolderId);
+    if (!yearFolderId) {
+      return res.status(404).json({ error: 'Year folder not found' });
+    }
+
+    const targetFolderId = await getOrCreateFolder(folderName, yearFolderId);
+    res.status(200).json({
+      folderId: targetFolderId,
+      folderUrl: `https://drive.google.com/drive/folders/${targetFolderId}`
+    });
+  } catch (error) {
+    console.error('Folder link error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

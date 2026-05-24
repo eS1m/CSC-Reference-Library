@@ -9,6 +9,7 @@ import '../../css/lgu/action-plan-u.css';
 import tooltipIcon from '../../assets/tooltip.svg';
 import LockModal from '../../components/LockModal.jsx';
 import Modal from '../../components/Modal';
+import GenerateModal from '../../components/GenerateModal';
 import Spinner from '../../components/Spinner';
 
 import { auth } from '../../firebase/config';
@@ -17,8 +18,7 @@ import { createSubmission } from '../../firebase/collections/agencySubmissions';
 import { logActivity } from '../../firebase/activityLog';
 import { createAdminNotifications } from '../../firebase/notifications';
 import { useAgencyWorkflow } from '../../hooks/useAgencyWorkflow';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { authFetch } from '../../utils/apiClient';
 
 const templateUrl = new URL('../../assets/templates/Action Plan Template - Agency Guide (Assist Form No. 2).docx', import.meta.url).href;
 
@@ -462,7 +462,7 @@ export default function ActionPlanU() {
       formData.append('file', blob, `Action Plan-${agencyName}.docx`);
       formData.append('agencyName', agencyName);
 
-      const res = await fetch(`${API_URL}/upload-action-plan`, {
+      const res = await authFetch('/upload-action-plan', {
         method: 'POST',
         body: formData,
       });
@@ -1186,46 +1186,18 @@ export default function ActionPlanU() {
         )}
       </div>
 
-      <Modal
+      <GenerateModal
         isOpen={showModal}
         onClose={closeModal}
         title="Document Preview"
-        size="xl"
-        hideIcon
-      >
-        <div className="preview-modal-layout">
-          <div className="preview-modal-iframe-wrap">
-            <iframe
-              src={previewBlobUrl}
-              title="Document Preview"
-              className="preview-iframe"
-            />
-          </div>
-          <div className="preview-modal-footer">
-            <p className="preview-disclaimer">
-              Note: This preview does not accurately show the actual document. This is to view if your data is correct. Please download the file for the actual result.
-            </p>
-            {uploadStatus && (
-              <span className={`footer-status ${uploadStatusType}`}>{uploadStatus}</span>
-            )}
-            <div className="preview-modal-actions">
-              <button className="modal-btn modal-btn-secondary" onClick={closeModal}>
-                Close
-              </button>
-              <button className="modal-btn modal-btn-primary" onClick={handleDownload} disabled={!generatedDocx}>
-                Download as Word
-              </button>
-              <button
-                className="modal-btn modal-btn-primary"
-                onClick={handleUploadToDrive}
-                disabled={isUploading || !generatedDocx}
-              >
-                {isUploading ? <Spinner size="xs" color="white" /> : 'Upload to Google Drive'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </Modal>
+        blobUrl={previewBlobUrl}
+        onDownload={handleDownload}
+        onUpload={handleUploadToDrive}
+        isUploading={isUploading}
+        uploadError={uploadStatus && uploadStatusType === 'error' ? uploadStatus : ''}
+        downloadDisabled={!generatedDocx}
+        uploadDisabled={!generatedDocx}
+      />
 
       <Modal
         isOpen={showSuccessModal}

@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Login from './pages/login'
 import Register from './pages/register'
 import ContactUs from './pages/ContactUs'
+import Forgotp from './pages/forgotp'
 
 import Ulayout from './components/layout-u'
 import Udashboard from './pages/lgu/dashboard-u';
@@ -12,6 +13,7 @@ import Uprofile from './pages/lgu/profile-u';
 import Uemployee from './pages/lgu/employee-u';
 import Uview from './pages/lgu/view-u'
 import ActionPlanU from './pages/lgu/action-plan-u';
+import ERU from './pages/lgu/er-u';
 // import TestPageU from './excel_test_data/test_pages/test-page-u';
 // please work bro
 
@@ -30,19 +32,29 @@ import ActivityLogsA from './pages/admin/activity-logs-a';
 import DriveBrowserA from './pages/admin/drive-browser-a';
 import DeletionRequestsA from './pages/admin/deletion-requests-a';
 import SendNotificationA from './pages/admin/send-notification-a';
+import ActiveUsersA from './pages/admin/active-users-a';
+import BackupsA from './pages/admin/backups-a';
+import RegisteredUsersA from './pages/admin/registered-users-a';
 // import TestPageA from './excel_test_data/test_pages/test-page-a';
 
 import ProtectedRoute from './components/ProtectedRoute'
 import ProfileGuard from './components/ProfileGuard';
+import SessionTracker from './components/SessionTracker';
+import IdleTimeoutModal from './components/IdleTimeoutModal';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   return (
     <>
+      <SessionTracker />
       <Router>
-        <Routes>
+        <IdleTimeoutModal />
+        <ErrorBoundary>
+          <Routes>
 
-          <Route path="/" element={<Login/>} />
+            <Route path="/" element={<Login/>} />
           <Route path="/register" element={<Register/>} />
+          <Route path="/forgot" element={<Forgotp/>} />
           
           {/* U Routes - Strictly for LGU/Agency users */}
           <Route element={<Ulayout/>}>
@@ -80,6 +92,11 @@ function App() {
                 </ProfileGuard>
               </ProtectedRoute> 
             } />
+            <Route path="/er-u" element={
+              <ProtectedRoute requiredRole="u">
+                <ERU/>
+              </ProtectedRoute> 
+            } />
             <Route path="/contact-u" element={
               <ProtectedRoute requiredRole="u">
                 <ContactUs/>
@@ -109,7 +126,7 @@ function App() {
                 <DeletionRequestsP/>
               </ProtectedRoute> 
             } />
-            <Route path="/recommendations-p" element={
+            <Route path="/fom" element={
               <ProtectedRoute requiredRole="p">
                 <RecommendationsP/>
               </ProtectedRoute> 
@@ -158,6 +175,21 @@ function App() {
                 <SendNotificationA/>
               </ProtectedRoute> 
             } />
+            <Route path="/active-users-a" element={
+              <ProtectedRoute requiredRole="admin">
+                <ActiveUsersA/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/registered-users-a" element={
+              <ProtectedRoute requiredRole="admin">
+                <RegisteredUsersA/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/backups-a" element={
+              <ProtectedRoute requiredRole="admin">
+                <BackupsA/>
+              </ProtectedRoute> 
+            } />
             <Route path="/contact-a" element={
               <ProtectedRoute requiredRole="admin">
                 <ContactUs/>
@@ -168,9 +200,10 @@ function App() {
                 <TestPageA/>
               </ProtectedRoute> 
             } /> */}
-          </Route>
+            </Route>
 
-        </Routes>
+          </Routes>
+        </ErrorBoundary>
       </Router>
     </>
   )

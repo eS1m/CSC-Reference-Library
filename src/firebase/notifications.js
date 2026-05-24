@@ -19,20 +19,21 @@ export const NOTIFICATION_RETENTION_DAYS = 30;
 const FIRESTORE_BATCH_LIMIT = 500;
 
 /**
- * Create a notification for every admin and CSC RO X user.
+ * Create a notification for admin and/or CSC RO X users.
  * Notifications are stored under each user's subcollection:
  *   users/{recipientId}/notifications/{notifId}
  * @param {Object} params
- * @param {string} params.type - "PROFILE_COMPLETE" | "PROFILE_UPDATE" | "EMPLOYEE_COMPLETE" | "EMPLOYEE_UPDATE" | "SELF_ASSESSMENT_UPLOAD" | "ACTION_PLAN_UPLOAD"
+ * @param {string} params.type - "PROFILE_COMPLETE" | "PROFILE_UPDATE" | "EMPLOYEE_COMPLETE" | "EMPLOYEE_UPDATE" | "SELF_ASSESSMENT_UPLOAD" | "ACTION_PLAN_UPLOAD" | "NEW_USER_REGISTERED"
  * @param {string} params.agencyId - Firebase Auth UID of the agency
  * @param {string} params.agencyName - Display name of the agency
  * @param {string} [params.fileName] - Optional file name for upload notifications
+ * @param {string[]} [params.roles] - Target roles (default: ['p', 'admin'])
  */
-export async function createAdminNotifications({ type, agencyId, agencyName, fileName }) {
+export async function createAdminNotifications({ type, agencyId, agencyName, fileName, roles = ['p', 'admin'] }) {
   try {
-    /* Find all admin and CSC RO X users */
+    /* Find all target users */
     const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('role', 'in', ['p', 'admin']));
+    const q = query(usersRef, where('role', 'in', roles));
     const snap = await getDocs(q);
 
     if (snap.empty) return;
@@ -94,6 +95,26 @@ function getNotificationText(type, agencyName, fileName) {
         title: 'Action Plan Uploaded',
         message: `${agencyName} uploaded an Action Plan file${fileName ? `: ${fileName}` : '.'}`
       };
+    case 'EVIDENCE_UPLOAD':
+      return {
+        title: 'Evidence Requirements Uploaded',
+        message: `${agencyName} uploaded ${fileName || 'evidence files'}.`
+      };
+    case 'NEW_USER_REGISTERED':
+      return {
+        title: 'New User Registered',
+        message: `${agencyName} has registered a new account and is pending approval.`
+      };
+    case 'BACKUP_COMPLETED':
+      return {
+        title: 'Firestore Backup Completed',
+        message: fileName || 'A Firestore backup has been completed.'
+      };
+    case 'ASSESSMENT_FINISHED':
+      return {
+        title: 'Assessment Finished',
+        message: `${agencyName ? agencyName + ' — ' : ''}Your Field Office Monitoring assessment has been completed.`
+      };
     default:
       return { title: 'New Notification', message: 'You have a new notification.' };
   }
@@ -134,6 +155,16 @@ export async function createUserNotification(recipientId, { type, title, message
  * @param {string} agencyId - Firebase Auth UID of the agency user
  * @param {string} [agencyName] - Display name of the agency
  */
+export async function notifyAgencyEvidenceRequired(agencyId, agencyName) {
+  await createUserNotification(agencyId, {
+    type: 'EVIDENCE_REQUIRED',
+    title: 'Evidence Requirements Available',
+    message: 'You have been selected for Field Office Monitoring. Please submit your Evidence Requirements.',
+    agencyId,
+    agencyName: agencyName || null
+  });
+}
+
 export async function notifyAgencyOARecommended(agencyId, agencyName) {
   await createUserNotification(agencyId, {
     type: 'OA_RECOMMENDED',

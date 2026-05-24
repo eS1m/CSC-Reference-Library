@@ -47,8 +47,9 @@ service cloud.firestore {
 
     // 4. Document Submissions
     match /agencySubmissions/{submissionId} {
-      // Any logged-in user can create
-      allow create: if request.auth != null;
+      // Users can only create submissions for themselves
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
 
       // Users read their own; PRIME and admin read all
       allow read: if request.auth != null && (
@@ -58,8 +59,8 @@ service cloud.firestore {
       // PRIME and admin can update status (approve/reject/return)
       allow update: if request.auth != null && isAdminOrPrime();
 
-      // Only admin can delete
-      allow delete: if request.auth != null && isAdmin();
+      // Admin and CSC RO X can delete (needed for deletion approval workflow)
+      allow delete: if request.auth != null && isAdminOrPrime();
     }
 
     // 5. Deletion Requests
@@ -96,6 +97,40 @@ service cloud.firestore {
       allow read: if request.auth != null && isAdminOrPrime();
       allow update: if request.auth != null && isAdminOrPrime();
       allow delete: if request.auth != null && isAdminOrPrime();
+    }
+
+    // 9. Evidence Requirements unlock state
+    match /evidenceUnlocks/{agencyId} {
+      // Agencies can read their own unlock status
+      allow read: if request.auth != null && request.auth.uid == agencyId;
+      // Only CSC RO X and admin can write
+      allow create, update: if request.auth != null && isAdminOrPrime();
+      allow delete: if request.auth != null && isAdminOrPrime();
+    }
+
+    // 10. Active Sessions - concurrent user tracking
+    match /activeSessions/{userId} {
+      // Users can only create/update their own session
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+      // Users can delete their own session; admins and prime can read all
+      allow read: if request.auth != null;
+      allow delete: if request.auth != null && (request.auth.uid == userId || isAdminOrPrime());
+    }
+
+    // 11. Backup History - only admins can read
+    match /backupHistory/{docId} {
+      allow create: if request.auth != null && isAdmin();
+      allow read: if request.auth != null && isAdmin();
+      allow update: if request.auth != null && isAdmin();
+      allow delete: if request.auth != null && isAdmin();
+    }
+
+    // 12. System Config - only admins can read/write
+    match /systemConfig/{docId} {
+      allow create: if request.auth != null && isAdmin();
+      allow read: if request.auth != null && isAdmin();
+      allow update: if request.auth != null && isAdmin();
+      allow delete: if request.auth != null && isAdmin();
     }
 
     // 7. Activity Logs - audit trail

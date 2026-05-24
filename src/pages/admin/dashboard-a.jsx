@@ -5,8 +5,11 @@ import { auth } from '../../firebase/config';
 import { logActivity } from '../../firebase/activityLog';
 import { formatFirestoreDate } from '../../utils/formatFirestoreDate';
 import { useAdminData } from '../../hooks/useAdminData';
+import { useTotalActiveSessionCount } from '../../hooks/useTotalActiveSessionCount';
 import { updateUser } from '../../firebase/collections/users';
 import { deleteSubmissionsByUserId } from '../../firebase/collections/agencySubmissions';
+
+const SHOW_RESET_BUTTON = import.meta.env.VITE_SHOW_RESET_BUTTON === 'true';
 
 import agencyIcon from '../../assets/agency.svg';
 import fileIcon from '../../assets/file.svg';
@@ -18,6 +21,7 @@ export default function Adashboard() {
   const nav = useNavigate();
 
   const { allUsers, stats, recentSubmissions, pendingDeletions, activityLogs, loading } = useAdminData();
+  const activeSessionCount = useTotalActiveSessionCount();
 
   /* Reset Modal State */
   const [resetModal, setResetModal] = useState({ open: false, user: null });
@@ -193,6 +197,15 @@ export default function Adashboard() {
           </div>
         </div>
 
+        <div className="stat-card-admin">
+          <div className="stat-icon">
+            <img src={profileIcon} alt="Active Users" width="40" height="40" className="deep-blue-filter"/>
+          </div>
+          <div className="stat-info">
+            <h3>{activeSessionCount}</h3>
+            <p>Active Users</p>
+          </div>
+        </div>
 
       </div>
 
@@ -208,6 +221,7 @@ export default function Adashboard() {
                     <th>Email</th>
                     <th>Requested Role</th>
                     <th>Registered</th>
+                    <th>Email Verified</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -222,14 +236,21 @@ export default function Adashboard() {
                       </td>
                       <td>{formatFirestoreDate(user.createdAt)}</td>
                       <td>
+                        <span className={`status-badge ${user.emailVerified ? 'approved' : 'rejected'}`}>
+                          {user.emailVerified ? 'Verified' : 'Unverified'}
+                        </span>
+                      </td>
+                      <td>
                         <div className="approval-actions">
-                          <button 
+                          <button
                             className="approve-user-btn"
                             onClick={() => handleApprovalStatus(user.id, 'approved', user.email, user.role)}
+                            disabled={!user.emailVerified}
+                            title={!user.emailVerified ? 'Cannot approve until email is verified' : ''}
                           >
                             Approve
                           </button>
-                          <button 
+                          <button
                             className="reject-user-btn"
                             onClick={() => handleApprovalStatus(user.id, 'rejected', user.email, user.role)}
                           >
@@ -252,10 +273,10 @@ export default function Adashboard() {
             <table className="admin-submissions-table">
               <thead>
                 <tr>
-                  <th>User ID</th>
                   <th>Email</th>
                   <th>Role</th>
                   <th>Approval Status</th>
+                  <th>Email Verified</th>
                   <th>Registered</th>
                   <th>Actions</th>
                 </tr>
@@ -268,7 +289,6 @@ export default function Adashboard() {
                 ) : (
                   allUsers.map((user) => (
                     <tr key={user.id}>
-                      <td className="mono-cell">{user.id}</td>
                       <td>{user.email}</td>
                       <td>
                         <span className={`role-badge ${getRoleBadgeClass(user.role)}`}>
@@ -281,10 +301,15 @@ export default function Adashboard() {
                         </span>
                       </td>
                       <td>
+                        <span className={`status-badge ${user.emailVerified ? 'approved' : 'rejected'}`}>
+                          {user.emailVerified ? 'Verified' : 'Unverified'}
+                        </span>
+                      </td>
+                      <td>
                         {formatFirestoreDate(user.createdAt)}
                       </td>
                       <td>
-                        {user.role === 'u' && (
+                        {SHOW_RESET_BUTTON && user.role === 'u' && (
                           <button
                             className="reset-user-btn"
                             onClick={() => openResetModal(user)}
@@ -299,6 +324,11 @@ export default function Adashboard() {
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="view-all-link">
+            <button onClick={() => nav('/registered-users-a')}>
+              View All Registered Users →
+            </button>
           </div>
         </div>
       </div>

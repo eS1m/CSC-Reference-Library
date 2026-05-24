@@ -110,6 +110,233 @@
 
 .recom-upload-slot {
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.recom-upload-slot:has(.rec-file-btn + .rec-file-btn) {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.recom-upload-slot:has(.rec-file-btn + .rec-file-btn) .rec-file-btn {
+    flex: 1;
+    min-width: 140px;
+}
+
+/* Generate Preview Button — matches Action Plan styling */
+.generate-preview-btn {
+    padding: 10px 24px;
+    background: linear-gradient(135deg, var(--light-blue), var(--deep-blue));
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: 'Outfit', sans-serif;
+    cursor: pointer;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 180px;
+    min-height: 42px;
+}
+
+.generate-preview-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(26, 54, 93, 0.25);
+}
+
+.generate-preview-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Preview Modal Layout */
+.preview-modal-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.preview-modal-iframe-wrap {
+    flex: 1;
+    overflow: hidden;
+    background: #f3f4f6;
+}
+
+.preview-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.preview-modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.preview-modal-footer .preview-disclaimer {
+    margin: 0;
+    flex: 1 1 200px;
+    font-size: 0.8rem;
+    color: #888;
+    font-style: italic;
+}
+
+.preview-modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+}
+
+/* Header actions group */
+.recom-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* Collapse/expand button */
+.recom-collapse-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background: #f8f9fa;
+    color: var(--deep-blue);
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.recom-collapse-btn:hover {
+    background: #edf2f7;
+    border-color: var(--light-blue);
+}
+
+/* Finished badge */
+.recom-finished-badge {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 4px 10px;
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: 'Outfit', sans-serif;
+}
+
+/* Recommendations folder link */
+.recom-folder-link {
+    padding: 8px 0 4px;
+    border-bottom: 1px solid rgba(0, 48, 73, 0.08);
+}
+
+.recom-folder-link a {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--light-blue);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.recom-folder-link a:hover {
+    color: var(--deep-blue);
+    text-decoration: underline;
+}
+
+/* Card body with smooth collapse/expand transition */
+.recom-card-body {
+    max-height: 2000px;
+    opacity: 1;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+}
+
+.recom-card-body.collapsed {
+    max-height: 0;
+    opacity: 0;
+}
+
+/* Collapsed card */
+.recom-card.collapsed {
+    padding-bottom: 16px;
+}
+
+/* Finished card styling */
+.recom-card.finished {
+    border-left: 4px solid #28a745;
+}
+
+/* Finish Assessment button */
+.recom-finish-row {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 48, 73, 0.08);
+    margin-top: 8px;
+}
+
+.recom-finish-btn {
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: 'Outfit', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 180px;
+    min-height: 44px;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.25);
+}
+
+.recom-finish-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(40, 167, 69, 0.35);
+}
+
+.recom-finish-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Locked file slots */
+.recom-file-locked {
+    display: flex;
+    align-items: center;
+    min-height: 42px;
+}
+
+.recom-locked-label {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem;
+    color: var(--stat-description);
+    font-style: italic;
 }
 
 /* Pending uploads: darker grey hover only (no blue/red accents) */

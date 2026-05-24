@@ -1,15 +1,13 @@
 import '../css/shared/contact-us.css';
-import { useState } from 'react';
-import Modal from '../components/Modal';
 import simbajonImg from '../assets/contact_pics/simbajon.jpg';
+import poImg from '../assets/contact_pics/po.jpg';
+import balbonImg from '../assets/contact_pics/balbon.jpg';
 
 import githubIcon from '../assets/contact_socials/github.svg';
 import facebookIcon from '../assets/contact_socials/facebook.svg';
 import tooltipIcon from '../assets/tooltip.svg';
 
 export default function ContactUs() {
-    const [showEmailModal, setShowEmailModal] = useState(false);
-
     return (
         <main className="contact-main-content">
             <div className="contact-main-content-header">
@@ -24,7 +22,7 @@ export default function ContactUs() {
             <div className="contact-content">
                 <div className="contact-card-container">
                     <div className="contact-card balbon">
-                        {/* <img src={simbajonImg} alt="balbon" className="balbon-png contact-png" /> */}
+                        <img src={balbonImg} alt="balbon" className="balbon-png contact-png" />
                         <div className="contact-info">
                             <h3 className="name">Zachary Lance Balbon</h3>
                             <p className="role">Quality Assurance Testing</p>
@@ -33,38 +31,38 @@ export default function ContactUs() {
                                 <a href="https://github.com" target="_blank" rel="noopener noreferrer">
                                     <img src={githubIcon} alt="GitHub" className="github socials-icon" />
                                 </a>
-                                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
+                                <a href="https://www.facebook.com/zachlancegb#" target="_blank" rel="noopener noreferrer">
                                     <img src={facebookIcon} alt="Facebook" className="facebook socials-icon" />
                                 </a>
                             </div>
                         </div>
                         <div className="contact-bar">
                             <span className="contact-label">Contact</span>
-                            <span className="contact-email" onClick={() => setShowEmailModal(true)}>
-                                balbon.email@placeholder.com
-                            </span>
+                            <a href="mailto:zacharylancegb@gmail.com?subject=Bug%20Report" className="contact-email">
+                                zacharylancegb@gmail.com
+                            </a>
                         </div>
                     </div>
                     <div className="contact-card po">
-                        {/* <img src={simbajonImg} alt="po" className="po-png contact-png" /> */}
+                        <img src={poImg} alt="po" className="po-png contact-png" />
                         <div className="contact-info">
                             <h3 className="name">Ram Jay Po</h3>
                             <p className="role">Frontend & Backend Developer</p>
                             <p className="course">Information Technology - 3</p>
                             <div className="socials">
-                                <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+                                <a href="https://github.com/FunkyAtoms" target="_blank" rel="noopener noreferrer">
                                     <img src={githubIcon} alt="GitHub" className="github socials-icon" />
                                 </a>
-                                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
+                                <a href="https://www.facebook.com/ramjay.po" target="_blank" rel="noopener noreferrer">
                                     <img src={facebookIcon} alt="Facebook" className="facebook socials-icon" />
                                 </a>
                             </div>
                         </div>
                         <div className="contact-bar">
                             <span className="contact-label">Contact</span>
-                            <span className="contact-email" onClick={() => setShowEmailModal(true)}>
-                                po.email@placeholder.com
-                            </span>
+                            <a href="mailto:rjbpo04sept2004@gmail.com?subject=Bug%20Report" className="contact-email">
+                                rjbpo04sept2004@gmail.com
+                            </a>
                         </div>
                     </div>
                     <div className="contact-card simbajon">
@@ -74,37 +72,23 @@ export default function ContactUs() {
                             <p className="role">Head Developer</p>
                             <p className="course">Information Technology - 3</p>
                             <div className="socials">
-                                <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+                                <a href="https://github.com/eS1m" target="_blank" rel="noopener noreferrer">
                                     <img src={githubIcon} alt="GitHub" className="github socials-icon" />
                                 </a>
-                                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
+                                <a href="https://www.facebook.com/eS1mulae/" target="_blank" rel="noopener noreferrer">
                                     <img src={facebookIcon} alt="Facebook" className="facebook socials-icon" />
                                 </a>
                             </div>
                         </div>
                         <div className="contact-bar">
                             <span className="contact-label">Contact</span>
-                            <span className="contact-email" onClick={() => setShowEmailModal(true)}>
-                                simbajon.email@placeholder.com
-                            </span>
+                            <a href="mailto:edfs593@gmail.com?subject=Bug%20Report" className="contact-email">
+                                edfs593@gmail.com
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <Modal
-                isOpen={showEmailModal}
-                onClose={() => setShowEmailModal(false)}
-                title="Contact Email"
-                variant="info"
-                actions={
-                    <button className="modal-btn modal-btn-primary modal-btn-full" onClick={() => setShowEmailModal(false)}>
-                        OK
-                    </button>
-                }
-            >
-                Email feature coming soon.
-            </Modal>
         </main>
     );
 }

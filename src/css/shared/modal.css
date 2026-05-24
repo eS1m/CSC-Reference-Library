@@ -45,6 +45,12 @@
     height: 85vh;
 }
 
+.modal-content.modal-size-3xl {
+    max-width: 1000px !important;
+    width: 98vw !important;
+    height: 80vh;
+}
+
 /* Variants (left accent border) */
 .modal-info    { border-left: 5px solid var(--light-blue); }
 .modal-warning { border-left: 5px solid #f4a261; }
@@ -235,6 +241,20 @@
 /* Centered actions (for single-button modals) */
 .modal-actions-center {
     justify-content: center;
+}
+
+/* GenerateModal footer status messages */
+.footer-status {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.footer-status.success {
+    color: #155724;
+}
+
+.footer-status.error {
+    color: #721c24;
 }
 
 /* Responsive */

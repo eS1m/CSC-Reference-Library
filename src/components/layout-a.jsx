@@ -7,15 +7,18 @@ import reviewIcon from '../assets/review.svg';
 import editIcon from '../assets/edit.svg';
 
 import folderIcon from '../assets/folder.svg';
+import databaseIcon from '../assets/database.svg';
 import deleteIcon from '../assets/rejected.svg';
 import notificationIcon from '../assets/notification.svg';
 import logoutIcon from '../assets/logout.svg';
 import contactIcon from '../assets/contact.svg';
+import profileIcon from '../assets/profile.svg';
 
 import NotificationBell from '../components/NotificationBell';
 import Modal from '../components/Modal';
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
+import { removeSession } from '../firebase/collections/activeSessions';
 
 export default function Alayout() {
     const nav = useNavigate();
@@ -23,6 +26,9 @@ export default function Alayout() {
 
     async function logout() {
         try {
+            if (auth.currentUser) {
+                await removeSession(auth.currentUser.uid);
+            }
             await signOut(auth);
             nav('/');
         } catch (error) {
@@ -48,6 +54,9 @@ export default function Alayout() {
             case '/drive-browser-a': return 'Google Drive Browser';
             case '/deletion-requests-a': return 'Deletion Requests';
             case '/send-notification-a': return 'Send Agency Notification';
+            case '/active-users-a': return 'Active Users';
+            case '/registered-users-a': return 'Registered Users';
+            case '/backups-a': return 'Backups';
             case '/contact-a': return 'Contact Us';
             default: return 'Admin Portal';
         }
@@ -91,6 +100,14 @@ export default function Alayout() {
                                 <img src={reviewIcon} alt="Activity Logs" width="20" height="20" className="deep-blue-filter"/>
                                 Activity Logs
                             </NavLink>
+                            <NavLink className="nav-item-admin nav-active-users" to="/active-users-a">
+                                <img src={profileIcon} alt="Active Users" width="20" height="20" className="deep-blue-filter"/>
+                                Active Users
+                            </NavLink>
+                            <NavLink className="nav-item-admin nav-registered-users" to="/registered-users-a">
+                                <img src={profileIcon} alt="Registered Users" width="20" height="20" className="deep-blue-filter"/>
+                                Registered Users
+                            </NavLink>
                         </nav>
                     </div>
         
@@ -121,6 +138,10 @@ export default function Alayout() {
                             <NavLink className="nav-item-admin nav-drive-browser" to="/drive-browser-a">
                                 <img src={folderIcon} alt="Drive Browser" width="20" height="20" className="deep-blue-filter"/>
                                 Drive Browser
+                            </NavLink>
+                            <NavLink className="nav-item-admin nav-backups" to="/backups-a">
+                                <img src={databaseIcon} alt="Backups" width="20" height="20" className="deep-blue-filter"/>
+                                Backups
                             </NavLink>
                         </nav>
                     </div>
@@ -160,7 +181,7 @@ export default function Alayout() {
                         <nav>
                             <NavLink className="nav-item-admin nav-contact-us" to="/contact-a">
                                 <img src={contactIcon} alt="Contact Us" width="20" height="20" className="deep-blue-filter"/>
-                                Contact Us
+                                Contact Developers
                             </NavLink>
                         </nav>
                         <div className="sidebar-footer-divider"></div>
