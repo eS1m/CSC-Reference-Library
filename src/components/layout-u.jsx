@@ -241,7 +241,7 @@ export default function Ulayout() {
                         <nav>
                             <NavLink className="nav-item-user nav-contact-us" to="/contact-u">
                                 <img src={contactIcon} alt="Contact Us" width="20" height="20" className="deep-blue-filter"/>
-                                Contact Us
+                                Contact Developers
                             </NavLink>
                         </nav>
                         <div className="sidebar-footer-divider"></div>

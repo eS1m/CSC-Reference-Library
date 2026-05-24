@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Login from './pages/login'
 import Register from './pages/register'
 import ContactUs from './pages/ContactUs'
+import Forgotp from './pages/forgotp'
 
 import Ulayout from './components/layout-u'
 import Udashboard from './pages/lgu/dashboard-u';
@@ -32,12 +33,15 @@ import DriveBrowserA from './pages/admin/drive-browser-a';
 import DeletionRequestsA from './pages/admin/deletion-requests-a';
 import SendNotificationA from './pages/admin/send-notification-a';
 import ActiveUsersA from './pages/admin/active-users-a';
+import BackupsA from './pages/admin/backups-a';
+import RegisteredUsersA from './pages/admin/registered-users-a';
 // import TestPageA from './excel_test_data/test_pages/test-page-a';
 
 import ProtectedRoute from './components/ProtectedRoute'
 import ProfileGuard from './components/ProfileGuard';
 import SessionTracker from './components/SessionTracker';
 import IdleTimeoutModal from './components/IdleTimeoutModal';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   return (
@@ -45,10 +49,12 @@ function App() {
       <SessionTracker />
       <Router>
         <IdleTimeoutModal />
-        <Routes>
+        <ErrorBoundary>
+          <Routes>
 
-          <Route path="/" element={<Login/>} />
+            <Route path="/" element={<Login/>} />
           <Route path="/register" element={<Register/>} />
+          <Route path="/forgot" element={<Forgotp/>} />
           
           {/* U Routes - Strictly for LGU/Agency users */}
           <Route element={<Ulayout/>}>
@@ -174,6 +180,16 @@ function App() {
                 <ActiveUsersA/>
               </ProtectedRoute> 
             } />
+            <Route path="/registered-users-a" element={
+              <ProtectedRoute requiredRole="admin">
+                <RegisteredUsersA/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/backups-a" element={
+              <ProtectedRoute requiredRole="admin">
+                <BackupsA/>
+              </ProtectedRoute> 
+            } />
             <Route path="/contact-a" element={
               <ProtectedRoute requiredRole="admin">
                 <ContactUs/>
@@ -184,9 +200,10 @@ function App() {
                 <TestPageA/>
               </ProtectedRoute> 
             } /> */}
-          </Route>
+            </Route>
 
-        </Routes>
+          </Routes>
+        </ErrorBoundary>
       </Router>
     </>
   )

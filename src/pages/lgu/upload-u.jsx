@@ -13,6 +13,7 @@ import { useAgencyWorkflow } from '../../hooks/useAgencyWorkflow';
 import { logActivity } from '../../firebase/activityLog';
 import { createAdminNotifications } from '../../firebase/notifications';
 import Spinner from '../../components/Spinner';
+import { authFetch } from '../../utils/apiClient';
 
 export default function Uupload() {
   const nav = useNavigate();
@@ -175,7 +176,6 @@ export default function Uupload() {
     setUploadStatus('Uploading to Google Drive...');
     setStatusType('');
 
-    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     const fileExtension = file.name.split('.').pop();
     const fileType = isSelfAssessmentMode ? 'Self-Assessment' : 'Action-Plan';
     const formattedName = isSelfAssessmentMode
@@ -188,14 +188,14 @@ export default function Uupload() {
     formData.append('fileType', fileType);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/upload`, {
+      const response = await authFetch('/upload', {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        const errData = await response.text();
-        throw new Error(errData || 'Upload to Drive failed.');
+        const errData = await response.json().catch(() => null);
+        throw new Error(errData?.error || 'Upload to Drive failed.');
       }
 
       const driveData = await response.json();

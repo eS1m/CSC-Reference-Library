@@ -1,0 +1,91 @@
+/* Registered Users Admin Page */
+
+.registered-users-page {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.registered-users-loading {
+  padding: 60px;
+  text-align: center;
+  color: var(--stat-description);
+  font-size: 1rem;
+}
+
+/* Stats */
+.registered-users-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.registered-users-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.027);
+  border-left: 4px solid var(--light-blue);
+  transition: transform 0.3s ease;
+}
+
+.registered-users-stat:hover {
+  transform: translateY(-2px);
+}
+
+.registered-users-stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--deep-blue);
+  line-height: 1;
+}
+
+.registered-users-stat-label {
+  font-size: 0.9rem;
+  color: var(--stat-description);
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+/* Table card */
+.registered-users-table-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.027);
+  padding: 24px;
+  overflow-x: auto;
+}
+
+/* Action buttons container */
+.registered-users-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Mono cell for User ID */
+.mono-cell {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.85rem;
+  color: var(--stat-description);
+  word-break: break-all;
+  max-width: 180px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .registered-users-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .registered-users-stats {
+    grid-template-columns: 1fr;
+  }
+}

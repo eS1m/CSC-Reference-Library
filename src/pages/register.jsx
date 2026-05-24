@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom'; // Using Link for navigation
-import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signOut, sendEmailVerification } from 'firebase/auth';
 import { auth } from '../firebase/config.js';
 import { createUser } from '../firebase/collections/users'; 
 import { logActivity } from '../firebase/activityLog';
+import { createAdminNotifications } from '../firebase/notifications';
 import '../css/auth.css';
 import Modal from '../components/Modal';
 import logo from '../assets/logo.svg';
@@ -28,7 +29,13 @@ export default function Register() {
                 email: user.email,
                 role: role,
                 approvalStatus: 'pending',
+                emailVerified: false,
                 createdAt: new Date()
+            });
+
+            await sendEmailVerification(user, {
+                url: `${window.location.origin}/`,
+                handleCodeInApp: false,
             });
 
             await logActivity({
@@ -37,6 +44,13 @@ export default function Register() {
                 userRole: role,
                 action: 'REGISTER',
                 message: `New user ${user.email} registered as ${role}`
+            });
+
+            await createAdminNotifications({
+                type: 'NEW_USER_REGISTERED',
+                agencyId: user.uid,
+                agencyName: user.email,
+                roles: ['admin']
             });
 
             await signOut(auth);
@@ -141,7 +155,12 @@ export default function Register() {
               }
             >
               <p style={{ fontWeight: 600 }}>Account created successfully!</p>
-              <p className="modal-subtext">Your account is pending admin approval. You will be able to log in once an administrator has reviewed and approved your request.</p>
+              <p className="modal-subtext">
+                A verification email has been sent to <strong>{email}</strong>.
+                Please check your inbox (and spam folder) and click the verification link.
+                Your account is also pending admin approval. You will be able to log in
+                once you have verified your email and an administrator has approved your request.
+              </p>
             </Modal>
         </div>
     );
