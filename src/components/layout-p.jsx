@@ -146,7 +146,7 @@ export default function Playout() {
                         <nav>
                             <NavLink className="nav-item-prime nav-contact-us" to="/contact-p">
                                 <img src={contactIcon} alt="Contact Us" width="20" height="20" className="deep-blue-filter"/>
-                                Contact Us
+                                Contact Developers
                             </NavLink>
                         </nav>
                         <div className="sidebar-footer-divider"></div>

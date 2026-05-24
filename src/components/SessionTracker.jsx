@@ -56,9 +56,12 @@ export default function SessionTracker() {
 
       try {
         const userDoc = await getDoc(doc(db, 'users', user.uid));
-        const role = userDoc.exists() ? userDoc.data().role : null;
+        const data = userDoc.exists() ? userDoc.data() : null;
+        const role = data?.role || null;
+        const approvalStatus = data?.approvalStatus || 'approved';
 
-        if (role) {
+        // Only track sessions for approved users
+        if (role && approvalStatus === 'approved') {
           userIdRef.current = user.uid;
           await createSession(user.uid, user.email, role);
           intervalRef.current = setInterval(() => {

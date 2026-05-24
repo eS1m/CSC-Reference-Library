@@ -18,8 +18,7 @@ import { createSubmission } from '../../firebase/collections/agencySubmissions';
 import { logActivity } from '../../firebase/activityLog';
 import { createAdminNotifications } from '../../firebase/notifications';
 import { useAgencyWorkflow } from '../../hooks/useAgencyWorkflow';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { authFetch } from '../../utils/apiClient';
 
 const templateUrl = new URL('../../assets/templates/Action Plan Template - Agency Guide (Assist Form No. 2).docx', import.meta.url).href;
 
@@ -463,7 +462,7 @@ export default function ActionPlanU() {
       formData.append('file', blob, `Action Plan-${agencyName}.docx`);
       formData.append('agencyName', agencyName);
 
-      const res = await fetch(`${API_URL}/upload-action-plan`, {
+      const res = await authFetch('/upload-action-plan', {
         method: 'POST',
         body: formData,
       });
