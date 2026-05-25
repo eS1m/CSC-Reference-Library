@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import '../../css/admin/admin-dashboard.css';
 import '../../css/admin/backups-a.css';
 import Spinner from '../../components/Spinner';
@@ -26,6 +26,24 @@ export default function BackupsA() {
   const [runningBackup, setRunningBackup] = useState(false);
   const [downloadingId, setDownloadingId] = useState(null);
 
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [restoreFileId, setRestoreFileId] = useState(null);
+  const [restoreFileName, setRestoreFileName] = useState('');
+  const [restoreCollections, setRestoreCollections] = useState([]);
+  const [restoreSelected, setRestoreSelected] = useState([]);
+  const [restoring, setRestoring] = useState(false);
+  const [showRestoreResultModal, setShowRestoreResultModal] = useState(false);
+  const [restoreResult, setRestoreResult] = useState(null);
+
+  const [showUploadRestoreModal, setShowUploadRestoreModal] = useState(false);
+  const [uploadRestoreFile, setUploadRestoreFile] = useState(null);
+  const [uploadRestoreFileName, setUploadRestoreFileName] = useState('');
+  const [uploadRestoreCollections, setUploadRestoreCollections] = useState([]);
+  const [uploadRestoreSelected, setUploadRestoreSelected] = useState([]);
+  const [uploadRestoring, setUploadRestoring] = useState(false);
+
+  const fileInputRef = useRef(null);
+
   const [estimateResult, setEstimateResult] = useState(null);
   const [lastBackupResult, setLastBackupResult] = useState(null);
 
@@ -49,7 +67,7 @@ export default function BackupsA() {
         const configData = await configRes.json();
         const colData = await colRes.json();
 
-        setConfig(prev => ({
+        setConfig(() => ({
           enabled: configData.config?.enabled ?? false,
           frequency: configData.config?.frequency ?? 'manual',
           collections: configData.config?.collections ?? [],
@@ -153,6 +171,140 @@ export default function BackupsA() {
       setError(err.message);
     } finally {
       setRunningBackup(false);
+    }
+  };
+
+  const openRestoreModal = (fileId, fileName, cols) => {
+    setRestoreFileId(fileId);
+    setRestoreFileName(fileName);
+    setRestoreCollections(cols || []);
+    setRestoreSelected(cols || []);
+    setShowRestoreModal(true);
+  };
+
+  const toggleRestoreCollection = (col) => {
+    setRestoreSelected(prev =>
+      prev.includes(col) ? prev.filter(c => c !== col) : [...prev, col]
+    );
+  };
+
+  const toggleSelectAllRestore = () => {
+    if (restoreSelected.length === restoreCollections.length) {
+      setRestoreSelected([]);
+    } else {
+      setRestoreSelected([...restoreCollections]);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (restoreSelected.length === 0) {
+      setError('Please select at least one collection to restore.');
+      return;
+    }
+    setRestoring(true);
+    setError('');
+    try {
+      const res = await authFetch('/backup/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileId: restoreFileId, collections: restoreSelected })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Restore failed');
+      setRestoreResult(data);
+      setShowRestoreModal(false);
+      setShowRestoreResultModal(true);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setRestoring(false);
+    }
+  };
+
+  const handleUploadBackupClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileSelected = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
+      setError('Please select a valid JSON backup file.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        const cols = Object.keys(data).filter(k => Array.isArray(data[k]));
+        if (cols.length === 0) {
+          setError('No valid collections found in the uploaded file.');
+          return;
+        }
+        setUploadRestoreFile(file);
+        setUploadRestoreFileName(file.name);
+        setUploadRestoreCollections(cols);
+        setUploadRestoreSelected(cols);
+        setShowUploadRestoreModal(true);
+      } catch {
+        setError('Failed to parse backup file. Please ensure it is valid JSON.');
+      }
+    };
+    reader.onerror = () => {
+      setError('Failed to read the selected file.');
+    };
+    reader.readAsText(file);
+  };
+
+  const toggleUploadRestoreCollection = (col) => {
+    setUploadRestoreSelected(prev =>
+      prev.includes(col) ? prev.filter(c => c !== col) : [...prev, col]
+    );
+  };
+
+  const toggleSelectAllUploadRestore = () => {
+    if (uploadRestoreSelected.length === uploadRestoreCollections.length) {
+      setUploadRestoreSelected([]);
+    } else {
+      setUploadRestoreSelected([...uploadRestoreCollections]);
+    }
+  };
+
+  const handleUploadRestore = async () => {
+    if (uploadRestoreSelected.length === 0) {
+      setError('Please select at least one collection to restore.');
+      return;
+    }
+    if (!uploadRestoreFile) {
+      setError('No backup file selected.');
+      return;
+    }
+    setUploadRestoring(true);
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.append('file', uploadRestoreFile);
+      formData.append('collections', JSON.stringify(uploadRestoreSelected));
+
+      const res = await authFetch('/backup/restore-upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Restore failed');
+      setRestoreResult(data);
+      setShowUploadRestoreModal(false);
+      setShowRestoreResultModal(true);
+      setUploadRestoreFile(null);
+      setUploadRestoreFileName('');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploadRestoring(false);
     }
   };
 
@@ -326,6 +478,16 @@ export default function BackupsA() {
         <div className="backups-card">
           <div className="backups-card-header">
             <h2>Backup History</h2>
+            <button className="backups-file-btn backups-file-btn-secondary" onClick={handleUploadBackupClick}>
+              Upload Backup
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,application/json"
+              style={{ display: 'none' }}
+              onChange={handleFileSelected}
+            />
           </div>
 
           <div className="backups-table-container">
@@ -360,13 +522,18 @@ export default function BackupsA() {
                       <td>
                         <div className="backups-file-actions">
                           {item.fileUrl && (
-                            <a href={item.fileUrl} target="_blank" rel="noopener noreferrer" className="backups-file-link">
+                            <a
+                              href={item.fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="backups-file-btn backups-file-btn-primary"
+                            >
                               View in Drive
                             </a>
                           )}
                           {item.fileId && (
                             <button
-                              className="backups-file-download-btn"
+                              className="backups-file-btn backups-file-btn-secondary"
                               onClick={() => handleDownload(item.fileId, item.fileName)}
                               disabled={downloadingId === item.fileId}
                             >
@@ -375,6 +542,14 @@ export default function BackupsA() {
                               ) : (
                                 'Download'
                               )}
+                            </button>
+                          )}
+                          {item.status === 'success' && item.fileId && (
+                            <button
+                              className="backups-file-btn backups-file-btn-warning"
+                              onClick={() => openRestoreModal(item.fileId, item.fileName, item.collections)}
+                            >
+                              Restore
                             </button>
                           )}
                           {!item.fileUrl && !item.fileId && '—'}
@@ -401,6 +576,127 @@ export default function BackupsA() {
         }
       >
         {successMessage}
+      </Modal>
+
+      <Modal
+        isOpen={showRestoreModal}
+        onClose={() => setShowRestoreModal(false)}
+        title="Restore Backup"
+        variant="warning"
+        actions={
+          <>
+            <button className="modal-btn modal-btn-secondary" onClick={() => setShowRestoreModal(false)}>
+              Cancel
+            </button>
+            <button
+              className="modal-btn modal-btn-primary"
+              onClick={handleRestore}
+              disabled={restoring || restoreSelected.length === 0}
+            >
+              {restoring ? <Spinner size="sm" color="white" /> : 'Restore'}
+            </button>
+          </>
+        }
+      >
+        <p className="modal-subtext">Select collections to restore from <strong>{restoreFileName}</strong>.</p>
+        <p className="modal-subtext" style={{ color: '#856404', marginTop: '4px' }}>
+          Existing documents will be skipped.
+        </p>
+        <div className="backups-restore-collections">
+          <button className="backups-select-all-btn" onClick={toggleSelectAllRestore}>
+            {restoreSelected.length === restoreCollections.length && restoreCollections.length > 0
+              ? 'Deselect All'
+              : 'Select All'}
+          </button>
+          <div className="backups-collections-grid">
+            {restoreCollections.map(col => (
+              <label key={col} className="backups-collection-item">
+                <input
+                  type="checkbox"
+                  checked={restoreSelected.includes(col)}
+                  onChange={() => toggleRestoreCollection(col)}
+                />
+                <span>{col}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={showUploadRestoreModal}
+        onClose={() => setShowUploadRestoreModal(false)}
+        title="Restore from Upload"
+        variant="warning"
+        actions={
+          <>
+            <button className="modal-btn modal-btn-secondary" onClick={() => setShowUploadRestoreModal(false)}>
+              Cancel
+            </button>
+            <button
+              className="modal-btn modal-btn-primary"
+              onClick={handleUploadRestore}
+              disabled={uploadRestoring || uploadRestoreSelected.length === 0}
+            >
+              {uploadRestoring ? <Spinner size="sm" color="white" /> : 'Restore'}
+            </button>
+          </>
+        }
+      >
+        <p className="modal-subtext">Select collections to restore from <strong>{uploadRestoreFileName}</strong>.</p>
+        <p className="modal-subtext" style={{ color: '#856404', marginTop: '4px' }}>
+          Existing documents will be skipped.
+        </p>
+        <div className="backups-restore-collections">
+          <button className="backups-select-all-btn" onClick={toggleSelectAllUploadRestore}>
+            {uploadRestoreSelected.length === uploadRestoreCollections.length && uploadRestoreCollections.length > 0
+              ? 'Deselect All'
+              : 'Select All'}
+          </button>
+          <div className="backups-collections-grid">
+            {uploadRestoreCollections.map(col => (
+              <label key={col} className="backups-collection-item">
+                <input
+                  type="checkbox"
+                  checked={uploadRestoreSelected.includes(col)}
+                  onChange={() => toggleUploadRestoreCollection(col)}
+                />
+                <span>{col}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={showRestoreResultModal}
+        onClose={() => setShowRestoreResultModal(false)}
+        title="Restore Complete"
+        variant="success"
+        actions={
+          <button className="modal-btn modal-btn-primary" onClick={() => setShowRestoreResultModal(false)}>
+            OK
+          </button>
+        }
+      >
+        {restoreResult && (
+          <div className="backups-restore-result">
+            <p><strong>{restoreResult.restored}</strong> documents restored</p>
+            <p><strong>{restoreResult.skipped}</strong> documents skipped (already existed)</p>
+            {restoreResult.failed > 0 && (
+              <p style={{ color: '#cc0000' }}><strong>{restoreResult.failed}</strong> documents failed</p>
+            )}
+            <div className="backups-restore-details">
+              {Object.entries(restoreResult.collections).map(([col, stats]) => (
+                <div key={col} className="backups-restore-col">
+                  <strong>{col}</strong>: {stats.restored} restored, {stats.skipped} skipped
+                  {stats.failed > 0 && `, ${stats.failed} failed`}
+                  {stats.error && <span style={{ color: '#cc0000' }}> — {stats.error}</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </Modal>
     </main>
   );

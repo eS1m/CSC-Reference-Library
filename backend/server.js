@@ -1016,6 +1016,60 @@ app.get('/backup/download', requireApprovedUser, requireRole('admin'), async (re
   }
 });
 
+app.post('/backup/restore', verifyFirebaseToken, requireApprovedUser, requireRole('admin'), async (req, res) => {
+  try {
+    const { fileId, collections } = req.body;
+    if (!fileId) {
+      return res.status(400).json({ error: 'fileId is required' });
+    }
+    if (!Array.isArray(collections) || collections.length === 0) {
+      return res.status(400).json({ error: 'collections array is required' });
+    }
+    if (!backupService.isInitialized()) {
+      return res.status(503).json({ error: 'Backup service not initialized' });
+    }
+    const result = await backupService.restoreBackup(fileId, collections);
+    res.status(200).json({ success: true, ...result });
+  } catch (error) {
+    console.error('Backup restore error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/backup/restore-upload', verifyFirebaseToken, requireApprovedUser, requireRole('admin'), upload.single('file'), async (req, res) => {
+  try {
+    let collections;
+    try {
+      collections = JSON.parse(req.body.collections);
+    } catch (err) {
+      return res.status(400).json({ error: 'collections must be a valid JSON array' });
+    }
+    if (!Array.isArray(collections) || collections.length === 0) {
+      return res.status(400).json({ error: 'collections array is required' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: 'backup file is required' });
+    }
+    if (!backupService.isInitialized()) {
+      return res.status(503).json({ error: 'Backup service not initialized' });
+    }
+
+    const jsonStr = req.file.buffer.toString('utf-8');
+    let backupData;
+    try {
+      backupData = JSON.parse(jsonStr);
+    } catch (err) {
+      return res.status(400).json({ error: 'Uploaded file is not valid JSON' });
+    }
+
+    const result = await backupService.restoreFromData(backupData, collections);
+    res.status(200).json({ success: true, ...result });
+  } catch (error) {
+    console.error('Backup restore upload error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/drive/folder-link', requireApprovedUser, requireAgencyOwnership, async (req, res) => {
   try {
     const { agencyName, folderName } = req.query;
