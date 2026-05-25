@@ -192,23 +192,18 @@
 /* Form actions */
 .backups-form-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
+  gap: 12px;
   padding-top: 8px;
-}
-
-/* Action buttons */
-.backups-actions {
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.backups-action-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
   flex-wrap: wrap;
+}
+
+.backups-form-results {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding-top: 8px;
 }
 
 .backups-btn-primary,
@@ -356,8 +351,13 @@
     grid-template-columns: 1fr;
   }
 
-  .backups-action-row {
+  .backups-form-actions,
+  .backups-form-results {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+  }
+
+  .backups-form-actions button {
+    width: 100%;
   }
 }

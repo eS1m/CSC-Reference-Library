@@ -283,39 +283,19 @@ export default function BackupsA() {
 
             <div className="backups-form-actions">
               <button
-                className="backups-btn-primary"
-                onClick={handleSaveConfig}
-                disabled={savingConfig}
-              >
-                {savingConfig ? <Spinner size="sm" color="white" /> : 'Save Configuration'}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="backups-card">
-          <div className="backups-card-header">
-            <h2>Actions</h2>
-          </div>
-
-          <div className="backups-actions">
-            <div className="backups-action-row">
-              <button
                 className="backups-btn-secondary"
                 onClick={handleEstimate}
                 disabled={estimating || config.collections.length === 0}
               >
                 {estimating ? <Spinner size="sm" color="dark" /> : 'Calculate Size'}
               </button>
-              {estimateResult && (
-                <span className="backups-estimate-result">
-                  Estimated size: <strong>{estimateResult.sizeDisplay}</strong> ({estimateResult.totalDocs.toLocaleString()} documents)
-                </span>
-              )}
-            </div>
-
-            <div className="backups-action-row">
+              <button
+                className="backups-btn-primary"
+                onClick={handleSaveConfig}
+                disabled={savingConfig}
+              >
+                {savingConfig ? <Spinner size="sm" color="white" /> : 'Save Configuration'}
+              </button>
               <button
                 className="backups-btn-primary"
                 onClick={handleRunBackup}
@@ -323,12 +303,22 @@ export default function BackupsA() {
               >
                 {runningBackup ? <Spinner size="sm" color="white" /> : 'Backup Now'}
               </button>
-              {lastBackupResult && (
-                <span className="backups-last-result">
-                  Last backup: <strong>{lastBackupResult.sizeDisplay}</strong>
-                </span>
-              )}
             </div>
+
+            {(estimateResult || lastBackupResult) && (
+              <div className="backups-form-results">
+                {estimateResult && (
+                  <span className="backups-estimate-result">
+                    Estimated size: <strong>{estimateResult.sizeDisplay}</strong> ({estimateResult.totalDocs.toLocaleString()} documents)
+                  </span>
+                )}
+                {lastBackupResult && (
+                  <span className="backups-last-result">
+                    Last backup: <strong>{lastBackupResult.sizeDisplay}</strong>
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
