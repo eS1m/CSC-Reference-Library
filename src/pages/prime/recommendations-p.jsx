@@ -10,8 +10,7 @@ import { getSubmissions } from '../../firebase/collections/agencySubmissions';
 import { getProfiles } from '../../firebase/collections/agencyProfiles';
 import { notifyAgencyEvidenceRequired, notifyAgencyOARecommended } from '../../firebase/notifications';
 import { unlockEvidence, lockEvidence } from '../../firebase/collections/evidenceUnlocks';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { authFetch } from '../../utils/apiClient';
 
 function canGenerateOARecommendation(rec) {
   return Boolean(
@@ -106,7 +105,7 @@ export default function RecommendationsP() {
           try {
             const params = new URLSearchParams({ fileId: rec.assistPlan.fileId });
             if (rec.agencyName) params.append('agencyName', rec.agencyName);
-            const res = await fetch(`${API_BASE_URL}/drive/file-exists?${params}`);
+            const res = await authFetch(`/drive/file-exists?${params}`);
             const data = await res.json();
             if (!data.exists) updates.assistPlan = null;
           } catch (err) {
@@ -118,7 +117,7 @@ export default function RecommendationsP() {
           try {
             const params = new URLSearchParams({ fileId: rec.progressLog.fileId });
             if (rec.agencyName) params.append('agencyName', rec.agencyName);
-            const res = await fetch(`${API_BASE_URL}/drive/file-exists?${params}`);
+            const res = await authFetch(`/drive/file-exists?${params}`);
             const data = await res.json();
             if (!data.exists) updates.progressLog = null;
           } catch (err) {
@@ -281,7 +280,7 @@ export default function RecommendationsP() {
     formData.append('fileType', fileType);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/upload`, {
+      const response = await authFetch('/upload', {
         method: 'POST',
         body: formData,
       });

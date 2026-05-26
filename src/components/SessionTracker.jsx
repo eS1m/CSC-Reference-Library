@@ -36,7 +36,15 @@ export default function SessionTracker() {
       }
     };
 
+    const handlePageHide = (event) => {
+      if (userIdRef.current && !event.persisted) {
+        // Page is being discarded (not cached for bfcache)
+        removeSession(userIdRef.current).catch(() => {});
+      }
+    };
+
     window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handlePageHide);
 
     const unsubAuth = onAuthStateChanged(auth, async (user) => {
       if (intervalRef.current) {
@@ -56,9 +64,12 @@ export default function SessionTracker() {
 
       try {
         const userDoc = await getDoc(doc(db, 'users', user.uid));
-        const role = userDoc.exists() ? userDoc.data().role : null;
+        const data = userDoc.exists() ? userDoc.data() : null;
+        const role = data?.role || null;
+        const approvalStatus = data?.approvalStatus || 'approved';
 
-        if (role) {
+        // Only track sessions for approved users
+        if (role && approvalStatus === 'approved') {
           userIdRef.current = user.uid;
           await createSession(user.uid, user.email, role);
           intervalRef.current = setInterval(() => {
@@ -73,6 +84,7 @@ export default function SessionTracker() {
     return () => {
       unsubAuth();
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handlePageHide);
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }

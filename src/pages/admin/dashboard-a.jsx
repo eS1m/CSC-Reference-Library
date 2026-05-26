@@ -9,6 +9,8 @@ import { useTotalActiveSessionCount } from '../../hooks/useTotalActiveSessionCou
 import { updateUser } from '../../firebase/collections/users';
 import { deleteSubmissionsByUserId } from '../../firebase/collections/agencySubmissions';
 
+const SHOW_RESET_BUTTON = import.meta.env.VITE_SHOW_RESET_BUTTON === 'true';
+
 import agencyIcon from '../../assets/agency.svg';
 import fileIcon from '../../assets/file.svg';
 import reviewIcon from '../../assets/review.svg';
@@ -219,6 +221,7 @@ export default function Adashboard() {
                     <th>Email</th>
                     <th>Requested Role</th>
                     <th>Registered</th>
+                    <th>Email Verified</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -233,14 +236,21 @@ export default function Adashboard() {
                       </td>
                       <td>{formatFirestoreDate(user.createdAt)}</td>
                       <td>
+                        <span className={`status-badge ${user.emailVerified ? 'approved' : 'rejected'}`}>
+                          {user.emailVerified ? 'Verified' : 'Unverified'}
+                        </span>
+                      </td>
+                      <td>
                         <div className="approval-actions">
-                          <button 
+                          <button
                             className="approve-user-btn"
                             onClick={() => handleApprovalStatus(user.id, 'approved', user.email, user.role)}
+                            disabled={!user.emailVerified}
+                            title={!user.emailVerified ? 'Cannot approve until email is verified' : ''}
                           >
                             Approve
                           </button>
-                          <button 
+                          <button
                             className="reject-user-btn"
                             onClick={() => handleApprovalStatus(user.id, 'rejected', user.email, user.role)}
                           >
@@ -263,10 +273,10 @@ export default function Adashboard() {
             <table className="admin-submissions-table">
               <thead>
                 <tr>
-                  <th>User ID</th>
                   <th>Email</th>
                   <th>Role</th>
                   <th>Approval Status</th>
+                  <th>Email Verified</th>
                   <th>Registered</th>
                   <th>Actions</th>
                 </tr>
@@ -279,7 +289,6 @@ export default function Adashboard() {
                 ) : (
                   allUsers.map((user) => (
                     <tr key={user.id}>
-                      <td className="mono-cell">{user.id}</td>
                       <td>{user.email}</td>
                       <td>
                         <span className={`role-badge ${getRoleBadgeClass(user.role)}`}>
@@ -292,10 +301,15 @@ export default function Adashboard() {
                         </span>
                       </td>
                       <td>
+                        <span className={`status-badge ${user.emailVerified ? 'approved' : 'rejected'}`}>
+                          {user.emailVerified ? 'Verified' : 'Unverified'}
+                        </span>
+                      </td>
+                      <td>
                         {formatFirestoreDate(user.createdAt)}
                       </td>
                       <td>
-                        {user.role === 'u' && (
+                        {SHOW_RESET_BUTTON && user.role === 'u' && (
                           <button
                             className="reset-user-btn"
                             onClick={() => openResetModal(user)}
@@ -310,6 +324,11 @@ export default function Adashboard() {
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="view-all-link">
+            <button onClick={() => nav('/registered-users-a')}>
+              View All Registered Users →
+            </button>
           </div>
         </div>
       </div>

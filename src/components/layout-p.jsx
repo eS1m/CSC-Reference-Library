@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import '../css/prime/prime-layout.css';
 import hamIcon from '../assets/hamburger.svg';
@@ -19,6 +19,7 @@ import Modal from '../components/Modal';
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
 import { removeSession } from '../firebase/collections/activeSessions';
+import { subscribeDeletionRequests } from '../firebase/collections/deletionRequests';
 
 export default function Playout() {
     const nav = useNavigate();
@@ -40,10 +41,20 @@ export default function Playout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     const [showSignOutModal, setShowSignOutModal] = useState(false);
+    const [pendingDeletionCount, setPendingDeletionCount] = useState(0);
 
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
+
+    useEffect(() => {
+        const unsubscribe = subscribeDeletionRequests(
+            { status: 'pending' },
+            (requests) => setPendingDeletionCount(requests.length),
+            (err) => console.error('Deletion requests count error:', err)
+        );
+        return () => unsubscribe();
+    }, []);
 
     /* Dynamic Header Title Functionality */
     const getPageTitle = (path) => {
@@ -119,6 +130,9 @@ export default function Playout() {
                             <NavLink className="nav-item-prime nav-deletion-requests" to="/deletion-requests-p">
                                 <img src={deleteIcon} alt="Deletion Requests" width="20" height="20" className="deep-blue-filter"/>
                                 Deletion Requests
+                                {pendingDeletionCount > 0 && (
+                                    <span className="nav-badge">{pendingDeletionCount}</span>
+                                )}
                             </NavLink>
                             <NavLink className="nav-item-prime nav-recommendations" to="/fom">
                                 <img src={recommendationsIcon} alt="Field Office Monitoring" width="20" height="20" className="deep-blue-filter"/>
@@ -146,7 +160,7 @@ export default function Playout() {
                         <nav>
                             <NavLink className="nav-item-prime nav-contact-us" to="/contact-p">
                                 <img src={contactIcon} alt="Contact Us" width="20" height="20" className="deep-blue-filter"/>
-                                Contact Us
+                                Contact Developers
                             </NavLink>
                         </nav>
                         <div className="sidebar-footer-divider"></div>
