@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import '../css/admin/admin-layout.css';
 import hamIcon from '../assets/hamburger.svg';
 import dashboardIcon from '../assets/dashboard.svg';
 import reviewIcon from '../assets/review.svg';
-import editIcon from '../assets/edit.svg';
 
 import folderIcon from '../assets/folder.svg';
 import databaseIcon from '../assets/database.svg';
+import pendingIcon from '../assets/pendinguser.svg';
 import deleteIcon from '../assets/rejected.svg';
 import notificationIcon from '../assets/notification.svg';
 import logoutIcon from '../assets/logout.svg';
@@ -19,6 +19,8 @@ import Modal from '../components/Modal';
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
 import { removeSession } from '../firebase/collections/activeSessions';
+import { subscribeUsers } from '../firebase/collections/users';
+import { subscribeDeletionRequests } from '../firebase/collections/deletionRequests';
 
 export default function Alayout() {
     const nav = useNavigate();
@@ -40,10 +42,31 @@ export default function Alayout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     const [showSignOutModal, setShowSignOutModal] = useState(false);
+    const [pendingCount, setPendingCount] = useState(0);
+    const [pendingDeletionCount, setPendingDeletionCount] = useState(0);
 
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
+
+    useEffect(() => {
+        const unsubscribe = subscribeUsers((users) => {
+            const pending = users.filter(u => u.approvalStatus === 'pending').length;
+            setPendingCount(pending);
+        }, (err) => {
+            console.error('Pending users count error:', err);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        const unsubscribe = subscribeDeletionRequests(
+            { status: 'pending' },
+            (requests) => setPendingDeletionCount(requests.length),
+            (err) => console.error('Deletion requests count error:', err)
+        );
+        return () => unsubscribe();
+    }, []);
 
     /* Dynamic Header Title Functionality */
     const getPageTitle = (path) => {
@@ -55,7 +78,7 @@ export default function Alayout() {
             case '/deletion-requests-a': return 'Deletion Requests';
             case '/send-notification-a': return 'Send Agency Notification';
             case '/active-users-a': return 'Active Users';
-            case '/registered-users-a': return 'Registered Users';
+            case '/registered-users-a': return 'Pending Users';
             case '/backups-a': return 'Backups';
             case '/contact-a': return 'Contact Us';
             default: return 'Admin Portal';
@@ -105,33 +128,14 @@ export default function Alayout() {
                                 Active Users
                             </NavLink>
                             <NavLink className="nav-item-admin nav-registered-users" to="/registered-users-a">
-                                <img src={profileIcon} alt="Registered Users" width="20" height="20" className="deep-blue-filter"/>
-                                Registered Users
+                                <img src={pendingIcon} alt="Pending Users" width="20" height="20" className="deep-blue-filter"/>
+                                Pending Users
+                                {pendingCount > 0 && (
+                                    <span className="nav-badge">{pendingCount}</span>
+                                )}
                             </NavLink>
                         </nav>
                     </div>
-        
-                    {/* Future admin routes — uncomment as pages are built */}
-                    {/*
-                    <div className="sidebar-section">
-                        <p className="sidebar-label">FILE MANAGEMENT</p>
-                        <nav>
-                            <NavLink className="nav-item-admin nav-review-files" to="/review-a">
-                                <img src={reviewIcon} alt="Review" width="20" height="20" className="deep-blue-filter"/>
-                                Review Submissions
-                            </NavLink>
-                            <NavLink className="nav-item-admin nav-approved-files" to="/approved-a">
-                                <img src={approvedIcon} alt="Approved" width="20" height="20" className="deep-blue-filter"/>
-                                Approved Files
-                            </NavLink>
-                            <NavLink className="nav-item-admin nav-rejected-files" to="/rejected-a">
-                                <img src={rejectedIcon} alt="Rejected" width="20" height="20" className="deep-blue-filter"/>
-                                Rejected Files
-                            </NavLink>
-                        </nav>
-                    </div>
-                    */}
-
                     <div className="sidebar-section">
                         <p className="sidebar-label">FILE MANAGEMENT</p>
                         <nav>
@@ -152,6 +156,9 @@ export default function Alayout() {
                             <NavLink className="nav-item-admin nav-deletion-requests" to="/deletion-requests-a">
                                 <img src={deleteIcon} alt="Deletion Requests" width="20" height="20" className="deep-blue-filter"/>
                                 Deletion Requests
+                                {pendingDeletionCount > 0 && (
+                                    <span className="nav-badge">{pendingDeletionCount}</span>
+                                )}
                             </NavLink>
                         </nav>
                     </div>

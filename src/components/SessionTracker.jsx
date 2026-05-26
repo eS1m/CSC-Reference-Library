@@ -36,7 +36,15 @@ export default function SessionTracker() {
       }
     };
 
+    const handlePageHide = (event) => {
+      if (userIdRef.current && !event.persisted) {
+        // Page is being discarded (not cached for bfcache)
+        removeSession(userIdRef.current).catch(() => {});
+      }
+    };
+
     window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handlePageHide);
 
     const unsubAuth = onAuthStateChanged(auth, async (user) => {
       if (intervalRef.current) {
@@ -76,6 +84,7 @@ export default function SessionTracker() {
     return () => {
       unsubAuth();
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handlePageHide);
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }

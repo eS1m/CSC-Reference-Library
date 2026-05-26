@@ -258,6 +258,128 @@ function startBackupScheduler() {
   console.log('Backup scheduler started (checks every hour)');
 }
 
+async function downloadBackupFromDrive(fileId) {
+  if (!driveInstance) throw new Error('Drive service not initialized');
+  const res = await driveInstance.files.get(
+    { fileId, alt: 'media' },
+    { responseType: 'stream' }
+  );
+  const chunks = [];
+  for await (const chunk of res.data) {
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString('utf-8');
+}
+
+function restoreTimestamps(obj) {
+  if (obj === null || typeof obj !== 'object') return obj;
+
+  if (
+    !Array.isArray(obj) &&
+    Object.keys(obj).length === 2 &&
+    '_seconds' in obj &&
+    '_nanoseconds' in obj &&
+    Number.isInteger(obj._seconds) &&
+    Number.isInteger(obj._nanoseconds)
+  ) {
+    return new admin.firestore.Timestamp(obj._seconds, obj._nanoseconds);
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(restoreTimestamps);
+  }
+
+  const result = {};
+  for (const [key, value] of Object.entries(obj)) {
+    result[key] = restoreTimestamps(value);
+  }
+  return result;
+}
+
+async function restoreFromData(backupData, collections) {
+  if (!adminDb) throw new Error('Firebase Admin not initialized');
+
+  const result = {
+    restored: 0,
+    skipped: 0,
+    failed: 0,
+    collections: {}
+  };
+
+  for (const col of collections) {
+    const backupDocs = backupData[col];
+    if (!Array.isArray(backupDocs)) {
+      result.collections[col] = { restored: 0, skipped: 0, failed: 0, error: 'Collection not found in backup' };
+      continue;
+    }
+
+    // Get all existing doc IDs for this collection
+    const existingSnap = await adminDb.collection(col).select().get();
+    const existingIds = new Set(existingSnap.docs.map(d => d.id));
+
+    const docsToRestore = [];
+    const docsToSkip = [];
+
+    for (const docData of backupDocs) {
+      const docId = docData.id;
+      if (!docId) {
+        result.failed++;
+        continue;
+      }
+      if (existingIds.has(docId)) {
+        docsToSkip.push(docId);
+      } else {
+        const { id, ...dataWithoutId } = docData;
+        docsToRestore.push({ id: docId, data: restoreTimestamps(dataWithoutId) });
+      }
+    }
+
+    let colRestored = 0;
+    let colFailed = 0;
+    const BATCH_SIZE = 500;
+
+    for (let i = 0; i < docsToRestore.length; i += BATCH_SIZE) {
+      const batch = adminDb.batch();
+      const chunk = docsToRestore.slice(i, i + BATCH_SIZE);
+      for (const doc of chunk) {
+        const ref = adminDb.collection(col).doc(doc.id);
+        batch.set(ref, doc.data);
+      }
+      try {
+        await batch.commit();
+        colRestored += chunk.length;
+      } catch (err) {
+        console.error(`Restore batch failed for ${col}:`, err);
+        colFailed += chunk.length;
+      }
+    }
+
+    result.restored += colRestored;
+    result.skipped += docsToSkip.length;
+    result.failed += colFailed;
+    result.collections[col] = {
+      restored: colRestored,
+      skipped: docsToSkip.length,
+      failed: colFailed,
+      totalInBackup: backupDocs.length
+    };
+  }
+
+  return result;
+}
+
+async function restoreBackup(fileId, collections) {
+  if (!driveInstance) throw new Error('Drive service not initialized');
+  const jsonStr = await downloadBackupFromDrive(fileId);
+  let backupData;
+  try {
+    backupData = JSON.parse(jsonStr);
+  } catch (err) {
+    throw new Error('Backup file is not valid JSON');
+  }
+  return restoreFromData(backupData, collections);
+}
+
 module.exports = {
   initBackupService,
   isInitialized,
@@ -269,4 +391,6 @@ module.exports = {
   logBackupError,
   getBackupHistory,
   formatBytes,
+  restoreBackup,
+  restoreFromData,
 };

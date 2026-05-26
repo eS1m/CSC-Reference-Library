@@ -94,7 +94,7 @@ export default function RegisteredUsersA() {
     return (
       <main className="main-content">
         <div className="main-content-header">
-          <h1 id="main-content-title">Registered Users</h1>
+          <h1 id="main-content-title">Pending Users</h1>
         </div>
         <div className="registered-users-loading">Loading users...</div>
       </main>

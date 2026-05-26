@@ -360,7 +360,7 @@ export default function RecomP() {
     formData.append('fileType', fileConfig.uploadFileType);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/upload`, {
+      const response = await authFetch('/upload', {
         method: 'POST',
         body: formData,
       });
