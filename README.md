@@ -1,4 +1,4 @@
-# PRIME-HRM Reference Library
+# PRIME-HRM Knowledge Library
 
 A web application for managing the submission and review of PRIME-HRM (Program to Institutionalize Meritocracy and Excellence in Human Resource Management) assessment documents. Built for the **Civil Service Commission (CSC)** and government agencies under **Region X (Northern Mindanao)**.
 
