@@ -105,8 +105,10 @@ Required variables:
 | `GOOGLE_CLIENT_SECRET` | OAuth2 Client Secret |
 | `GOOGLE_REFRESH_TOKEN` | Refresh token for Drive API access |
 | `GOOGLE_FOLDER_ID` | Root Google Drive folder ID where agency folders are created |
+| `FIREBASE_SERVICE_ACCOUNT` | Base64-encoded Firebase Admin service account JSON |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated list of allowed frontend origins |
 
-#### Frontend (Optional — Development Only)
+#### Frontend (Development)
 Create a `.env` file at the project root for testing overrides:
 
 ```bash
@@ -116,6 +118,9 @@ VITE_IDLE_LOGOUT_MS=5000
 
 # Lower concurrent user limit for testing
 VITE_MAX_AGENCY_USERS=2
+
+# Production backend API URL (set before building for deployment)
+# VITE_API_URL=https://your-backend-url.com
 ```
 
 > **Note:** Vite reads `.env` only when the dev server starts. Restart `npm run dev` after changing these values.
@@ -156,6 +161,33 @@ docker compose down
 
 ---
 
+## Deployment
+
+The app is deployed using **Firebase Hosting** (frontend) and **Render** (backend) on free tiers. No credit card is required.
+
+| Layer | Platform | URL |
+|-------|----------|-----|
+| Frontend | Firebase Hosting | `https://csc-reference-library.web.app` |
+| Backend | Render | `https://prime-hrm-backend.onrender.com` |
+
+### Quick Deploy
+
+1. **Build the frontend** with the production backend URL:
+   ```bash
+   # Windows PowerShell
+   $env:VITE_API_URL="https://prime-hrm-backend.onrender.com"
+   npm run build
+   ```
+
+2. **Deploy to Firebase:**
+   ```bash
+   firebase deploy --only hosting
+   ```
+
+> See **AGENTS.md** for the full deployment procedure, environment setup, and troubleshooting.
+
+---
+
 ## Available Scripts
 
 ### Frontend (root directory)
@@ -174,6 +206,13 @@ docker compose down
 | `npm start` | Start Express server |
 | `npm run dev` | Start with nodemon (requires global installation) |
 
+### Firebase CLI
+
+| Command | Description |
+|---------|-------------|
+| `firebase deploy --only hosting` | Deploy frontend to Firebase Hosting |
+| `firebase hosting:disable` | Temporarily take the site offline |
+
 ---
 
 ## Project Structure
@@ -183,6 +222,7 @@ CSC-Reference-Library/
 ├── backend/                    # Express.js backend
 │   ├── server.js               # Main API server
 │   ├── narrativeReport.js      # Narrative Report generator
+│   ├── backupService.js        # Firestore backup & restore
 │   ├── .env                    # Google API credentials (gitignored)
 │   ├── .env.example            # Env var template
 │   ├── package.json
@@ -190,6 +230,8 @@ CSC-Reference-Library/
 ├── src/
 │   ├── App.jsx                 # Root router with role-based routes
 │   ├── firebase/               # Firebase config, rules, collections
+│   │   ├── config.js           # Firebase init
+│   │   ├── firestore.rules     # Security rules
 │   │   └── collections/        # Firestore CRUD helpers
 │   ├── hooks/                  # Real-time data hooks
 │   ├── utils/                  # Shared utilities
@@ -203,6 +245,9 @@ CSC-Reference-Library/
 │   │   ├── prime/              # CSC RO X pages
 │   │   └── admin/              # Admin pages
 │   └── css/                    # Component and page styles
+├── .firebaserc                 # Firebase CLI project alias
+├── firebase.json               # Firebase Hosting config
+├── render.yaml                 # Render deployment blueprint
 ├── Dockerfile
 ├── docker-compose.yml
 ├── nginx.conf
@@ -227,6 +272,8 @@ CSC-Reference-Library/
 | **`evidenceUnlocks`** | Per-agency unlock state for Evidence Requirements |
 | **`activeSessions`** | Real-time heartbeat-based session tracking |
 | **`notifications`** | Cross-role agency notifications |
+| **`backupHistory`** | Backup run history metadata |
+| **`systemConfig`** | System-wide settings (backup config) |
 
 ---
 
@@ -239,10 +286,13 @@ Agency users are limited to **25 simultaneous sessions**. Admins and CSC RO X ar
 All users are automatically logged out after **10 minutes of inactivity**. A warning modal appears after 9 minutes with an **"Extend Session"** button.
 
 ### Account Approval
-New registrations default to `approvalStatus: "pending"`. Admins must approve accounts through the System Administrator dashboard before users can log in.
+New registrations default to `approvalStatus: "pending"`. Admins must approve accounts through the System Administrator dashboard before users can log in. Email verification is required for email/password accounts.
 
 ### Active Users Monitor
 Admins can view a real-time table of all logged-in users across all roles at `/active-users-a`, including login time, last active timestamp, and Active/Idle status.
+
+### Firestore Backup System
+Admins can configure automatic Firestore backups to Google Drive, run manual backups, estimate sizes, and restore from backup files. Accessible at `/backups-a`.
 
 ### Google Drive Folder Structure
 Uploaded files are organized automatically:
