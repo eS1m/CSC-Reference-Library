@@ -238,7 +238,9 @@ const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
       'http://localhost:5173',
       'http://localhost:8080',
       'https://ccs-reference-library-staging-vtmh4.ondigitalocean.app',
-      'https://csc-kl.duckdns.org'
+      'https://csc-kl.duckdns.org',
+      'https://csc-reference-library.web.app',
+      'https://csc-reference-library.firebaseapp.com'
     ];
 
 app.use(cors({
