@@ -184,8 +184,6 @@ The app is deployed using **Firebase Hosting** (frontend) and **Render** (backen
    firebase deploy --only hosting
    ```
 
-> See **AGENTS.md** for the full deployment procedure, environment setup, and troubleshooting.
-
 ---
 
 ## Available Scripts
