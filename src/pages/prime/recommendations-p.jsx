@@ -117,7 +117,7 @@ export default function RecommendationsP() {
           try {
             const params = new URLSearchParams({ fileId: rec.progressLog.fileId });
             if (rec.agencyName) params.append('agencyName', rec.agencyName);
-            const res = await fetch(`${API_BASE_URL}/drive/file-exists?${params}`);
+            const res = await authFetch(`/drive/file-exists?${params}`);
             const data = await res.json();
             if (!data.exists) updates.progressLog = null;
           } catch (err) {

@@ -90,6 +90,10 @@
 .backups-card-header {
   padding: 20px 24px;
   border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .backups-card-header h2 {
@@ -192,23 +196,18 @@
 /* Form actions */
 .backups-form-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
+  gap: 12px;
   padding-top: 8px;
-}
-
-/* Action buttons */
-.backups-actions {
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.backups-action-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
   flex-wrap: wrap;
+}
+
+.backups-form-results {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding-top: 8px;
 }
 
 .backups-btn-primary,
@@ -286,45 +285,71 @@
   white-space: nowrap;
 }
 
-.backups-file-link {
-  color: var(--light-blue);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.backups-file-link:hover {
-  text-decoration: underline;
-}
-
 /* File actions in table */
 .backups-file-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  flex-wrap: nowrap;
 }
 
-.backups-file-download-btn {
-  background: transparent;
-  border: none;
-  color: var(--light-blue);
-  font-size: 0.9rem;
-  font-weight: 500;
-  font-family: 'Outfit', sans-serif;
-  cursor: pointer;
-  padding: 0;
-  text-decoration: underline;
+.backups-file-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: 'Outfit', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  height: 28px;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.backups-file-download-btn:hover:not(:disabled) {
+.backups-file-btn-primary {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(79, 172, 254, 0.2);
+}
+
+.backups-file-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
+}
+
+.backups-file-btn-secondary {
+  background: #f5f5f5;
   color: var(--deep-blue);
+  border: 1px solid #e0e0e0;
 }
 
-.backups-file-download-btn:disabled {
+.backups-file-btn-secondary:hover {
+  background: #ebebeb;
+  transform: translateY(-1px);
+}
+
+.backups-file-btn-warning {
+  background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(253, 160, 133, 0.2);
+}
+
+.backups-file-btn-warning:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(253, 160, 133, 0.3);
+}
+
+.backups-file-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* Status badges reuse */
@@ -338,6 +363,59 @@
   background-color: #f8d7da;
   color: #721c24;
   border: 1px solid #f5c6cb;
+}
+
+/* Restore modal */
+.backups-restore-collections {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.backups-select-all-btn {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid var(--light-blue);
+  color: var(--light-blue);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: 'Outfit', sans-serif;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.backups-select-all-btn:hover {
+  background: var(--light-blue);
+  color: white;
+}
+
+.backups-restore-result {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.backups-restore-result p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--deep-blue);
+}
+
+.backups-restore-details {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.backups-restore-col {
+  font-size: 0.9rem;
+  color: #555;
 }
 
 /* Responsive */
@@ -356,8 +434,13 @@
     grid-template-columns: 1fr;
   }
 
-  .backups-action-row {
+  .backups-form-actions,
+  .backups-form-results {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+  }
+
+  .backups-form-actions button {
+    width: 100%;
   }
 }

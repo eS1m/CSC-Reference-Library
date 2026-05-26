@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 import '../../css/lgu/user-layout.css';
 import '../../css/lgu/uupload.css';
 import uploadIcon from '../../assets/upload.svg';
