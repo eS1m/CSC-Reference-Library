@@ -172,14 +172,17 @@ The app is deployed using **Firebase Hosting** (frontend) and **Render** (backen
 
 ### Quick Deploy
 
-1. **Build the frontend** with the production backend URL:
+1. **Set the production API URL** in your `.env` file:
    ```bash
-   # Windows PowerShell
-   $env:VITE_API_URL="https://prime-hrm-backend.onrender.com"
+   VITE_API_URL=https://prime-hrm-backend.onrender.com
+   ```
+
+2. **Build the frontend:**
+   ```bash
    npm run build
    ```
 
-2. **Deploy to Firebase:**
+3. **Deploy to Firebase:**
    ```bash
    firebase deploy --only hosting
    ```
