@@ -13,6 +13,7 @@ import notificationIcon from '../assets/notification.svg';
 import logoutIcon from '../assets/logout.svg';
 import contactIcon from '../assets/contact.svg';
 import profileIcon from '../assets/profile.svg';
+import addCircleIcon from '../assets/add-circle.svg';
 
 import NotificationBell from '../components/NotificationBell';
 import Modal from '../components/Modal';
@@ -80,6 +81,7 @@ export default function Alayout() {
             case '/active-users-a': return 'Active Users';
             case '/registered-users-a': return 'Pending Users';
             case '/backups-a': return 'Backups';
+            case '/start-assessment-a': return 'Start New Assessment';
             case '/contact-a': return 'Contact Us';
             default: return 'Admin Portal';
         }
@@ -147,6 +149,10 @@ export default function Alayout() {
                                 <img src={databaseIcon} alt="Backups" width="20" height="20" className="deep-blue-filter"/>
                                 Backups
                             </NavLink>
+                            <NavLink className="nav-item-admin nav-start-assessment" to="/start-assessment-a">
+                                <img src={addCircleIcon} alt="Start Assessment" width="20" height="20" className="deep-blue-filter"/>
+                                Start Assessment
+                            </NavLink>
                         </nav>
                     </div>
 
@@ -172,6 +178,15 @@ export default function Alayout() {
                             </NavLink>
                         </nav>
                     </div>
+                    {/* <div className="sidebar-section">
+                        <p className="sidebar-label">DEVELOPMENT</p>
+                        <nav>
+                            <NavLink className="nav-item-admin nav-test-page" to="/test-page-a">
+                                <img src={editIcon} alt="Test Page" width="20" height="20" className="deep-blue-filter"/>
+                                Test Page
+                            </NavLink>
+                        </nav>
+                    </div> */}
                     <div className="sidebar-section sign-out-section">
                         <nav>
                             <NavLink className="nav-item-admin nav-contact-us" to="/contact-a">

@@ -8,7 +8,7 @@ import { useAgencyWorkflow } from '../../hooks/useAgencyWorkflow';
 
 export default function Udashboard() {
   const nav = useNavigate();
-  const { currentStep, agencyName, loading } = useAgencyWorkflow();
+  const { currentStep, agencyName, loading, currentAssessmentYear, needsRevalidation } = useAgencyWorkflow();
 
   /* Date and Time */
   const [time, setTime] = useState(new Date());
@@ -53,7 +53,12 @@ export default function Udashboard() {
   return (
         <main className="main-content">
           <div className="main-content-header">
-            <h1 id="main-content-title">Welcome back, <b>{agencyName}</b>!</h1>
+            <div>
+              <h1 id="main-content-title">Welcome back, <b>{agencyName}</b>!</h1>
+              {currentAssessmentYear && (
+                <p className="assessment-year-badge">Assessment Year: <strong>{currentAssessmentYear}</strong></p>
+              )}
+            </div>
               <button 
                 className="new-submission-btn" 
                 onClick={() => nav(currentStep === 4 ? '/action-plan-u' : '/upload-u')}
@@ -67,6 +72,16 @@ export default function Udashboard() {
                 {currentStep === 3 ? "Upload Self-Assessment" : currentStep === 4 ? "Generate Action Plan" : "Complete"}
               </button>
           </div>
+
+          {needsRevalidation && (
+            <div className="revalidation-banner">
+              <p>
+                <strong>New assessment started!</strong> Please update your{' '}
+                <a href="/profile-u">Agency Profile</a> and{' '}
+                <a href="/employee-u">Employee Data</a> to continue.
+              </p>
+            </div>
+          )}
           
           <div className="main-content-container">
             <div className="stat-tracker stat-container">

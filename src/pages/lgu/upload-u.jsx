@@ -35,7 +35,7 @@ export default function Uupload() {
 
   const fileInputRef = useRef(null);
 
-  const { agencyName, hasSelfAssessment, hasActionPlan, loading } = useAgencyWorkflow();
+  const { agencyName, hasSelfAssessment, hasActionPlan, loading, currentAssessmentYear } = useAgencyWorkflow();
 
   const isSelfAssessmentMode = !hasSelfAssessment;
 
@@ -186,6 +186,7 @@ export default function Uupload() {
     formData.append('file', file);
     formData.append('agencyName', agencyName);
     formData.append('fileType', fileType);
+    formData.append('assessmentYear', currentAssessmentYear || new Date().getFullYear().toString());
 
     try {
       const response = await authFetch('/upload', {
@@ -208,7 +209,7 @@ export default function Uupload() {
         fileUrl: driveData.fileId ? `https://drive.google.com/file/d/${driveData.fileId}/view` : driveData.webViewLink,
         fileType: fileType,
         uploadedAt: serverTimestamp(),
-        assessmentYear: new Date().getFullYear(),
+        assessmentYear: currentAssessmentYear || new Date().getFullYear().toString(),
       };
 
       /* Parse Excel only for Self-Assessment */

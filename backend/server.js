@@ -88,6 +88,8 @@ function requireRole(...allowedRoles) {
 
 async function requireCompleteProfile(req, res, next) {
   if (!admin.apps.length) return next();
+  // CSC RO X and admin users do not have agency profiles; skip for them
+  if (req.userData?.role !== 'u') return next();
   try {
     const profileDoc = await admin.firestore().collection('agencyProfiles').doc(req.user.uid).get();
     const profile = profileDoc.data();
@@ -117,6 +119,8 @@ async function requireCompleteProfile(req, res, next) {
 
 async function requireCompleteEmployees(req, res, next) {
   if (!admin.apps.length) return next();
+  // CSC RO X and admin users do not have employee data; skip for them
+  if (req.userData?.role !== 'u') return next();
   try {
     const empDoc = await admin.firestore().collection('agencyEmployees').doc(req.user.uid).get();
     const emp = empDoc.data();
@@ -150,12 +154,21 @@ async function requireSelfAssessment(req, res, next) {
     const snapshot = await admin.firestore().collection('agencySubmissions')
       .where('userId', '==', req.user.uid)
       .where('fileType', '==', 'Self-Assessment')
-      .limit(1)
       .get();
 
     if (snapshot.empty) {
       return res.status(403).json({ error: 'Forbidden: Self-Assessment must be uploaded first' });
     }
+
+    // If assessment year tracking is active, verify there's a Self-Assessment for the current year
+    const currentYear = req.userData?.currentAssessmentYear;
+    if (currentYear) {
+      const hasCurrentYear = snapshot.docs.some(d => String(d.data().assessmentYear) === String(currentYear));
+      if (!hasCurrentYear) {
+        return res.status(403).json({ error: 'Forbidden: Self-Assessment must be uploaded first' });
+      }
+    }
+
     next();
   } catch (err) {
     console.error('requireSelfAssessment error:', err);
@@ -169,11 +182,18 @@ async function requireNoActionPlan(req, res, next) {
     const snapshot = await admin.firestore().collection('agencySubmissions')
       .where('userId', '==', req.user.uid)
       .where('fileType', '==', 'Action-Plan')
-      .limit(1)
       .get();
 
     if (!snapshot.empty) {
-      return res.status(403).json({ error: 'Forbidden: Action Plan already exists' });
+      // If assessment year tracking is active, only block if there's an Action-Plan for the current year
+      const currentYear = req.userData?.currentAssessmentYear;
+      if (!currentYear) {
+        return res.status(403).json({ error: 'Forbidden: Action Plan already exists' });
+      }
+      const hasCurrentYear = snapshot.docs.some(d => String(d.data().assessmentYear) === String(currentYear));
+      if (hasCurrentYear) {
+        return res.status(403).json({ error: 'Forbidden: Action Plan already exists' });
+      }
     }
     next();
   } catch (err) {
@@ -184,6 +204,8 @@ async function requireNoActionPlan(req, res, next) {
 
 async function requireAgencyOwnership(req, res, next) {
   if (!admin.apps.length) return next();
+  // CSC RO X and admin users upload on behalf of agencies; skip ownership check
+  if (req.userData?.role !== 'u') return next();
   try {
     const agencyName = req.body?.agencyName || req.query?.agencyName;
     if (!agencyName) return next(); // endpoints without agencyName skip this check
@@ -399,8 +421,8 @@ async function getOrCreateFolder(folderName, parentId = null) {
 
 app.post('/upload', uploadLimiter, requireApprovedUser, requireCompleteProfile, requireCompleteEmployees, requireAgencyOwnership, upload.single('file'), async (req, res) => {
   try {
-    const { agencyName, fileType } = req.body; 
-    const currentYear = new Date().getFullYear().toString();
+    const { agencyName, fileType, assessmentYear } = req.body;
+    const currentYear = assessmentYear || new Date().getFullYear().toString();
     const path = require('path');
     const fileExtension = path.extname(req.file.originalname);
     let finalFileName = req.file.originalname;
@@ -676,8 +698,8 @@ app.post('/approve-deletion', deleteLimiter, requireApprovedUser, requireRole('a
 
 app.post('/upload-action-plan', uploadLimiter, requireApprovedUser, requireCompleteProfile, requireCompleteEmployees, requireSelfAssessment, requireNoActionPlan, requireAgencyOwnership, upload.single('file'), async (req, res) => {
   try {
-    const { agencyName } = req.body;
-    const currentYear = new Date().getFullYear().toString();
+    const { agencyName, assessmentYear } = req.body;
+    const currentYear = assessmentYear || new Date().getFullYear().toString();
 
     if (!agencyName) {
       return res.status(400).send('Agency Name is required.');
@@ -839,6 +861,38 @@ app.post('/drive/delete', deleteLimiter, requireApprovedUser, requireRole('admin
   } catch (error) {
     console.error('Drive delete error:', error);
     res.status(500).json({ error: 'Failed to delete item' });
+  }
+});
+
+app.post('/drive/verify-files', requireApprovedUser, async (req, res) => {
+  try {
+    const { fileIds } = req.body;
+    if (!Array.isArray(fileIds) || fileIds.length === 0) {
+      return res.status(400).json({ error: 'fileIds array is required' });
+    }
+
+    const results = {};
+    await Promise.all(fileIds.map(async (fileId) => {
+      try {
+        const file = await drive.files.get({
+          fileId,
+          fields: 'id, trashed'
+        });
+        results[fileId] = !file.data.trashed;
+      } catch (err) {
+        if (err.code === 404 || err.message?.includes('notFound')) {
+          results[fileId] = false;
+        } else {
+          console.error(`Drive verify error for ${fileId}:`, err.message);
+          results[fileId] = false;
+        }
+      }
+    }));
+
+    res.status(200).json({ exists: results });
+  } catch (error) {
+    console.error('Drive verify-files error:', error);
+    res.status(500).json({ error: 'Failed to verify files' });
   }
 });
 
@@ -1127,7 +1181,59 @@ app.get('/read-excel', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5000; 
+app.post('/assessment/revert', generalLimiter, verifyFirebaseToken, requireApprovedUser, requireRole('admin', 'p'), async (req, res) => {
+  try {
+    const { agencyId, historyDocId } = req.body;
+    if (!agencyId || !historyDocId) {
+      return res.status(400).json({ error: 'agencyId and historyDocId are required' });
+    }
+
+    const historyRef = admin.firestore().collection('assessmentHistory').doc(historyDocId);
+    const historySnap = await historyRef.get();
+
+    if (!historySnap.exists) {
+      return res.status(404).json({ error: 'Assessment history record not found' });
+    }
+
+    const historyData = historySnap.data();
+    if (historyData.agencyId !== agencyId) {
+      return res.status(400).json({ error: 'History record does not match agency' });
+    }
+
+    const startedAt = historyData.startedAt?.toMillis ? historyData.startedAt.toMillis() : 0;
+    if (Date.now() > startedAt + 60000) {
+      return res.status(400).json({ error: 'Revert window has expired' });
+    }
+
+    if (historyData.revertedAt) {
+      return res.status(400).json({ error: 'Assessment has already been reverted' });
+    }
+
+    const userRef = admin.firestore().collection('users').doc(agencyId);
+    const updatePayload = {
+      currentAssessmentYear: historyData.previousYear || null
+    };
+    if (!historyData.previousYear) {
+      delete updatePayload.currentAssessmentYear;
+      updatePayload.currentAssessmentYear = null;
+    }
+    updatePayload.assessmentStartedAt = admin.firestore.FieldValue.delete();
+
+    await userRef.update(updatePayload);
+
+    await historyRef.update({
+      revertedAt: admin.firestore.FieldValue.serverTimestamp(),
+      revertedBy: req.user.uid
+    });
+
+    res.status(200).json({ success: true, message: 'Assessment reverted successfully' });
+  } catch (error) {
+    console.error('Assessment revert error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);

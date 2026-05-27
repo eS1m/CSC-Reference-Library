@@ -26,3 +26,23 @@ export async function createUser(uid, data) {
 export async function updateUser(uid, data) {
   return updateDoc(doc(db, 'users', uid), data);
 }
+
+/**
+ * Subscribe to a single user document by UID.
+ * @param {string} uid
+ * @param {function} onData
+ * @param {function} onError
+ */
+export function subscribeUserById(uid, onData, onError) {
+  if (!uid) {
+    onData(null);
+    return () => {};
+  }
+  return onSnapshot(
+    doc(db, 'users', uid),
+    (snap) => {
+      onData(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+    },
+    onError
+  );
+}
