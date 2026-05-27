@@ -87,11 +87,24 @@ export default function RecomP() {
   const [previewModal, setPreviewModal] = useState({ open: false, blobUrl: '', docxBlob: null, agencyName: '', recId: '' });
   const [collapsedCards, setCollapsedCards] = useState({});
   const [finishingStates, setFinishingStates] = useState({});
+  const [showArchive, setShowArchive] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const fileInputRefs = useRef({});
 
-  const recommendedAgencies = recommendations
-    .filter(r => r.oaRecommended && r.agencyName)
+  const activeRecommendations = recommendations.filter(r => !r.archived);
+  const archivedRecommendations = recommendations.filter(r => r.archived);
+
+  const matchesSearch = (rec) => {
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.trim().toLowerCase();
+    return (rec.agencyName || '').toLowerCase().includes(term);
+  };
+
+  const recommendedAgencies = activeRecommendations
+    .filter(r => r.oaRecommended && r.agencyName && matchesSearch(r))
     .sort((a, b) => (a.agencyName || '').localeCompare(b.agencyName || ''));
+
+  const filteredArchived = archivedRecommendations.filter(matchesSearch);
 
   useEffect(() => {
     async function fetchSubmissions() {
@@ -559,8 +572,22 @@ export default function RecomP() {
           </div>
         )}
 
-        {!pageLoading && recommendedAgencies.length === 0 && (
+        <div className="rec-search-bar">
+          <input
+            type="text"
+            className="rec-search-input"
+            placeholder="Search agency name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        {!pageLoading && recommendedAgencies.length === 0 && filteredArchived.length === 0 && (
           <p className="recom-empty">No OA-recommended agencies yet.</p>
+        )}
+
+        {!pageLoading && recommendedAgencies.length === 0 && activeRecommendations.length > 0 && searchTerm.trim() && (
+          <p className="recom-empty">No agencies match your search.</p>
         )}
 
         {!pageLoading && recommendedAgencies.length > 0 && (
@@ -690,6 +717,68 @@ export default function RecomP() {
                 </div>
               );
             })}
+          </div>
+        )}
+        {archivedRecommendations.length > 0 && (
+          <div className="rec-archive-section">
+            <button
+              className="rec-archive-toggle"
+              onClick={() => setShowArchive(prev => !prev)}
+            >
+              {showArchive ? '▲' : '▼'} Archive History ({archivedRecommendations.length} {archivedRecommendations.length === 1 ? 'agency' : 'agencies'})
+            </button>
+            {showArchive && (
+              <div className="rec-cards rec-archived-cards recom-archived-cards">
+                {filteredArchived.map(rec => (
+                  <div key={rec.id} className="rec-card recom-card rec-archived">
+                    <div className="recom-card-header">
+                      <div className="recom-card-title">
+                        <h2 className="recom-agency-name">{rec.agencyName}</h2>
+                        {rec.fieldDirector && (
+                          <p className="recom-agency-director">Field Director: {rec.fieldDirector}</p>
+                        )}
+                        <span className="recom-finished-badge recom-archive-badge">
+                          Archived{rec.archivedYear ? ` — ${rec.archivedYear}` : ''}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="rec-upload-row recom-files-row">
+                      {COMPILED_FILES.map(fileConfig => (
+                        <div key={fileConfig.key} className="rec-upload-cell recom-file-cell">
+                          <span className="recom-file-label">{fileConfig.label}</span>
+                          {fileConfig.source === 'submission' ? (
+                            (() => {
+                              const submission = getLatestSubmission(submissionsByAgency, rec.agencyId, fileConfig.submissionType);
+                              return submission ? (
+                                <button
+                                  type="button"
+                                  className="rec-file-btn uploaded"
+                                  onClick={() => handleViewFile(getDriveUrl(submission.fileId, submission.fileUrl))}
+                                >
+                                  {submission.fileName}
+                                </button>
+                              ) : (
+                                <span className="recom-locked-label">Not available</span>
+                              );
+                            })()
+                          ) : rec[fileConfig.field] ? (
+                            <button
+                              type="button"
+                              className="rec-file-btn uploaded"
+                              onClick={() => handleViewFile(getDriveUrl(rec[fileConfig.field].fileId, rec[fileConfig.field].fileUrl))}
+                            >
+                              {rec[fileConfig.field].fileName}
+                            </button>
+                          ) : (
+                            <span className="recom-locked-label">Not uploaded</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

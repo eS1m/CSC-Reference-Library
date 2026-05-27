@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import '../../css/lgu/user-layout.css';
 import '../../css/lgu/uview.css';
 
@@ -10,16 +10,75 @@ import { serverTimestamp } from 'firebase/firestore';
 import { useDeletionRequests } from '../../hooks/useDeletionRequests';
 import { createDeletionRequest } from '../../firebase/collections/deletionRequests';
 import { logActivity } from '../../firebase/activityLog';
+import { authFetch } from '../../utils/apiClient';
 
 export default function Uview() {
-  const { submissions, loading, error } = useAgencyWorkflow();
+  const { submissions, loading, error, currentAssessmentYear } = useAgencyWorkflow();
   const { requests: deletionRequests } = useDeletionRequests({ userId: auth.currentUser?.uid });
+  const [selectedYear, setSelectedYear] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalStatus, setModalStatus] = useState('');
   const [modalStatusType, setModalStatusType] = useState('');
+  const [verifiedFiles, setVerifiedFiles] = useState({});
+  const [verifying, setVerifying] = useState(false);
+  const [verifyError, setVerifyError] = useState('');
+
+  useEffect(() => {
+    async function verifyFiles() {
+      if (submissions.length === 0) return;
+      const fileIds = submissions
+        .map(s => s.fileId)
+        .filter(Boolean);
+      if (fileIds.length === 0) return;
+
+      setVerifying(true);
+      setVerifyError('');
+      try {
+        const res = await authFetch('/drive/verify-files', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileIds })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to verify files');
+        }
+        setVerifiedFiles(data.exists || {});
+      } catch (err) {
+        console.error('File verification error:', err);
+        setVerifyError('Could not verify file availability. Showing all files.');
+        setVerifiedFiles({});
+      } finally {
+        setVerifying(false);
+      }
+    }
+
+    verifyFiles();
+  }, [submissions]);
+
+  const availableYears = useMemo(() => {
+    const years = new Set();
+    submissions.forEach((s) => {
+      if (s.assessmentYear != null) years.add(String(s.assessmentYear));
+    });
+    return Array.from(years).sort((a, b) => b.localeCompare(a));
+  }, [submissions]);
+
+  const visibleSubmissions = useMemo(() => {
+    if (Object.keys(verifiedFiles).length === 0) return submissions;
+    return submissions.filter((s) => {
+      if (!s.fileId) return true;
+      return verifiedFiles[s.fileId] === true;
+    });
+  }, [submissions, verifiedFiles]);
+
+  const filteredSubmissions = useMemo(() => {
+    if (selectedYear === 'all') return visibleSubmissions;
+    return visibleSubmissions.filter((s) => String(s.assessmentYear) === selectedYear);
+  }, [visibleSubmissions, selectedYear]);
 
   const getDriveUrl = (file) => {
     if (!file) return '#';
@@ -100,32 +159,48 @@ export default function Uview() {
     <main className="view-main-content">
       <div className="view-header">
         <h1>View Your Files</h1>
+        {availableYears.length > 0 && (
+          <div className="year-selector">
+            <label htmlFor="year-filter">Assessment Year:</label>
+            <select
+              id="year-filter"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+            >
+              <option value="all">All Years</option>
+              {availableYears.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
-      {loading && (
+      {(loading || verifying) && (
         <div className="loading-container">
-          <p>Fetching your documents...</p>
+          <p>{verifying ? 'Verifying file availability...' : 'Fetching your documents...'}</p>
           <div className="loading-bar-background">
             <div className="loading-bar-fill"></div>
           </div>
         </div>
       )}
 
-      {error && !loading && (
+      {(error || verifyError) && !loading && !verifying && (
         <div className="no-files-found">
-          <p style={{ color: '#cc0000' }}>Error: {error}</p>
+          {error && <p style={{ color: '#cc0000' }}>Error: {error}</p>}
+          {verifyError && <p style={{ color: '#e67e22' }}>{verifyError}</p>}
         </div>
       )}
 
-      {!loading && !error && submissions.length === 0 && (
+      {!loading && !error && filteredSubmissions.length === 0 && (
         <div className="no-files-found">
           <p>No files found in the shared directory.</p>
         </div>
       )}
 
-      {!loading && !error && submissions.length > 0 && (
+      {!loading && !error && filteredSubmissions.length > 0 && (
         <div className="current-files-found">
-          {submissions.map((file) => {
+          {filteredSubmissions.map((file) => {
             const delStatus = getDeletionStatus(file.id);
             return (
               <div

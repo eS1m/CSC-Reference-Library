@@ -19,7 +19,7 @@ import { authFetch } from '../../utils/apiClient';
 
 export default function ERU() {
   const navigate = useNavigate();
-  const { agencyName, submissions, loading } = useAgencyWorkflow();
+  const { agencyName, submissions, loading, currentAssessmentYear } = useAgencyWorkflow();
   const { isUnlocked, lockedReason } = useAgencyEvidenceUnlock();
   const { requests: deletionRequests } = useDeletionRequests({ userId: auth.currentUser?.uid });
 
@@ -52,8 +52,7 @@ export default function ERU() {
 
   const evidenceSubmissions = submissions.filter(s => s.fileType === 'Evidence-Requirements');
 
-  const selfAssessment = submissions.find(s => s.fileType === 'Self-Assessment');
-  const assessmentYear = selfAssessment?.assessmentYear || new Date().getFullYear();
+  const assessmentYear = currentAssessmentYear || new Date().getFullYear().toString();
 
   const getDeletionStatus = (submissionId) => {
     const req = deletionRequests.find(r => r.submissionId === submissionId);

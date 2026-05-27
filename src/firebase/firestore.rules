@@ -27,9 +27,9 @@ service cloud.firestore {
     // 1. User Profiles
     match /users/{userId} {
       allow read: if request.auth != null;
-      // Users can create/update their own profile; admins can update any (for approvals)
+      // Users can create/update their own profile; admins and CSC RO X can update any (for approvals and assessment management)
       allow create: if request.auth != null && isOwner(userId);
-      allow update: if request.auth != null && (isOwner(userId) || isAdmin());
+      allow update: if request.auth != null && (isOwner(userId) || isAdminOrPrime());
       allow delete: if request.auth != null && isAdmin();
     }
 
@@ -125,7 +125,15 @@ service cloud.firestore {
       allow delete: if request.auth != null && isAdmin();
     }
 
-    // 12. System Config - only admins can read/write
+    // 12. Assessment History - admin and CSC RO X can manage
+    match /assessmentHistory/{docId} {
+      allow create: if request.auth != null && isAdminOrPrime();
+      allow read: if request.auth != null && isAdminOrPrime();
+      allow update: if request.auth != null && isAdminOrPrime();
+      allow delete: if request.auth != null && isAdminOrPrime();
+    }
+
+    // 13. System Config - only admins can read/write
     match /systemConfig/{docId} {
       allow create: if request.auth != null && isAdmin();
       allow read: if request.auth != null && isAdmin();

@@ -4,10 +4,29 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { subscribeProfileById } from '../firebase/collections/agencyProfiles';
 import { subscribeEmployeesById } from '../firebase/collections/agencyEmployees';
 import { subscribeSubmissions } from '../firebase/collections/agencySubmissions';
+import { subscribeUserById } from '../firebase/collections/users';
 import { validateAgency } from '../utils/validateAgency';
+
+function getTimestampMillis(value) {
+  if (!value) return null;
+  if (typeof value.toMillis === 'function') return value.toMillis();
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === 'number') return value;
+  const parsed = Date.parse(value);
+  return isNaN(parsed) ? null : parsed;
+}
+
+function isUpdatedAfter(lastUpdated, assessmentStartedAt) {
+  const updatedMs = getTimestampMillis(lastUpdated);
+  const startedMs = getTimestampMillis(assessmentStartedAt);
+  if (!startedMs) return true; // no assessment start = always valid
+  if (!updatedMs) return false; // never updated after start = invalid
+  return updatedMs > startedMs;
+}
 
 export const useAgencyWorkflow = () => {
     const [user, setUser] = useState(null);
+    const [userDoc, setUserDoc] = useState(null);
     const [profile, setProfile] = useState(null);
     const [employees, setEmployees] = useState(null);
     const [submissions, setSubmissions] = useState([]);
@@ -35,15 +54,25 @@ export const useAgencyWorkflow = () => {
         let unsubProfile = () => {};
         let unsubEmployees = () => {};
         let unsubSubmissions = () => {};
+        let unsubUserDoc = () => {};
 
         const unsubAuth = onAuthStateChanged(auth, (currentUser) => {
             unsubProfile();
             unsubEmployees();
             unsubSubmissions();
+            unsubUserDoc();
 
             if (currentUser) {
                 setUser(currentUser);
                 setError(null);
+
+                unsubUserDoc = subscribeUserById(
+                    currentUser.uid,
+                    (data) => setUserDoc(data),
+                    (err) => {
+                        console.error("User doc listener error:", err);
+                    }
+                );
 
                 unsubProfile = subscribeProfileById(
                     currentUser.uid,
@@ -87,6 +116,7 @@ export const useAgencyWorkflow = () => {
 
             } else {
                 setUser(null);
+                setUserDoc(null);
                 setProfile(null);
                 setEmployees(null);
                 setSubmissions([]);
@@ -99,14 +129,27 @@ export const useAgencyWorkflow = () => {
             unsubProfile();
             unsubEmployees();
             unsubSubmissions();
+            unsubUserDoc();
         };
     }, []);
 
     const derived = useMemo(() => {
-        const isAgencyDone = validateAgency(profile);
-        const isEmployeeDone = validateEmployees(employees);
-        const selfAssessment = submissions.find(s => s.fileType === "Self-Assessment");
-        const actionPlan = submissions.find(s => s.fileType === "Action-Plan");
+        const assessmentStartedAt = userDoc?.assessmentStartedAt;
+        const currentAssessmentYear = userDoc?.currentAssessmentYear || null;
+
+        const agencyValid = validateAgency(profile);
+        const employeeValid = validateEmployees(employees);
+
+        const isAgencyDone = agencyValid && isUpdatedAfter(profile?.lastUpdated, assessmentStartedAt);
+        const isEmployeeDone = employeeValid && isUpdatedAfter(employees?.lastUpdated, assessmentStartedAt);
+
+        const yearFilter = currentAssessmentYear || null;
+        const currentYearSubmissions = yearFilter
+            ? submissions.filter(s => String(s.assessmentYear) === String(yearFilter))
+            : submissions;
+
+        const selfAssessment = currentYearSubmissions.find(s => s.fileType === "Self-Assessment");
+        const actionPlan = currentYearSubmissions.find(s => s.fileType === "Action-Plan");
 
         let step = 1;
         if (isAgencyDone) step = 2;
@@ -122,8 +165,11 @@ export const useAgencyWorkflow = () => {
             hasSelfAssessment: !!selfAssessment,
             hasActionPlan: !!actionPlan,
             agencyName: profile?.agencyDetails?.agencyName || "Agency User",
+            currentAssessmentYear,
+            assessmentStartedAt,
+            needsRevalidation: assessmentStartedAt && (!isAgencyDone || !isEmployeeDone),
         };
-    }, [profile, employees, submissions, validateEmployees]);
+    }, [profile, employees, submissions, validateEmployees, userDoc]);
 
     return {
         user,
@@ -139,5 +185,7 @@ export const useAgencyWorkflow = () => {
         agencyName: derived.agencyName,
         hasSelfAssessment: derived.hasSelfAssessment,
         hasActionPlan: derived.hasActionPlan,
+        currentAssessmentYear: derived.currentAssessmentYear,
+        needsRevalidation: derived.needsRevalidation,
     };
 };

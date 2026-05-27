@@ -13,6 +13,7 @@ import recommendationIcon from '../assets/recommendation.svg';
 import notificationIcon from '../assets/notification.svg';
 import logoutIcon from '../assets/logout.svg';
 import contactIcon from '../assets/contact.svg';
+import addCircleIcon from '../assets/add-circle.svg';
 
 import NotificationBell from '../components/NotificationBell';
 import Modal from '../components/Modal';
@@ -67,6 +68,7 @@ export default function Playout() {
             case '/send-notification-p': return 'Send Agency Notification';
             case '/approved-p': return 'Approved Files';
             case '/rejected-p': return 'Rejected Files';
+            case '/start-assessment-p': return 'Start New Assessment';
             case '/contact-p': return 'Contact Us';
 
             default: return 'CSC RO X Portal';
@@ -112,6 +114,10 @@ export default function Playout() {
                             <NavLink className="nav-item-prime nav-drive-browser-csc" to="/drive-browser-csc">
                                 <img src={folderIcon} alt="Drive Browser" width="20" height="20" className="deep-blue-filter"/>
                                 Drive Browser
+                            </NavLink>
+                            <NavLink className="nav-item-prime nav-start-assessment" to="/start-assessment-p">
+                                <img src={addCircleIcon} alt="Start Assessment" width="20" height="20" className="deep-blue-filter"/>
+                                Start Assessment
                             </NavLink>
                             {/* <NavLink className="nav-item-prime nav-approved-files" to="/approved-p">
                                 <img src={approvedIcon} alt="Approved" width="20" height="20" className="deep-blue-filter"/>

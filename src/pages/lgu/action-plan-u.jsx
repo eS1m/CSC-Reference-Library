@@ -33,7 +33,7 @@ const TOOLTIP_TEXT = {
 
 export default function ActionPlanU() {
   const navigate = useNavigate();
-  const { agencyName, submissions, hasActionPlan } = useAgencyWorkflow();
+  const { agencyName, submissions, hasActionPlan, currentAssessmentYear } = useAgencyWorkflow();
 
   const [inputs, setInputs] = useState({
     currentMaturityLevel: '',
@@ -461,6 +461,7 @@ export default function ActionPlanU() {
       const formData = new FormData();
       formData.append('file', blob, `Action Plan-${agencyName}.docx`);
       formData.append('agencyName', agencyName);
+      formData.append('assessmentYear', currentAssessmentYear || new Date().getFullYear().toString());
 
       const res = await authFetch('/upload-action-plan', {
         method: 'POST',
@@ -473,7 +474,7 @@ export default function ActionPlanU() {
       }
 
       const driveData = await res.json();
-      const year = new Date().getFullYear();
+      const year = currentAssessmentYear || new Date().getFullYear().toString();
       const fileName = `Action Plan - ${agencyName} - ${year}.docx`;
 
       await createSubmission({

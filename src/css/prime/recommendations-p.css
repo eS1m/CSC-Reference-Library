@@ -452,6 +452,86 @@
     box-shadow: 0 4px 12px rgba(193, 18, 31, 0.3);
 }
 
+/* Search Bar */
+.rec-search-bar {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.rec-search-input {
+    font-family: 'Outfit', sans-serif;
+    width: 100%;
+    max-width: 400px;
+    padding: 10px 14px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-size: 1rem;
+    color: var(--deep-blue);
+    background: #fafafa;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.rec-search-input:focus {
+    outline: none;
+    border-color: var(--light-blue);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+}
+
+/* Archive Section */
+.rec-archive-section {
+    margin-top: 32px;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 20px;
+}
+
+.rec-archive-toggle {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--deep-blue);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s;
+}
+
+.rec-archive-toggle:hover {
+    color: var(--light-blue);
+}
+
+.rec-archived-cards {
+    margin-top: 16px;
+}
+
+.rec-card.rec-archived {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    opacity: 0.92;
+}
+
+.rec-archive-badge {
+    display: inline-block;
+    background: #6c757d;
+    color: white;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+}
+
+.rec-readonly-value {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    color: var(--deep-blue);
+    padding: 6px 0;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .recommendations-page {

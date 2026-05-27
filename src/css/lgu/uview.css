@@ -17,6 +17,31 @@
     /* border: 2px solid red; */
 }
 
+.year-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.year-selector label {
+    font-family: 'Outfit', sans-serif;
+    color: var(--deep-blue);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.year-selector select {
+    font-family: 'Outfit', sans-serif;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background: white;
+    color: var(--deep-blue);
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
 .loading-text {
     margin-top: 20px;
     font-size: 1.2rem;

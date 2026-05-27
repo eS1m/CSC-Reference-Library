@@ -5,6 +5,7 @@ import Login from './pages/login'
 import Register from './pages/register'
 import ContactUs from './pages/ContactUs'
 import Forgotp from './pages/forgotp'
+import StartAssessment from './pages/shared/start-assessment'
 
 import Ulayout from './components/layout-u'
 import Udashboard from './pages/lgu/dashboard-u';
@@ -146,6 +147,11 @@ function App() {
                 <ContactUs/>
               </ProtectedRoute> 
             } />
+            <Route path="/start-assessment-p" element={
+              <ProtectedRoute requiredRole="p">
+                <StartAssessment/>
+              </ProtectedRoute> 
+            } />
           </Route>
 
           {/* A Routes - Strictly for System Administrators */}
@@ -188,6 +194,11 @@ function App() {
             <Route path="/backups-a" element={
               <ProtectedRoute requiredRole="admin">
                 <BackupsA/>
+              </ProtectedRoute> 
+            } />
+            <Route path="/start-assessment-a" element={
+              <ProtectedRoute requiredRole="admin">
+                <StartAssessment/>
               </ProtectedRoute> 
             } />
             <Route path="/contact-a" element={

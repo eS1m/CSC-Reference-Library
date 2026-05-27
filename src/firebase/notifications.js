@@ -115,6 +115,11 @@ function getNotificationText(type, agencyName, fileName) {
         title: 'Assessment Finished',
         message: `${agencyName ? agencyName + ' — ' : ''}Your Field Office Monitoring assessment has been completed.`
       };
+    case 'NEW_ASSESSMENT_STARTED':
+      return {
+        title: 'New Assessment Started',
+        message: `${agencyName ? agencyName + ' — ' : ''}A new assessment has started. Please update your agency profile and employee data.`
+      };
     default:
       return { title: 'New Notification', message: 'You have a new notification.' };
   }
