@@ -1,0 +1,4 @@
+# Prevent environment-specific config files from being overwritten during merges
+# Each branch maintains its own Firebase project settings
+.firebaserc merge=ours
+src/firebase/config.js merge=ours
