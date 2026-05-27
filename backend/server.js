@@ -399,8 +399,8 @@ async function getOrCreateFolder(folderName, parentId = null) {
 
 app.post('/upload', uploadLimiter, requireApprovedUser, requireCompleteProfile, requireCompleteEmployees, requireAgencyOwnership, upload.single('file'), async (req, res) => {
   try {
-    const { agencyName, fileType } = req.body; 
-    const currentYear = new Date().getFullYear().toString();
+    const { agencyName, fileType, assessmentYear } = req.body;
+    const currentYear = assessmentYear || new Date().getFullYear().toString();
     const path = require('path');
     const fileExtension = path.extname(req.file.originalname);
     let finalFileName = req.file.originalname;
@@ -676,8 +676,8 @@ app.post('/approve-deletion', deleteLimiter, requireApprovedUser, requireRole('a
 
 app.post('/upload-action-plan', uploadLimiter, requireApprovedUser, requireCompleteProfile, requireCompleteEmployees, requireSelfAssessment, requireNoActionPlan, requireAgencyOwnership, upload.single('file'), async (req, res) => {
   try {
-    const { agencyName } = req.body;
-    const currentYear = new Date().getFullYear().toString();
+    const { agencyName, assessmentYear } = req.body;
+    const currentYear = assessmentYear || new Date().getFullYear().toString();
 
     if (!agencyName) {
       return res.status(400).send('Agency Name is required.');
@@ -1127,7 +1127,59 @@ app.get('/read-excel', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5000; 
+app.post('/assessment/revert', generalLimiter, verifyFirebaseToken, requireApprovedUser, requireRole('admin', 'p'), async (req, res) => {
+  try {
+    const { agencyId, historyDocId } = req.body;
+    if (!agencyId || !historyDocId) {
+      return res.status(400).json({ error: 'agencyId and historyDocId are required' });
+    }
+
+    const historyRef = admin.firestore().collection('assessmentHistory').doc(historyDocId);
+    const historySnap = await historyRef.get();
+
+    if (!historySnap.exists) {
+      return res.status(404).json({ error: 'Assessment history record not found' });
+    }
+
+    const historyData = historySnap.data();
+    if (historyData.agencyId !== agencyId) {
+      return res.status(400).json({ error: 'History record does not match agency' });
+    }
+
+    const startedAt = historyData.startedAt?.toMillis ? historyData.startedAt.toMillis() : 0;
+    if (Date.now() > startedAt + 60000) {
+      return res.status(400).json({ error: 'Revert window has expired' });
+    }
+
+    if (historyData.revertedAt) {
+      return res.status(400).json({ error: 'Assessment has already been reverted' });
+    }
+
+    const userRef = admin.firestore().collection('users').doc(agencyId);
+    const updatePayload = {
+      currentAssessmentYear: historyData.previousYear || null
+    };
+    if (!historyData.previousYear) {
+      delete updatePayload.currentAssessmentYear;
+      updatePayload.currentAssessmentYear = null;
+    }
+    updatePayload.assessmentStartedAt = admin.firestore.FieldValue.delete();
+
+    await userRef.update(updatePayload);
+
+    await historyRef.update({
+      revertedAt: admin.firestore.FieldValue.serverTimestamp(),
+      revertedBy: req.user.uid
+    });
+
+    res.status(200).json({ success: true, message: 'Assessment reverted successfully' });
+  } catch (error) {
+    console.error('Assessment revert error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);

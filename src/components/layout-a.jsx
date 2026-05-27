@@ -13,6 +13,7 @@ import notificationIcon from '../assets/notification.svg';
 import logoutIcon from '../assets/logout.svg';
 import contactIcon from '../assets/contact.svg';
 import profileIcon from '../assets/profile.svg';
+import addCircleIcon from '../assets/add-circle.svg';
 
 import NotificationBell from '../components/NotificationBell';
 import Modal from '../components/Modal';
@@ -80,6 +81,7 @@ export default function Alayout() {
             case '/active-users-a': return 'Active Users';
             case '/registered-users-a': return 'Pending Users';
             case '/backups-a': return 'Backups';
+            case '/start-assessment-a': return 'Start New Assessment';
             case '/contact-a': return 'Contact Us';
             default: return 'Admin Portal';
         }
@@ -146,6 +148,10 @@ export default function Alayout() {
                             <NavLink className="nav-item-admin nav-backups" to="/backups-a">
                                 <img src={databaseIcon} alt="Backups" width="20" height="20" className="deep-blue-filter"/>
                                 Backups
+                            </NavLink>
+                            <NavLink className="nav-item-admin nav-start-assessment" to="/start-assessment-a">
+                                <img src={addCircleIcon} alt="Start Assessment" width="20" height="20" className="deep-blue-filter"/>
+                                Start Assessment
                             </NavLink>
                         </nav>
                     </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import '../../css/lgu/user-layout.css';
 import '../../css/lgu/uview.css';
 
@@ -12,14 +12,28 @@ import { createDeletionRequest } from '../../firebase/collections/deletionReques
 import { logActivity } from '../../firebase/activityLog';
 
 export default function Uview() {
-  const { submissions, loading, error } = useAgencyWorkflow();
+  const { submissions, loading, error, currentAssessmentYear } = useAgencyWorkflow();
   const { requests: deletionRequests } = useDeletionRequests({ userId: auth.currentUser?.uid });
+  const [selectedYear, setSelectedYear] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalStatus, setModalStatus] = useState('');
   const [modalStatusType, setModalStatusType] = useState('');
+
+  const availableYears = useMemo(() => {
+    const years = new Set();
+    submissions.forEach((s) => {
+      if (s.assessmentYear != null) years.add(String(s.assessmentYear));
+    });
+    return Array.from(years).sort((a, b) => b.localeCompare(a));
+  }, [submissions]);
+
+  const filteredSubmissions = useMemo(() => {
+    if (selectedYear === 'all') return submissions;
+    return submissions.filter((s) => String(s.assessmentYear) === selectedYear);
+  }, [submissions, selectedYear]);
 
   const getDriveUrl = (file) => {
     if (!file) return '#';
@@ -100,6 +114,21 @@ export default function Uview() {
     <main className="view-main-content">
       <div className="view-header">
         <h1>View Your Files</h1>
+        {availableYears.length > 0 && (
+          <div className="year-selector">
+            <label htmlFor="year-filter">Assessment Year:</label>
+            <select
+              id="year-filter"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+            >
+              <option value="all">All Years</option>
+              {availableYears.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {loading && (
@@ -117,15 +146,15 @@ export default function Uview() {
         </div>
       )}
 
-      {!loading && !error && submissions.length === 0 && (
+      {!loading && !error && filteredSubmissions.length === 0 && (
         <div className="no-files-found">
           <p>No files found in the shared directory.</p>
         </div>
       )}
 
-      {!loading && !error && submissions.length > 0 && (
+      {!loading && !error && filteredSubmissions.length > 0 && (
         <div className="current-files-found">
-          {submissions.map((file) => {
+          {filteredSubmissions.map((file) => {
             const delStatus = getDeletionStatus(file.id);
             return (
               <div
