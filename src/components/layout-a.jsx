@@ -178,6 +178,15 @@ export default function Alayout() {
                             </NavLink>
                         </nav>
                     </div>
+                    {/* <div className="sidebar-section">
+                        <p className="sidebar-label">DEVELOPMENT</p>
+                        <nav>
+                            <NavLink className="nav-item-admin nav-test-page" to="/test-page-a">
+                                <img src={editIcon} alt="Test Page" width="20" height="20" className="deep-blue-filter"/>
+                                Test Page
+                            </NavLink>
+                        </nav>
+                    </div> */}
                     <div className="sidebar-section sign-out-section">
                         <nav>
                             <NavLink className="nav-item-admin nav-contact-us" to="/contact-a">
