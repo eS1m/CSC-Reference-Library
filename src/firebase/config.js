@@ -4,13 +4,12 @@ import { getAuth, GoogleAuthProvider, setPersistence, browserSessionPersistence 
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCD9C5IKEXeGhcppQNlNyAPPAq-1VvAr-I",
-  authDomain: "csc-reference-library.firebaseapp.com",
-  projectId: "csc-reference-library",
-  storageBucket: "csc-reference-library.firebasestorage.app",
-  messagingSenderId: "541637052436",
-  appId: "1:541637052436:web:803b352e4e9277b6ddbf01",
-  measurementId: "G-SBT4J399LH"
+  apiKey: "AIzaSyCZ8nQFwZSKa7mtfhSiOHtrtUcZdYfWJU0",
+  authDomain: "csc-kl-dev.firebaseapp.com",
+  projectId: "csc-kl-dev",
+  storageBucket: "csc-kl-dev.firebasestorage.app",
+  messagingSenderId: "958266481429",
+  appId: "1:958266481429:web:2ed2077ee9a4366672e71c"
 };
 
 export const app = initializeApp(firebaseConfig);
