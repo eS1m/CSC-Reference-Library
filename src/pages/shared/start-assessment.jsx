@@ -7,7 +7,7 @@ import { subscribeUsers } from '../../firebase/collections/users';
 import { updateUser } from '../../firebase/collections/users';
 import { createAssessmentHistory } from '../../firebase/collections/assessmentHistory';
 import { lockEvidence } from '../../firebase/collections/evidenceUnlocks';
-import { deleteRecommendationsByAgencyId } from '../../firebase/collections/recommendations';
+import { archiveRecommendationsByAgencyId } from '../../firebase/collections/recommendations';
 import { createUserNotification } from '../../firebase/notifications';
 import { authFetch } from '../../utils/apiClient';
 
@@ -105,7 +105,7 @@ export default function StartAssessment() {
       });
 
       await lockEvidence(agency.id, 'removed');
-      await deleteRecommendationsByAgencyId(agency.id);
+      await archiveRecommendationsByAgencyId(agency.id, previousYear);
 
       await createUserNotification(agency.id, {
         type: 'NEW_ASSESSMENT_STARTED',

@@ -35,3 +35,27 @@ export async function deleteRecommendationsByAgencyId(agencyId) {
   snap.docs.forEach((d) => batch.delete(d.ref));
   await batch.commit();
 }
+
+/**
+ * Archive all active recommendation docs for a specific agency.
+ * @param {string} agencyId
+ * @param {string} archivedYear - the assessment year being archived
+ */
+export async function archiveRecommendationsByAgencyId(agencyId, archivedYear) {
+  if (!agencyId) return;
+  const q = query(collection(db, 'recommendations'), where('agencyId', '==', agencyId));
+  const snap = await getDocs(q);
+  if (snap.empty) return;
+
+  const batch = writeBatch(db);
+  snap.docs.forEach((d) => {
+    if (!d.data().archived) {
+      batch.update(d.ref, {
+        archived: true,
+        archivedAt: new Date().toISOString(),
+        archivedYear: archivedYear || null
+      });
+    }
+  });
+  await batch.commit();
+}
