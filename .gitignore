@@ -27,6 +27,9 @@ dist-ssr
 # Secret Keys
 .env
 
+# Firebase local cache
+.firebase/
+
 # .md
 AGENTS.md
 
