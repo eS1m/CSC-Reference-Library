@@ -1,12 +1,13 @@
 import '../../css/admin/admin-dashboard.css';
 import '../../css/admin/registered-users-a.css';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAdminData } from '../../hooks/useAdminData';
 import { formatFirestoreDate } from '../../utils/formatFirestoreDate';
 import { updateUser } from '../../firebase/collections/users';
 import { auth } from '../../firebase/config';
 import { logActivity } from '../../firebase/activityLog';
 import { deleteSubmissionsByUserId } from '../../firebase/collections/agencySubmissions';
+import { authFetch } from '../../utils/apiClient';
 import Modal from '../../components/Modal';
 
 const SHOW_RESET_BUTTON = import.meta.env.VITE_SHOW_RESET_BUTTON === 'true';
@@ -16,6 +17,8 @@ export default function RegisteredUsersA() {
 
   const [resetModal, setResetModal] = useState({ open: false, user: null });
   const [resetLoading, setResetLoading] = useState(false);
+  const [syncingUserId, setSyncingUserId] = useState(null);
+  const autoSyncAttemptedRef = useRef(new Set());
 
   const formatRole = (role) => {
     switch (role) {
@@ -89,6 +92,53 @@ export default function RegisteredUsersA() {
       setResetLoading(false);
     }
   };
+
+  const handleSyncEmailVerified = async (userId) => {
+    setSyncingUserId(userId);
+    try {
+      const res = await authFetch('/sync-email-verified', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: userId })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        console.warn('Sync failed for', userId, data.error);
+      }
+    } catch (err) {
+      console.error('Sync error:', err);
+    } finally {
+      setSyncingUserId(null);
+    }
+  };
+
+  // Auto-sync email verification for pending unverified users every 10 seconds
+  useEffect(() => {
+    const pendingUnverified = allUsers.filter(
+      u => u.approvalStatus === 'pending' && !u.emailVerified
+    );
+
+    if (pendingUnverified.length === 0) return;
+
+    // Sync immediately on mount for users we haven't tried yet
+    pendingUnverified.forEach(user => {
+      if (!autoSyncAttemptedRef.current.has(user.id)) {
+        autoSyncAttemptedRef.current.add(user.id);
+        handleSyncEmailVerified(user.id);
+      }
+    });
+
+    const interval = setInterval(() => {
+      const stillPending = allUsers.filter(
+        u => u.approvalStatus === 'pending' && !u.emailVerified
+      );
+      stillPending.forEach(user => {
+        handleSyncEmailVerified(user.id);
+      });
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [allUsers]);
 
   if (loading) {
     return (
@@ -167,6 +217,17 @@ export default function RegisteredUsersA() {
                         <span className={`status-badge ${user.emailVerified ? 'approved' : 'rejected'}`}>
                           {user.emailVerified ? 'Verified' : 'Unverified'}
                         </span>
+                        {!user.emailVerified && (
+                          <button
+                            className="approve-user-btn"
+                            onClick={() => handleSyncEmailVerified(user.id)}
+                            disabled={syncingUserId === user.id}
+                            title="Check Firebase Auth for updated verification status"
+                            style={{ marginLeft: '8px', fontSize: '0.75rem', padding: '4px 8px' }}
+                          >
+                            {syncingUserId === user.id ? 'Checking...' : 'Check'}
+                          </button>
+                        )}
                       </td>
                       <td>{formatFirestoreDate(user.createdAt)}</td>
                       <td>
