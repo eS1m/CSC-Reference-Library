@@ -1,5 +1,5 @@
 {
   "projects": {
-    "default": (YOUR PROJECT NAME HERE)
+    "default": "csc-reference-library"
   }
 }
