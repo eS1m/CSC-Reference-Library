@@ -1207,3 +1207,9 @@
   font-size: 0.9rem;
   padding: 8px 16px;
 }
+
+/* Quick Guide Modal — push footer to the very bottom of the modal */
+.modal-content.quick-guide-modal .modal-body {
+    flex: 1;
+    overflow: hidden;
+}

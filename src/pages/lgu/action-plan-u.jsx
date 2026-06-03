@@ -689,87 +689,6 @@ export default function ActionPlanU() {
       <div className="action-plan-container">
         {currentStep === 2 && (
           <>
-            {/* Quick Guide Section */}
-            {showQuickGuide && (
-              <div className="quick-guide-section">
-                <h2>Quick Guide — System and Practice Lens</h2>
-                <p className="quick-guide-subtext">
-                  Use this guide to identify which HR system to prioritize and the specific areas to focus on. Your selections will pre-fill the Step 2 fields below.
-                </p>
-
-                <div className="quick-guide-block">
-                  <label className="quick-guide-label">HR System To Prioritize</label>
-                  <select
-                    className="quick-guide-select"
-                    value={qgSystem}
-                    onChange={(e) => handleQgSystemChange(e.target.value)}
-                  >
-                    <option value="">Select an HR System</option>
-                    {Object.entries(SYSTEM_CONFIG).map(([key, config]) => (
-                      <option key={key} value={key}>{config.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {qgSystem && (
-                  <>
-                    <div className="quick-guide-block">
-                      <label className="quick-guide-label">Governance</label>
-                      <div className="quick-guide-checkbox-group">
-                        {GOVERNANCE_ITEMS.map(item => (
-                          <label key={item} className="quick-guide-checkbox">
-                            <input
-                              type="checkbox"
-                              checked={qgGovernance.includes(item)}
-                              onChange={() => toggleQgGovernance(item)}
-                            />
-                            <span>{item}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="quick-guide-block">
-                      <label className="quick-guide-label">Target System Area Focus</label>
-                      {Object.entries(SYSTEM_CONFIG[qgSystem].categories).map(([category, items]) => (
-                        <div key={category} className="quick-guide-category">
-                          <h4 className="quick-guide-category-title">{category}</h4>
-                          <div className="quick-guide-checkbox-group">
-                            {items.map(item => (
-                              <label key={item} className="quick-guide-checkbox">
-                                <input
-                                  type="checkbox"
-                                  checked={(qgFocusAreas[category] || []).includes(item)}
-                                  onChange={() => toggleQgFocusArea(category, item)}
-                                />
-                                <span>{item}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-
-                <div className="quick-guide-actions">
-                  <button
-                    className="modal-btn modal-btn-secondary"
-                    onClick={handleQuickGuideSkip}
-                  >
-                    Skip for now
-                  </button>
-                  <button
-                    className="modal-btn modal-btn-primary"
-                    onClick={handleQuickGuideSave}
-                    disabled={!qgSystem}
-                  >
-                    Save & Continue
-                  </button>
-                </div>
-              </div>
-            )}
-
             {!showQuickGuide && (
               <div className="quick-guide-reopen">
                 <button
@@ -1466,6 +1385,92 @@ export default function ActionPlanU() {
         <p className="modal-subtext">
           You can still generate a preview or download the file, but all fields must be completed to submit to Google Drive.
         </p>
+      </Modal>
+
+      {/* Quick Guide Modal */}
+      <Modal
+        isOpen={showQuickGuide}
+        onClose={handleQuickGuideSkip}
+        title="Quick Guide — System and Practice Lens"
+        variant="info"
+        size="2xl"
+        className="quick-guide-modal"
+        actions={
+          <>
+            <button className="modal-btn modal-btn-secondary" onClick={handleQuickGuideSkip}>
+              Skip for now
+            </button>
+            <button
+              className="modal-btn modal-btn-primary"
+              onClick={handleQuickGuideSave}
+              disabled={!qgSystem}
+            >
+              Save & Continue
+            </button>
+          </>
+        }
+      >
+        <div style={{ maxHeight: '65vh', overflowY: 'auto', paddingRight: '8px' }}>
+          <p className="modal-subtext" style={{ marginBottom: '16px' }}>
+            Use this guide to identify which HR system to prioritize and the specific areas to focus on. Your selections will pre-fill the Step 2 fields.
+          </p>
+
+          <div className="quick-guide-block">
+            <label className="quick-guide-label">HR System To Prioritize</label>
+            <select
+              className="quick-guide-select"
+              value={qgSystem}
+              onChange={(e) => handleQgSystemChange(e.target.value)}
+            >
+              <option value="">Select an HR System</option>
+              {Object.entries(SYSTEM_CONFIG).map(([key, config]) => (
+                <option key={key} value={key}>{config.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {qgSystem && (
+            <>
+              <div className="quick-guide-block">
+                <label className="quick-guide-label">Target System Area Focus</label>
+                {Object.entries(SYSTEM_CONFIG[qgSystem].categories).map(([category, items]) => (
+                  <div key={category} className="quick-guide-category">
+                    <h4 className="quick-guide-category-title">{category}</h4>
+                    <div className="quick-guide-checkbox-group">
+                      {items.map(item => (
+                        <label key={item} className="quick-guide-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={(qgFocusAreas[category] || []).includes(item)}
+                            onChange={() => toggleQgFocusArea(category, item)}
+                          />
+                          <span>{item}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="quick-guide-block">
+                <label className="quick-guide-label">Governance</label>
+                <div className="quick-guide-checkbox-group">
+                  {GOVERNANCE_ITEMS.map(item => (
+                    <label key={item} className="quick-guide-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={qgGovernance.includes(item)}
+                        onChange={() => toggleQgGovernance(item)}
+                      />
+                      <span>{item}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+        </div>
       </Modal>
 
       {/* LOCKED STATE: Action Plan already submitted */}
