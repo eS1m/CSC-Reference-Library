@@ -8,7 +8,7 @@ import LockModal from '../../components/LockModal.jsx';
 import Modal from '../../components/Modal';
 import { auth } from '../../firebase/config';
 import { serverTimestamp } from 'firebase/firestore';
-import { createSubmission } from '../../firebase/collections/agencySubmissions';
+import { createSubmission, updateSubmission } from '../../firebase/collections/agencySubmissions';
 import { useAgencyWorkflow } from '../../hooks/useAgencyWorkflow';
 import { logActivity } from '../../firebase/activityLog';
 import { createAdminNotifications } from '../../firebase/notifications';
@@ -33,7 +33,16 @@ export default function Uupload() {
   /* Inline Success Banner */
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
 
+  /* Gap Analysis State */
+  const [showTargetModal, setShowTargetModal] = useState(false);
+  const [showGapsModal, setShowGapsModal] = useState(false);
+  const [showNoGapsModal, setShowNoGapsModal] = useState(false);
+  const [gapData, setGapData] = useState(null);
+  const [userTargetLevel, setUserTargetLevel] = useState('');
+  const [pendingSubmissionId, setPendingSubmissionId] = useState(null);
+
   const fileInputRef = useRef(null);
+  const parsedDataRef = useRef(null);
 
   const { agencyName, hasSelfAssessment, hasActionPlan, loading, currentAssessmentYear } = useAgencyWorkflow();
 
@@ -162,6 +171,74 @@ export default function Uupload() {
     });
   };
 
+  /* Parse gap cells from RSP, L&D, PM, R&R sheets */
+  const parseGapCells = (fileBlob, targetLevel) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const level = parseInt(targetLevel, 10);
+          if (isNaN(level) || level < 1 || level > 4) {
+            resolve(null);
+            return;
+          }
+          const columnMap = {
+            1: ['I'],
+            2: ['I', 'P'],
+            3: ['I', 'P', 'W'],
+            4: ['I', 'P', 'W', 'AD']
+          };
+          const columns = columnMap[level];
+          const rows = [7, 10, 13, 16, 19, 22, 25, 28, 31, 34];
+          const sheets = ['RSP', 'L&D', 'PM', 'R&R'];
+          const gaps = {};
+          let totalGaps = 0;
+          sheets.forEach(sheetName => {
+            const worksheet = workbook.Sheets[sheetName];
+            if (!worksheet) return;
+            const sheetGaps = [];
+            rows.forEach(row => {
+              columns.forEach(col => {
+                const cell = worksheet[col + row];
+                const value = cell?.v;
+                if (value === 0 || value === 0.5) {
+                  sheetGaps.push({ row, column: col, value });
+                }
+              });
+            });
+            if (sheetGaps.length > 0) {
+              gaps[sheetName] = sheetGaps;
+              totalGaps += sheetGaps.length;
+            }
+          });
+          resolve({ gaps, totalGaps, hasGaps: totalGaps > 0 });
+        } catch {
+          resolve(null);
+        }
+      };
+      reader.readAsArrayBuffer(fileBlob);
+    });
+  };
+
+  /* Run gap analysis and show appropriate modal */
+  const runGapAnalysis = async (fileBlob, targetLevel, submissionId, existingParsedData) => {
+    const gapResult = await parseGapCells(fileBlob, targetLevel);
+    if (!gapResult) return;
+    setGapData(gapResult);
+    const updatedParsedData = {
+      ...(existingParsedData || {}),
+      gaps: gapResult.gaps
+    };
+    await updateSubmission(submissionId, { parsedData: updatedParsedData });
+    if (gapResult.hasGaps) {
+      setShowGapsModal(true);
+    } else {
+      setShowNoGapsModal(true);
+    }
+  };
+
   /* Upload to Server */
   const handleUpload = async (e) => {
     if (e) e.stopPropagation();
@@ -213,14 +290,18 @@ export default function Uupload() {
       };
 
       /* Parse Excel only for Self-Assessment */
+      let parsedData = null;
       if (isSelfAssessmentMode) {
-        const parsedData = await parseAssessmentCells(file);
+        parsedData = await parseAssessmentCells(file);
+        parsedDataRef.current = parsedData;
         if (parsedData.currentMaturityLevel || parsedData.targetMaturityLevel) {
           submissionData.parsedData = parsedData;
         }
       }
 
-      await createSubmission(submissionData);
+      const submissionRef = await createSubmission(submissionData);
+      const submissionId = submissionRef.id;
+      setPendingSubmissionId(submissionId);
 
       await logActivity({
         userId: auth.currentUser.uid,
@@ -241,9 +322,18 @@ export default function Uupload() {
 
       if (isSelfAssessmentMode) {
         setShowSuccessBanner(true);
+        const targetLevel = parsedData?.targetMaturityLevel;
+        const levelNum = parseInt(targetLevel, 10);
+        if (!targetLevel || isNaN(levelNum) || levelNum < 1 || levelNum > 4) {
+          setShowTargetModal(true);
+        } else {
+          await runGapAnalysis(file, targetLevel, submissionId, parsedData);
+          setFile(null);
+        }
+      } else {
+        setFile(null);
       }
 
-      setFile(null);
       setUploadStatus('');
     } catch (err) {
       console.error(err);
@@ -282,6 +372,36 @@ export default function Uupload() {
 
   const dismissSuccessBanner = () => {
     setShowSuccessBanner(false);
+  };
+
+  const confirmTargetLevel = async () => {
+    const level = parseInt(userTargetLevel, 10);
+    if (isNaN(level) || level < 1 || level > 4) return;
+    setShowTargetModal(false);
+    const existingParsedData = parsedDataRef.current || {};
+    await runGapAnalysis(file, level, pendingSubmissionId, { ...existingParsedData, targetMaturityLevel: String(level) });
+    setFile(null);
+    setUserTargetLevel('');
+  };
+
+  const handleTargetModalCancel = () => {
+    setShowTargetModal(false);
+    setUserTargetLevel('');
+    setFile(null);
+  };
+
+  const handleGapsModalConfirm = () => {
+    setShowGapsModal(false);
+    setGapData(null);
+    setFile(null);
+    nav('/action-plan-u');
+  };
+
+  const handleNoGapsModalConfirm = () => {
+    setShowNoGapsModal(false);
+    setGapData(null);
+    setFile(null);
+    nav('/action-plan-u');
   };
 
   return (
@@ -386,6 +506,92 @@ export default function Uupload() {
             &apos;{isSelfAssessmentMode ? 'PRIME-HRM Assessment' : 'Action Plan'}-(Agency Name)&apos;
           </strong>.
           Are you sure you want to proceed?
+        </p>
+      </Modal>
+
+      {/* Target Maturity Level Input Modal */}
+      <Modal
+        isOpen={showTargetModal}
+        onClose={handleTargetModalCancel}
+        title="Target Maturity Level Required"
+        variant="warning"
+        actions={
+          <>
+            <button className="modal-btn modal-btn-secondary" onClick={handleTargetModalCancel}>
+              Cancel
+            </button>
+            <button className="modal-btn modal-btn-primary" onClick={confirmTargetLevel}>
+              Confirm
+            </button>
+          </>
+        }
+      >
+        <p style={{ fontWeight: 600, marginBottom: '12px' }}>
+          We couldn&apos;t detect your Target Maturity Level from the uploaded file.
+        </p>
+        <p className="modal-subtext" style={{ marginBottom: '16px' }}>
+          Please select your Target Maturity Level below to proceed with gap analysis.
+        </p>
+        <select
+          style={{ width: '100%', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1px solid #ccc' }}
+          value={userTargetLevel}
+          onChange={(e) => setUserTargetLevel(e.target.value)}
+        >
+          <option value="">Select Target Maturity Level</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+        </select>
+      </Modal>
+
+      {/* Gaps Found Modal */}
+      <Modal
+        isOpen={showGapsModal}
+        onClose={handleGapsModalConfirm}
+        title="Gaps Identified"
+        variant="warning"
+        actions={
+          <button className="modal-btn modal-btn-primary" onClick={handleGapsModalConfirm}>
+            Go to Action Plan
+          </button>
+        }
+      >
+        <p style={{ fontWeight: 600, marginBottom: '8px' }}>
+          We found <strong>{gapData?.totalGaps || 0} gap(s)</strong> across your Self-Assessment.
+        </p>
+        <p className="modal-subtext">
+          Gaps were identified in the following areas:
+        </p>
+        <ul style={{ marginTop: '8px', paddingLeft: '20px', lineHeight: '1.6' }}>
+          {gapData && Object.keys(gapData.gaps).map(sheet => (
+            <li key={sheet}>
+              <strong>{sheet}</strong>: {gapData.gaps[sheet].length} gap(s)
+            </li>
+          ))}
+        </ul>
+        <p className="modal-subtext" style={{ marginTop: '12px' }}>
+          You must generate an Action Plan to address these gaps.
+        </p>
+      </Modal>
+
+      {/* No Gaps Modal */}
+      <Modal
+        isOpen={showNoGapsModal}
+        onClose={handleNoGapsModalConfirm}
+        title="No Gaps Found"
+        variant="success"
+        actions={
+          <button className="modal-btn modal-btn-primary" onClick={handleNoGapsModalConfirm}>
+            Go to Action Plan
+          </button>
+        }
+      >
+        <p style={{ fontWeight: 600, marginBottom: '8px' }}>
+          No gaps identified within your target maturity level.
+        </p>
+        <p className="modal-subtext">
+          You may still generate an Action Plan if desired.
         </p>
       </Modal>
     </main>
