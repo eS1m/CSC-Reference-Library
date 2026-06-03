@@ -56,8 +56,8 @@ service cloud.firestore {
         isOwner(resource.data.userId) || isAdminOrPrime()
       );
 
-      // PRIME and admin can update status (approve/reject/return)
-      allow update: if request.auth != null && isAdminOrPrime();
+      // Owner can update their own submission; admin and PRIME can update any
+      allow update: if request.auth != null && (isOwner(resource.data.userId) || isAdminOrPrime());
 
       // Admin and CSC RO X can delete (needed for deletion approval workflow)
       allow delete: if request.auth != null && isAdminOrPrime();
@@ -131,6 +131,11 @@ service cloud.firestore {
       allow read: if request.auth != null && isAdminOrPrime();
       allow update: if request.auth != null && isAdminOrPrime();
       allow delete: if request.auth != null && isAdminOrPrime();
+    }
+
+    // 14. Action Plan Quick Guide - agencies manage their own
+    match /agencyActionPlanQG/{uid} {
+      allow create, read, update, delete: if request.auth != null && request.auth.uid == uid;
     }
 
     // 13. System Config - only admins can read/write
