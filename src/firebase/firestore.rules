@@ -133,6 +133,11 @@ service cloud.firestore {
       allow delete: if request.auth != null && isAdminOrPrime();
     }
 
+    // 14. Action Plan Quick Guide - agencies manage their own
+    match /agencyActionPlanQG/{uid} {
+      allow create, read, update, delete: if request.auth != null && request.auth.uid == uid;
+    }
+
     // 13. System Config - only admins can read/write
     match /systemConfig/{docId} {
       allow create: if request.auth != null && isAdmin();
