@@ -56,8 +56,8 @@ service cloud.firestore {
         isOwner(resource.data.userId) || isAdminOrPrime()
       );
 
-      // PRIME and admin can update status (approve/reject/return)
-      allow update: if request.auth != null && isAdminOrPrime();
+      // Owner can update their own submission; admin and PRIME can update any
+      allow update: if request.auth != null && (isOwner(resource.data.userId) || isAdminOrPrime());
 
       // Admin and CSC RO X can delete (needed for deletion approval workflow)
       allow delete: if request.auth != null && isAdminOrPrime();
