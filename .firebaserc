@@ -1,5 +1,5 @@
 {
   "projects": {
-    "default": "csc-kl-stage"
+    "default": "csc-reference-library"
   }
 }
