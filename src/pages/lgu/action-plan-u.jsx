@@ -19,6 +19,7 @@ import { logActivity } from '../../firebase/activityLog';
 import { createAdminNotifications } from '../../firebase/notifications';
 import { useAgencyWorkflow } from '../../hooks/useAgencyWorkflow';
 import { authFetch } from '../../utils/apiClient';
+import { subscribeQuickGuideById, setQuickGuide } from '../../firebase/collections/agencyActionPlanQG';
 
 const templateUrl = new URL('../../assets/templates/Action Plan Template - Agency Guide (Assist Form No. 2).docx', import.meta.url).href;
 
@@ -30,6 +31,47 @@ const TOOLTIP_TEXT = {
   timeline: '(Day/Month)',
   successIndicators: 'How will you know that you are making progress? What are your benchmarks? How will you determine that your goal has been reached? What are your measures?'
 };
+
+const SYSTEM_CONFIG = {
+  'RSP': {
+    label: 'Recruitment, Selection and Placement (RSP)',
+    categories: {
+      'Talent Planning': ['Staffing/Workforce Plan'],
+      'Talent Sourcing': ['Recruitment Plan', 'Talent Attraction', 'Equal Employment Opportunity Principles (EEOP)'],
+      'Talent Selection and Placement': ['Selection Criteria', 'Assessment and Selection Process', 'Onboarding']
+    }
+  },
+  'L&D': {
+    label: 'Learning and Development (L&D)',
+    categories: {
+      'Planning and M&E': ['L&D Planning', 'L&D Monitoring and Evaluation'],
+      'Execution': ['Design', 'Development', 'Delivery', 'Learning Service Provider Management']
+    }
+  },
+  'PM': {
+    label: 'Performance Management (PM)',
+    categories: {
+      'Performance Planning and Commitment': ['Target Setting', 'Standard Setting'],
+      'Performance Monitoring and Coaching': ['Performance Tracking', 'Providing Performance Support'],
+      'Performance Review and Evaluation': ['Performance Review and Evaluation', 'Calibrating Performance Assessments'],
+      'Development Planning': ['Development Planning']
+    }
+  },
+  'R&R': {
+    label: 'Rewards and Recognition (R&R)',
+    categories: {
+      'Planning': ['Planning'],
+      'Implementation': ['R&R Screening and Selection Criteria and Processes']
+    }
+  }
+};
+
+const GOVERNANCE_ITEMS = [
+  'Policy',
+  'Structure and Roles',
+  'Review Mechanisms',
+  'Information and Communication'
+];
 
 export default function ActionPlanU() {
   const navigate = useNavigate();
@@ -52,6 +94,13 @@ export default function ActionPlanU() {
   const [uploadStatus, setUploadStatus] = useState('');
   const [uploadStatusType, setUploadStatusType] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  /* ========== QUICK GUIDE STATE ========== */
+  const [showQuickGuide, setShowQuickGuide] = useState(false);
+  const [qgSystem, setQgSystem] = useState('');
+  const [qgGovernance, setQgGovernance] = useState([]);
+  const [qgFocusAreas, setQgFocusAreas] = useState({});
+  const [qgData, setQgData] = useState(null);
 
   /* Validation Error Modal */
   const [showValidationModal, setShowValidationModal] = useState(false);
@@ -128,9 +177,90 @@ export default function ActionPlanU() {
     }
   }, [submissions]);
 
+  /* Subscribe to Quick Guide data */
+  useEffect(() => {
+    if (!auth.currentUser?.uid) return;
+    const unsub = subscribeQuickGuideById(auth.currentUser.uid, (data) => {
+      setQgData(data);
+      if (data?.selections) {
+        setQgSystem(data.selections.system || '');
+        setQgGovernance(data.selections.governance || []);
+        setQgFocusAreas(data.selections.focusAreas || {});
+      }
+    });
+    return unsub;
+  }, []);
+
+  /* Determine Quick Guide visibility on mount / year change */
+  useEffect(() => {
+    if (!currentAssessmentYear) return;
+    const isCompleted = qgData?.completedYear === currentAssessmentYear;
+    setShowQuickGuide(!isCompleted);
+  }, [qgData, currentAssessmentYear]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setInputs(prev => ({ ...prev, [name]: value }));
+  };
+
+  /* ========== QUICK GUIDE HANDLERS ========== */
+  const handleQgSystemChange = (system) => {
+    setQgSystem(system);
+    setQgFocusAreas({});
+  };
+
+  const toggleQgGovernance = (item) => {
+    setQgGovernance(prev =>
+      prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
+    );
+  };
+
+  const toggleQgFocusArea = (category, item) => {
+    setQgFocusAreas(prev => {
+      const current = prev[category] || [];
+      const updated = current.includes(item)
+        ? current.filter(i => i !== item)
+        : [...current, item];
+      return { ...prev, [category]: updated };
+    });
+  };
+
+  const buildQuickGuidePrefill = () => {
+    const systemLabel = SYSTEM_CONFIG[qgSystem]?.label || qgSystem;
+    const govText = qgGovernance.length > 0
+      ? 'Governance:\n' + qgGovernance.map(g => `- ${g}`).join('\n')
+      : '';
+    const focusText = Object.entries(qgFocusAreas)
+      .filter(([, items]) => items.length > 0)
+      .map(([category, items]) => `- ${category}: ${items.join(', ')}`)
+      .join('\n');
+    const focusSection = focusText ? `System and Practice Lens:\n${focusText}` : '';
+    const hrSystemText = [systemLabel, govText].filter(Boolean).join('\n\n');
+    const targetFocusText = [govText, focusSection].filter(Boolean).join('\n\n');
+    return { hrSystemText, targetFocusText };
+  };
+
+  const handleQuickGuideSave = async () => {
+    if (!auth.currentUser?.uid) return;
+    const { hrSystemText, targetFocusText } = buildQuickGuidePrefill();
+    await setQuickGuide(auth.currentUser.uid, {
+      completedYear: currentAssessmentYear,
+      selections: {
+        system: qgSystem,
+        governance: qgGovernance,
+        focusAreas: qgFocusAreas
+      }
+    });
+    setInputs(prev => ({
+      ...prev,
+      hrSystemToPrioritize: hrSystemText,
+      targetSystemAreaFocus: targetFocusText
+    }));
+    setShowQuickGuide(false);
+  };
+
+  const handleQuickGuideSkip = () => {
+    setShowQuickGuide(false);
   };
 
   /* ========== STEP 3: Action Steps State ========== */
@@ -559,6 +689,17 @@ export default function ActionPlanU() {
       <div className="action-plan-container">
         {currentStep === 2 && (
           <>
+            {!showQuickGuide && (
+              <div className="quick-guide-reopen">
+                <button
+                  className="modal-btn modal-btn-secondary"
+                  onClick={() => setShowQuickGuide(true)}
+                >
+                  Open Quick Guide
+                </button>
+              </div>
+            )}
+
             <div className="action-plan-inputs-section">
               <h2>Determining the Current State</h2>
               <div className="action-plan-inputs-grid">
@@ -1244,6 +1385,92 @@ export default function ActionPlanU() {
         <p className="modal-subtext">
           You can still generate a preview or download the file, but all fields must be completed to submit to Google Drive.
         </p>
+      </Modal>
+
+      {/* Quick Guide Modal */}
+      <Modal
+        isOpen={showQuickGuide}
+        onClose={handleQuickGuideSkip}
+        title="Quick Guide — System and Practice Lens"
+        variant="info"
+        size="2xl"
+        className="quick-guide-modal"
+        actions={
+          <>
+            <button className="modal-btn modal-btn-secondary" onClick={handleQuickGuideSkip}>
+              Skip for now
+            </button>
+            <button
+              className="modal-btn modal-btn-primary"
+              onClick={handleQuickGuideSave}
+              disabled={!qgSystem}
+            >
+              Save & Continue
+            </button>
+          </>
+        }
+      >
+        <div style={{ maxHeight: '65vh', overflowY: 'auto', paddingRight: '8px' }}>
+          <p className="modal-subtext" style={{ marginBottom: '16px' }}>
+            Use this guide to identify which HR system to prioritize and the specific areas to focus on. Your selections will pre-fill the Step 2 fields.
+          </p>
+
+          <div className="quick-guide-block">
+            <label className="quick-guide-label">HR System To Prioritize</label>
+            <select
+              className="quick-guide-select"
+              value={qgSystem}
+              onChange={(e) => handleQgSystemChange(e.target.value)}
+            >
+              <option value="">Select an HR System</option>
+              {Object.entries(SYSTEM_CONFIG).map(([key, config]) => (
+                <option key={key} value={key}>{config.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {qgSystem && (
+            <>
+              <div className="quick-guide-block">
+                <label className="quick-guide-label">Target System Area Focus</label>
+                {Object.entries(SYSTEM_CONFIG[qgSystem].categories).map(([category, items]) => (
+                  <div key={category} className="quick-guide-category">
+                    <h4 className="quick-guide-category-title">{category}</h4>
+                    <div className="quick-guide-checkbox-group">
+                      {items.map(item => (
+                        <label key={item} className="quick-guide-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={(qgFocusAreas[category] || []).includes(item)}
+                            onChange={() => toggleQgFocusArea(category, item)}
+                          />
+                          <span>{item}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="quick-guide-block">
+                <label className="quick-guide-label">Governance</label>
+                <div className="quick-guide-checkbox-group">
+                  {GOVERNANCE_ITEMS.map(item => (
+                    <label key={item} className="quick-guide-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={qgGovernance.includes(item)}
+                        onChange={() => toggleQgGovernance(item)}
+                      />
+                      <span>{item}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+        </div>
       </Modal>
 
       {/* LOCKED STATE: Action Plan already submitted */}
